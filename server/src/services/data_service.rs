@@ -1,4 +1,1 @@
-struct DataService {
-
-}
-
+struct DataService {}
