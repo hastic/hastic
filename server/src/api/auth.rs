@@ -18,7 +18,9 @@ struct SigninResp {
     token: user_service::AccessToken,
 }
 
-pub fn get_route(user_service: Arc<RwLock<user_service::UserService>>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn get_route(
+    user_service: Arc<RwLock<user_service::UserService>>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     return warp::path!("api" / "auth" / "signin")
         .and(post())
         .and(warp::body::json())
@@ -26,8 +28,9 @@ pub fn get_route(user_service: Arc<RwLock<user_service::UserService>>) -> impl F
             let us = user_service.write().login(&user);
             match us {
                 Some(token) => api::API::json(&SigninResp { token }),
-                None => api::API::json(&SigninResp { token: "no token".to_string() })
+                None => api::API::json(&SigninResp {
+                    token: "no token".to_string(),
+                }),
             }
-            
         });
 }

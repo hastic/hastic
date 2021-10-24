@@ -12,24 +12,15 @@ use serde::Serialize;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-
 pub struct API {
-    user_service: Arc<RwLock<user_service::UserService>>
+    user_service: Arc<RwLock<user_service::UserService>>,
 }
 
 impl API {
     pub fn new() -> API {
         API {
-            user_service: Arc::new(RwLock::new(user_service::UserService::new()))
+            user_service: Arc::new(RwLock::new(user_service::UserService::new())),
         }
-    }
-
-    fn builder<T>(s: T) -> Result<Response<T>, warp::http::Error> {
-        return Response::builder()
-            .header("Access-Control-Allow-Origin", "*")
-            .header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE")
-            .header("Access-Control-Allow-Headers", "*")
-            .body(s);
     }
 
     fn json<T: Serialize>(t: &T) -> Response<Body> {
