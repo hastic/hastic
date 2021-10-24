@@ -13,7 +13,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 #[derive(Serialize)]
-struct Options {
+pub struct Message {
     message: String,
 }
 
@@ -29,6 +29,10 @@ impl API {
     }
 
     fn json<T: Serialize>(t: &T) -> Response<Body> {
+        API::json_with_code(t, StatusCode::OK)
+    }
+
+    fn json_with_code<T: Serialize>(t: &T, status_code: StatusCode) -> Response<Body> {
         let j = warp::reply::json(t);
         let mut rs = j.into_response();
         let hs = rs.headers_mut();
@@ -41,6 +45,7 @@ impl API {
             "Access-Control-Allow-Headers",
             HeaderValue::from_static("*"),
         );
+        *rs.status_mut() = status_code;
         rs
     }
 
@@ -48,7 +53,7 @@ impl API {
         let not_found =
             warp::any().map(|| warp::reply::with_status("Not found", StatusCode::NOT_FOUND));
         let options = warp::any().and(options()).map(|| {
-            API::json(&Options {
+            API::json(&Message {
                 message: "ok".to_owned(),
             })
         });

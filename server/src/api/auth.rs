@@ -2,13 +2,13 @@ use hastic::services::user_service;
 
 use warp::filters::method::post;
 use warp::http::HeaderValue;
-use warp::hyper::Body;
+use warp::hyper::{Body, StatusCode};
 use warp::{http::Response, Filter};
 use warp::{Rejection, Reply};
 
 use serde::Serialize;
 
-use crate::api;
+use crate::api::{self, API};
 
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -26,11 +26,15 @@ pub fn get_route(
         .and(warp::body::json())
         .map(move |user: user_service::User| {
             let us = user_service.write().login(&user);
-            match us {
-                Some(token) => api::API::json(&SigninResp { token }),
-                None => api::API::json(&SigninResp {
-                    token: "no token".to_string(),
-                }),
+            if let Some(token) = us {
+                return api::API::json(&SigninResp { token });
+            } else {
+                return api::API::json_with_code(
+                    &api::Message {
+                        message: "wrong login or password".to_owned(),
+                    },
+                    StatusCode::UNAUTHORIZED,
+                );
             }
         });
 }
