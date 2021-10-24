@@ -2,5 +2,6 @@ mod api;
 
 #[tokio::main]
 async fn main() {
-    api::API::serve().await;
+    let api = api::API::new();
+    api.serve().await;
 }

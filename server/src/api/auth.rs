@@ -10,18 +10,24 @@ use serde::Serialize;
 
 use crate::api;
 
+use parking_lot::RwLock;
+use std::sync::Arc;
+
 #[derive(Serialize)]
 struct SigninResp {
     token: user_service::AccessToken,
 }
 
-pub fn get_route() -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
+pub fn get_route(user_service: Arc<RwLock<user_service::UserService>>) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     return warp::path!("api" / "auth" / "signin")
         .and(post())
         .and(warp::body::json())
-        .map(|user: user_service::User| {
-            api::API::json(&SigninResp {
-                token: "asdad".to_string(),
-            })
+        .map(move |user: user_service::User| {
+            let us = user_service.write().login(&user);
+            match us {
+                Some(token) => api::API::json(&SigninResp { token }),
+                None => api::API::json(&SigninResp { token: "no token".to_string() })
+            }
+            
         });
 }

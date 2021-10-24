@@ -9,11 +9,19 @@ mod auth;
 
 use serde::Serialize;
 
-pub struct API {}
+use parking_lot::RwLock;
+use std::sync::Arc;
+
+
+pub struct API {
+    user_service: Arc<RwLock<user_service::UserService>>
+}
 
 impl API {
-    fn new() -> API {
-        API {}
+    pub fn new() -> API {
+        API {
+            user_service: Arc::new(RwLock::new(user_service::UserService::new()))
+        }
     }
 
     fn builder<T>(s: T) -> Result<Response<T>, warp::http::Error> {
@@ -40,9 +48,9 @@ impl API {
         rs
     }
 
-    pub async fn serve() {
+    pub async fn serve(&self) {
         let lg = warp::any().map(move || API::builder("not found"));
-        let login = auth::get_route();
+        let login = auth::get_route(self.user_service.clone());
 
         println!("Start server on 8000 port");
         warp::serve(login.or(lg)).run(([127, 0, 0, 1], 8000)).await;
