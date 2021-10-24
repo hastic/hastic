@@ -1,5 +1,5 @@
 use crate::api::API;
-use crate::user_service;
+use crate::services::user_service;
 
 use warp::{Rejection, Reply};
 use warp::filters::method::post;
