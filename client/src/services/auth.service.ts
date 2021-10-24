@@ -2,7 +2,8 @@ import { User } from "@/types/user";
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api/auth/';
+// TODO: get it from config
+const API_URL = '/api/auth/';
 
 class AuthService {
   login(user: User) {

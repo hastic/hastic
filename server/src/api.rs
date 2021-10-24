@@ -58,9 +58,11 @@ impl API {
             })
         });
         let login = auth::get_route(self.user_service.clone());
+        let public = warp::fs::dir("public");
 
         println!("Start server on 8000 port");
-        let routes = login.or(options).or(not_found);
+        // TODO: move it to "server"
+        let routes = login.or(options).or(public).or(not_found);
         warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
     }
 }

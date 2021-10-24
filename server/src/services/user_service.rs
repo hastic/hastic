@@ -6,7 +6,7 @@ use std::iter::repeat_with;
 
 pub type AccessToken = String;
 
-const TOKEN_LENGTH: usize = 20;
+const TOKEN_LENGTH: usize = 30;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct User {
@@ -34,7 +34,7 @@ impl UserService {
         }
         return None;
     }
-    pub fn check_token(&self, username: &String, token: &AccessToken) -> bool {
+    pub fn check_token(&self, token: &AccessToken) -> bool {
         return self.tokens.contains(token);
     }
 }
