@@ -16,13 +16,12 @@ impl API {
         API{}
     }
 
-    fn builder(s: &str) -> Result<Response<String>, warp::http::Error> {
+    fn builder<T>(s: T) -> Result<Response<T>, warp::http::Error> {
         return Response::builder()
             .header("Access-Control-Allow-Origin", "*")
             .header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE")
             .header("Access-Control-Allow-Headers", "*")
-            .body(s.to_owned())
-    
+            .body(s)
     }
 
     pub async fn serve() {
@@ -32,6 +31,7 @@ impl API {
         println!("Start server on 8000 port");
         warp::serve(login.
             or(lg)
+            
         )
             .run(([127, 0, 0, 1], 8000))
             .await;
