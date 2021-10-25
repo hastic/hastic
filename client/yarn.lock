@@ -223,6 +223,18 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
+"@chartwerk/core@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.1.1.tgz#cc15c4f388737032a1e9616959541989e54b4824"
+  integrity sha512-AgERJVR6agOXULOQsc7sQHM7INP8iaF+kGj2c08DYTZ6SmIUGJFWpcSVTTccZZ3Szf/ypiI60tC1bgTKaIchTg==
+
+"@chartwerk/line-pod@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.2.4.tgz#67f9f026ca330c4e746d80ff9ce88e99ddca9b1d"
+  integrity sha512-XXoDBEIHyxSNdbpjKWZwU4zXE9nlN7731lYx3F5ICQxozGrb3FEPsj4gS63nPAdyQXWWvglSk+t12L8deN0P2A==
+  dependencies:
+    "@chartwerk/core" "^0.1.1"
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
