@@ -4,16 +4,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { ChartwerkLineChart } from "@chartwerk/line-pod";
+import { HasticPod } from "./hastic_pod";
 
-// TODO: place chartwerk
 // TODO: fetch data from API
 // TODO: set height
 export default defineComponent({
   name: 'Graph',
   props: {},
   mounted() {
-    console.log(this.$el);
     const startTime = 1590590148;
     const arrayLength = 20;
     const data1: [number, number][] = Array.from({ length: arrayLength }, (el, idx) => [Math.floor(Math.random() * 40), startTime + idx * 10000]);
@@ -28,7 +26,7 @@ export default defineComponent({
       // },
       // eventsCallbacks: { zoomIn: zoomIn, zoomOut }
     }
-    var pod = new ChartwerkLineChart(
+    var pod = new HasticPod(
       document.getElementById('chart'),
       [
         { target: 'test1', datapoints: data1, color: 'green' },
