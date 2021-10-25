@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@chartwerk/line-pod": "^0.2.4",
+    "@types/lodash": "^4.14.176",
     "axios": "^0.23.0",
+    "lodash": "^4.17.21",
     "vue": "^3.0.0",
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.0-0",
