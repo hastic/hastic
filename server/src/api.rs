@@ -1,4 +1,5 @@
-use hastic::services::user_service;
+use hastic::config::Config;
+use hastic::services::{metric_service, user_service};
 use warp::filters::method::post;
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
@@ -6,6 +7,7 @@ use warp::{body, options, Rejection, Reply};
 use warp::{http::Response, Filter};
 
 mod auth;
+mod metric;
 
 use serde::Serialize;
 
@@ -17,14 +19,21 @@ pub struct Message {
     message: String,
 }
 
-pub struct API {
+pub struct API<'a> {
+    config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
+    metric_service: Arc<RwLock<metric_service::MetricService>>,
 }
 
-impl API {
-    pub fn new() -> API {
+impl API<'_> {
+    pub fn new(config: &Config) -> API<'_> {
         API {
+            config: config,
             user_service: Arc::new(RwLock::new(user_service::UserService::new())),
+            metric_service: Arc::new(RwLock::new(metric_service::MetricService::new(
+                &config.prom_url,
+                &config.query,
+            ))),
         }
     }
 
