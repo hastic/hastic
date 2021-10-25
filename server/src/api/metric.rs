@@ -15,7 +15,6 @@ use crate::api::{self, API};
 
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::convert::Infallible;
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -43,12 +42,8 @@ async fn query(
     let prom = ms.read().get_prom();
     drop(ms);
     let res = prom.query(from, to, step).await;
-    // let pm = subbeat::datasources::prometheus::Prometheus::new(&"http://".to_owned(), &"asd".to_owned());
-    // let r = pm.query(from, to, step).await;
 
-    Ok(API::json(&QueryResponse {
-        message: "hello".to_string(),
-    }))
+    Ok(API::json(&res.unwrap()))
 }
 
 pub fn get_route(

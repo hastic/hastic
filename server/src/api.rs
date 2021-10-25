@@ -1,6 +1,5 @@
 use hastic::config::Config;
 use hastic::services::{metric_service, user_service};
-use warp::filters::method::post;
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
 use warp::{body, options, Rejection, Reply};

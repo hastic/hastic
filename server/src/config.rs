@@ -3,6 +3,7 @@ pub struct Config {
     pub query: String,
 }
 
+// TODO: use actual config and env variables
 impl Config {
     pub fn new() -> Config {
         Config {

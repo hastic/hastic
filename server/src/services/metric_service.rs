@@ -9,7 +9,7 @@ impl MetricService {
     pub fn new(url: &str, query: &str) -> MetricService {
         MetricService {
             url: url.to_string(),
-            query: url.to_string(),
+            query: query.to_string(),
         }
     }
 
