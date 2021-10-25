@@ -1,14 +1,15 @@
 import { User } from "@/types/user";
+import { API_URL } from "@/config";
 
 import axios from 'axios';
 
 // TODO: get it from config
-const API_URL = '/api/auth/';
+const AUTH_API_URL = API_URL + 'auth/';
 
 class AuthService {
   login(user: User) {
     return axios
-      .post(API_URL + 'signin', {
+      .post(AUTH_API_URL + 'signin', {
         username: user.username,
         password: user.password
       })
@@ -25,7 +26,7 @@ class AuthService {
   }
 
   register(user: User) {
-    return axios.post(API_URL + 'signup', {
+    return axios.post(AUTH_API_URL + 'signup', {
       username: user.username,
       email: user.email,
       password: user.password
