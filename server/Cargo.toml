@@ -14,3 +14,4 @@ fastrand = "1.5.0"
 # subbeat = { path = "../../../subbeat/subbeat/" }
 subbeat = "0.0.5"
 config = "0.11.0"
+openssl = { version = "=0.10.33", features = ["vendored"] }
