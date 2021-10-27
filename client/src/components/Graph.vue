@@ -45,9 +45,15 @@ export default defineComponent({
         options
       );
       pod.render();
+    }).catch(e => {
+      this.$notify({
+        title: "Error during extracting metric",
+        text: e,
+        type: 'error',
+      });
+      console.error(e);
     })
-    
-    
+ 
   }
 });
 </script>
