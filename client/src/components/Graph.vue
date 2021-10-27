@@ -16,40 +16,27 @@ export default defineComponent({
   props: {},
   mounted() {
     const endTime = Math.floor(Date.now() / 1000);
-    const startTime = endTime - 60 * 1000; // 1000 seconds
+    const startTime = endTime - 1000; // 1000 seconds
 
-    const step = Math.round((endTime - startTime) / 5000);
+    const step = Math.max(Math.round((endTime - startTime) / 5000), 1);
 
-    getMetrics(startTime, endTime, step).then((res) => {
-      // console.log(res);
-      let target = _.keys(res["data"]["data"])[0];
-      let values = res["data"]["data"][target].map(([a,b]) => [b,a]);
-
+    getMetrics(startTime, endTime, step).then(([target, values]) => {
       
       // const zoomIn = (ranges) => { const range = ranges[0]; options.axis.x.range = range; pod.updateData(undefined, options) }
       // const zoomOut = (ranges) => { console.log('zoomout'); options.axis.x.range = undefined; pod.updateData(undefined, options) }
-      let options = {
-        renderLegend: false,
-        usePanning: false, 
-        // axis: {
-        //    y: { invert: false, range: [0, 350] },
-        //    x: { format: 'time' }
-        // },
-        // eventsCallbacks: { zoomIn }
-      }
+      
       var pod = new HasticPod(
         document.getElementById('chart'),
         [
           { target: target, datapoints: values, color: 'green' },
-        ],
-        options
+        ]
       );
       pod.render();
     }).catch(e => {
       this.$notify({
         title: "Error during extracting metric",
         text: e,
-        type: 'error',
+        type: 'error'
       });
       console.error(e);
     })
