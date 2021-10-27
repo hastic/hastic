@@ -1,6 +1,6 @@
 use hastic::services::{metric_service, user_service};
 
-use subbeat::metric::Metric;
+use subbeat::metric::{Metric, MetricResult};
 use warp::filters::method::get;
 use warp::http::HeaderValue;
 use warp::hyper::server::conn::Http;
@@ -11,10 +11,13 @@ use warp::{reject, Rejection, Reply};
 
 use serde::Serialize;
 
+use anyhow;
+
 use crate::api::{self, API};
 
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fmt::Debug;
 use std::sync::Arc;
 
@@ -28,22 +31,38 @@ struct BadQuery;
 
 impl Reject for BadQuery {}
 
+async fn get_query(
+    p: HashMap<String, String>,
+    ms: Arc<RwLock<metric_service::MetricService>>,
+) -> anyhow::Result<MetricResult> {
+    if !p.contains_key("from") {
+        return Err(anyhow::anyhow!("Missing attribute from"));
+    }
+    if !p.contains_key("to") {
+        return Err(anyhow::anyhow!("Missing attribute to"));
+    }
+    if !p.contains_key("step") {
+        return Err(anyhow::anyhow!("Missing attribute step"));
+    }
+    let from = p.get("from").unwrap().parse::<u64>()?;
+    let to = p.get("to").unwrap().parse::<u64>()?;
+    let step = p.get("step").unwrap().parse::<u64>()?;
+
+    let prom = ms.read().get_prom();
+    drop(ms);
+    Ok(prom.query(from, to, step).await?)
+}
+
 async fn query(
     p: HashMap<String, String>,
     ms: Arc<RwLock<metric_service::MetricService>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if !p.contains_key("from") || !p.contains_key("to") || !p.contains_key("step") {
-        return Err(warp::reject::custom(BadQuery));
+    //Err(warp::reject::custom(BadQuery));
+    match get_query(p, ms).await {
+        Ok(res) => Ok(API::json(&res)),
+        // TODO: parse different error types
+        Err(_e) => Err(warp::reject::custom(BadQuery)),
     }
-    let from = p.get("from").unwrap().parse::<u64>().unwrap();
-    let to = p.get("to").unwrap().parse::<u64>().unwrap();
-    let step = p.get("step").unwrap().parse::<u64>().unwrap();
-
-    let prom = ms.read().get_prom();
-    drop(ms);
-    let res = prom.query(from, to, step).await;
-
-    Ok(API::json(&res.unwrap()))
 }
 
 pub fn get_route(
