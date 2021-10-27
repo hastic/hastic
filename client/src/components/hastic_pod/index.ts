@@ -5,4 +5,13 @@ export class HasticPod extends ChartwerkLineChart {
     super(el, series, options)
   }
 
+  renderMetrics() {
+    super.renderMetrics();
+    console.log('render my metrics');
+  }
+
+  private _renderSegments() {
+    const m = this.metricContainer;
+    console.log(m);
+  }
 }
