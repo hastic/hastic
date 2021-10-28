@@ -12,8 +12,9 @@ export class HasticPod extends LinePod {
     super(el, undefined, {
       renderLegend: false,
       eventsCallbacks: {
-        zoomIn: range => { this._zoomIn(range) },
-        zoomOut: ({x, y}) => { this._zoomOut({x, y}) }
+        zoomIn: range => { this._updateRange(range) },
+        zoomOut: ({x, y}) => { this._zoomOut({x, y}) },
+        panningEnd: range => { this._updateRange(range) }
       }
     });
     this._udc = udc;
@@ -32,7 +33,10 @@ export class HasticPod extends LinePod {
     console.log('render my metrics');
   }
 
-  private async _zoomIn(range: AxisRange[]) {
+  private async _updateRange(range: AxisRange[]) {
+    console.log('update range');
+    console.log(range);
+    
     const ts = await this._udc({ from: range[0][0], to: range[0][1] });
     const options = { axis: { x: { range: range[0] } } };
     this.updateData(ts, options);
