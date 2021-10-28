@@ -76,13 +76,13 @@ impl API<'_> {
         });
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
-        // let segments = segments::get_route(self.data_service.clone());
+        let segments = segments::filters::filters(self.data_service.clone());
         let public = warp::fs::dir("public");
 
         println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
         let routes = warp::path("api")
-            .and(login.or(metrics).or(options))
+            .and(login.or(metrics).or(segments).or(options))
             .or(public)
             .or(not_found);
         warp::serve(routes)

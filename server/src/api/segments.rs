@@ -1,4 +1,4 @@
-mod filters {
+pub mod filters {
     use super::handlers;
     use super::models::{Db, ListOptions};
     use warp::Filter;
