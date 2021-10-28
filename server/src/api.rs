@@ -1,5 +1,5 @@
 use hastic::config::Config;
-use hastic::services::{metric_service, user_service};
+use hastic::services::{data_service, metric_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
 use warp::{body, options, Rejection, Reply};
@@ -22,18 +22,20 @@ pub struct API<'a> {
     config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: Arc<RwLock<metric_service::MetricService>>,
+    data_service: Arc<RwLock<data_service::DataService>>,
 }
 
 impl API<'_> {
-    pub fn new(config: &Config) -> API<'_> {
-        API {
+    pub fn new(config: &Config) -> anyhow::Result<API<'_>> {
+        Ok(API {
             config: config,
             user_service: Arc::new(RwLock::new(user_service::UserService::new())),
             metric_service: Arc::new(RwLock::new(metric_service::MetricService::new(
                 &config.prom_url,
                 &config.query,
             ))),
-        }
+            data_service: Arc::new(RwLock::new(data_service::DataService::new()?)),
+        })
     }
 
     fn json<T: Serialize>(t: &T) -> Response<Body> {
