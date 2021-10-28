@@ -70,11 +70,12 @@ impl API<'_> {
         });
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
+        let segments = segments::get_route(self.data_service.clone());
         let public = warp::fs::dir("public");
 
         println!("Start server on 8000 port");
         // TODO: move it to "server"
-        let routes = login.or(metrics).or(options).or(public).or(not_found);
+        let routes = login.or(metrics).or(segments).or(options).or(public).or(not_found);
         warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
     }
 }

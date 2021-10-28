@@ -2,6 +2,9 @@ use rusqlite::{ Connection, params };
 
 use serde::Serialize;
 
+use std::sync::{Arc, Mutex};
+
+
 #[derive(Debug, Serialize)]
 pub struct Segment {
     pub id: Option<u64>,
@@ -9,9 +12,12 @@ pub struct Segment {
     pub end: u64,
 }
 
+// TODO: find a way to remove this unsafe
+unsafe impl Sync for DataService {}
+
 
 pub struct DataService {
-    connection: Connection
+    connection: Arc<Mutex<Connection>>
 }
 
 
@@ -27,14 +33,12 @@ impl DataService {
             [],
         )?;
 
-
-
-        Ok(DataService { connection: conn })
+        Ok(DataService { connection: Arc::new(Mutex::new(conn)) })
     }
 
     pub fn insert_segment(&self, segment: &Segment) -> anyhow::Result<u64> {
         // TODO: merge with other segments
-        self.connection.execute(
+        self.connection.lock().unwrap().execute(
             "INSERT INTO segment (start, end) VALUES (?1, ?2)",
             params![segment.start, segment.end],
         )?;
@@ -42,7 +46,8 @@ impl DataService {
     }
 
     pub fn get_segments(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
-        let mut stmt = self.connection.prepare(
+        let conn = self.connection.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, start, end FROM person WHERE ?1 < start AND end < ?2"
         )?;
 
@@ -53,10 +58,6 @@ impl DataService {
                 end: row.get(2)?
             })
         })?.map(|e| e.unwrap()).collect();
-
-        
-
         Ok(res)
-
     }
 }
