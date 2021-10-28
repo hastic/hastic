@@ -21,15 +21,13 @@ use std::error::Error;
 use std::fmt::Debug;
 use std::sync::Arc;
 
+use super::BadQuery;
+
 #[derive(Serialize)]
 struct QueryResponse {
     message: String,
 }
 
-#[derive(Debug)]
-struct BadQuery;
-
-impl Reject for BadQuery {}
 
 async fn get_query(
     p: HashMap<String, String>,

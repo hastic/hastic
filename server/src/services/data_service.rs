@@ -1,11 +1,11 @@
 use rusqlite::{ Connection, params };
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 use std::sync::{Arc, Mutex};
 
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
     pub id: Option<u64>,
     pub start: u64,

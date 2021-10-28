@@ -2,6 +2,7 @@ use hastic::config::Config;
 use hastic::services::{data_service, metric_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
+use warp::reject::Reject;
 use warp::{body, options, Rejection, Reply};
 use warp::{http::Response, Filter};
 
@@ -13,6 +14,12 @@ use serde::Serialize;
 
 use parking_lot::RwLock;
 use std::sync::Arc;
+
+
+#[derive(Debug)]
+struct BadQuery;
+
+impl Reject for BadQuery {}
 
 #[derive(Serialize)]
 pub struct Message {
@@ -70,12 +77,17 @@ impl API<'_> {
         });
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
-        let segments = segments::get_route(self.data_service.clone());
+        // let segments = segments::get_route(self.data_service.clone());
         let public = warp::fs::dir("public");
 
         println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
-        let routes = login.or(metrics).or(segments).or(options).or(public).or(not_found);
+        let routes = login
+            .or(metrics)
+            //.or(segments)
+            .or(options)
+            .or(public)
+            .or(not_found);
         warp::serve(routes).run(([127, 0, 0, 1], self.config.port)).await;
     }
 }
