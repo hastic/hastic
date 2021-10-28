@@ -15,7 +15,6 @@ use serde::Serialize;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-
 #[derive(Debug)]
 struct BadQuery;
 
@@ -82,13 +81,12 @@ impl API<'_> {
 
         println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
-        let routes = 
-            warp::path("api")
-                .and(
-                    login.or(metrics).or(options))
-            
+        let routes = warp::path("api")
+            .and(login.or(metrics).or(options))
             .or(public)
             .or(not_found);
-        warp::serve(routes).run(([127, 0, 0, 1], self.config.port)).await;
+        warp::serve(routes)
+            .run(([127, 0, 0, 1], self.config.port))
+            .await;
     }
 }

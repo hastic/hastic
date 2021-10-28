@@ -1,9 +1,8 @@
-use rusqlite::{ Connection, params };
+use rusqlite::{params, Connection};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use std::sync::{Arc, Mutex};
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
@@ -15,11 +14,9 @@ pub struct Segment {
 // TODO: find a way to remove this unsafe
 unsafe impl Sync for DataService {}
 
-
 pub struct DataService {
-    connection: Arc<Mutex<Connection>>
+    connection: Arc<Mutex<Connection>>,
 }
-
 
 impl DataService {
     pub fn new() -> anyhow::Result<DataService> {
@@ -33,7 +30,9 @@ impl DataService {
             [],
         )?;
 
-        Ok(DataService { connection: Arc::new(Mutex::new(conn)) })
+        Ok(DataService {
+            connection: Arc::new(Mutex::new(conn)),
+        })
     }
 
     pub fn insert_segment(&self, segment: &Segment) -> anyhow::Result<u64> {
@@ -47,17 +46,19 @@ impl DataService {
 
     pub fn get_segments(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let conn = self.connection.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id, start, end FROM person WHERE ?1 < start AND end < ?2"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, start, end FROM person WHERE ?1 < start AND end < ?2")?;
 
-        let res = stmt.query_map(params![from, to], |row| {
-            Ok(Segment{ 
-                id: row.get(0)?, 
-                start: row.get(1)?, 
-                end: row.get(2)?
-            })
-        })?.map(|e| e.unwrap()).collect();
+        let res = stmt
+            .query_map(params![from, to], |row| {
+                Ok(Segment {
+                    id: row.get(0)?,
+                    start: row.get(1)?,
+                    end: row.get(2)?,
+                })
+            })?
+            .map(|e| e.unwrap())
+            .collect();
         Ok(res)
     }
 }

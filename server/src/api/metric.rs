@@ -28,7 +28,6 @@ struct QueryResponse {
     message: String,
 }
 
-
 async fn get_query(
     p: HashMap<String, String>,
     ms: Arc<RwLock<metric_service::MetricService>>,

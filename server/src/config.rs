@@ -1,7 +1,7 @@
 pub struct Config {
     pub prom_url: String,
     pub query: String,
-    pub port: u16
+    pub port: u16,
 }
 
 // TODO: use actual config and env variables
