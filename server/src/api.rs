@@ -7,6 +7,7 @@ use warp::{http::Response, Filter};
 
 mod auth;
 mod metric;
+mod segments;
 
 use serde::Serialize;
 

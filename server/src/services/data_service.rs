@@ -1,7 +1,8 @@
 use rusqlite::{ Connection, params };
 
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Segment {
     pub id: Option<u64>,
     pub start: u64,
