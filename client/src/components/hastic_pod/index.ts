@@ -33,12 +33,7 @@ export class HasticPod extends LinePod {
   }
 
   private async _zoomIn(range: AxisRange[]) {
-    // const zoomIn = (ranges) => { const range = ranges[0]; options.axis.x.range = range; pod.updateData(undefined, options) }
-    // const zoomOut = (ranges) => { console.log('zoomout'); options.axis.x.range = undefined; pod.updateData(undefined, options) }
     const ts = await this._udc({ from: range[0][0], to: range[0][1] });
-    console.log("ts");
-    console.log(ts);
-    
     const options = { axis: { x: { range: range[0] } } };
     this.updateData(ts, options);
   }
