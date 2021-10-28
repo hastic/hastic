@@ -66,7 +66,7 @@ async fn query(
 pub fn get_route(
     metric_service: Arc<RwLock<metric_service::MetricService>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    return warp::path!("api" / "metric")
+    return warp::path!("metric")
         .and(get())
         .and(warp::query::<HashMap<String, String>>())
         .and(warp::any().map(move || metric_service.clone()))

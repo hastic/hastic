@@ -21,7 +21,7 @@ struct SigninResp {
 pub fn get_route(
     user_service: Arc<RwLock<user_service::UserService>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    return warp::path!("api" / "auth" / "signin")
+    return warp::path!("auth" / "signin")
         .and(post())
         .and(warp::body::json())
         .map(move |user: user_service::User| {

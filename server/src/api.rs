@@ -82,10 +82,11 @@ impl API<'_> {
 
         println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
-        let routes = login
-            .or(metrics)
-            //.or(segments)
-            .or(options)
+        let routes = 
+            warp::path("api")
+                .and(
+                    login.or(metrics).or(options))
+            
             .or(public)
             .or(not_found);
         warp::serve(routes).run(([127, 0, 0, 1], self.config.port)).await;
