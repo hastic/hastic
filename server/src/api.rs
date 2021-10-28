@@ -73,9 +73,9 @@ impl API<'_> {
         let segments = segments::get_route(self.data_service.clone());
         let public = warp::fs::dir("public");
 
-        println!("Start server on 8000 port");
+        println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
         let routes = login.or(metrics).or(segments).or(options).or(public).or(not_found);
-        warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
+        warp::serve(routes).run(([127, 0, 0, 1], self.config.port)).await;
     }
 }
