@@ -1,6 +1,6 @@
-import { ChartwerkLineChart, LineOptions, LineTimeSerie } from "@chartwerk/line-pod";
+import { LinePod, LineTimeSerie } from "@chartwerk/line-pod";
 
-export class HasticPod extends ChartwerkLineChart {
+export class HasticPod extends LinePod {
   constructor(el: HTMLElement, series?: LineTimeSerie[]) {
     super(el, series, {
       renderLegend: false,

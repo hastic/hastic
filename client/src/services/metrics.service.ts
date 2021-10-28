@@ -17,6 +17,6 @@ export async function getMetrics(from: number, to: number, step: number) {
   const res = await axios.get(uri);
 
   const target = _.keys(res["data"]["data"])[0];
-  const values = res["data"]["data"][target].map(([a,b]) => [b,a]);
+  const values = res["data"]["data"][target];
   return [target, values];
 }
