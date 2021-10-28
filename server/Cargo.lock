@@ -382,6 +382,7 @@ dependencies = [
  "anyhow",
  "config",
  "fastrand",
+ "libsqlite3-sys",
  "openssl",
  "parking_lot",
  "rusqlite",
@@ -572,6 +573,7 @@ version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abd5850c449b40bacb498b2bbdfaff648b1b055630073ba8db499caf2d0ea9f2"
 dependencies = [
+ "cc",
  "pkg-config",
  "vcpkg",
 ]

@@ -31,7 +31,7 @@ impl DataService {
         )?;
 
         Ok(DataService {
-            connection: Arc::new(Mutex::new(conn)),
+            connection: Arc::new(Mutex::new(conn))
         })
     }
 
