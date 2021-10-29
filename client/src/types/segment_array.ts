@@ -17,9 +17,9 @@ export class SegmentArray<T extends Segment> implements SegmentsSet<T> {
     if(to === undefined) {
       to = Infinity;
     }
-    var result = [];
-    for(var i = 0; i < this._segments.length; i++) {
-      var s = this._segments[i];
+    let result = [];
+    for(let i = 0; i < this._segments.length; i++) {
+      const s = this._segments[i];
       if(from <= s.from && s.to <= to) {
         result.push(s);
       }
@@ -53,10 +53,10 @@ export class SegmentArray<T extends Segment> implements SegmentsSet<T> {
   }
 
   removeInRange(from: number, to: number): T[] {
-    var deleted = [];
-    var newSegments = [];
-    for(var i = 0; i < this._segments.length; i++) {
-      var s = this._segments[i];
+    let deleted = [];
+    let newSegments = [];
+    for(let i = 0; i < this._segments.length; i++) {
+      let s = this._segments[i];
       if(from <= s.from && s.to <= to) {
         this._keyToSegment.delete(s.id);
         deleted.push(s);
@@ -85,14 +85,14 @@ export class SegmentArray<T extends Segment> implements SegmentsSet<T> {
     if(!this.has(key)) {
       return false;
     }
-    var index = this._segments.findIndex(s => s.id === key);
+    const index = this._segments.findIndex(s => s.id === key);
     this._segments.splice(index, 1);
     this._keyToSegment.delete(key);
     return true;
   }
 
   updateId(fromKey: SegmentId, toKey: SegmentId) {
-    var segment = this._keyToSegment.get(fromKey);
+    const segment = this._keyToSegment.get(fromKey);
     this._keyToSegment.delete(fromKey);
     segment.id = toKey;
     this._keyToSegment.set(toKey, segment);
