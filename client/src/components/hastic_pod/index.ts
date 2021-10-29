@@ -128,7 +128,6 @@ export class HasticPod extends LinePod {
     } else {
       const extent = this.d3.event.selection;
       this.isBrushing === false;
-      this._labelBrush = false;
       if(extent === undefined || extent === null || extent.length < 2) {
         return;
       }
@@ -140,9 +139,11 @@ export class HasticPod extends LinePod {
 
       if(this._labelBrush) {
         this.addSegment(startTimestamp, endTimestamp);
+        this._labelBrush = false;
       }
       if(this._deleteBrush) {
         this.deleteSegment(startTimestamp, endTimestamp);
+        this._deleteBrush = false;
       }
     }
   }
