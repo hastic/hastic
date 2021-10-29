@@ -109,13 +109,13 @@ export class HasticPod extends LinePod {
 
     const x = this.xScale(from);
     const y = 0;
-    const w = 100;
-    const h = 100;
+    const w = this.xScale(to) - x;
+    const h = this.height
 
     const r = this.chartContainer
       .append('rect')
       .attr('x', x)
-      .attr('y', x)
+      .attr('y', y)
       .attr('width', w)
       .attr('height', h)
       .attr('fill', 'red')
