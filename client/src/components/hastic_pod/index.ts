@@ -23,6 +23,8 @@ export class HasticPod extends LinePod {
   private _labelBrush: boolean;
   private _deleteBrush: boolean;
 
+  protected segmentsContainer;
+
   constructor(
     el: HTMLElement, 
     udc: UpdateDataCallback, 
@@ -186,6 +188,9 @@ export class HasticPod extends LinePod {
 
   protected renderSegments() {
     const segments = this._segmentSet.getSegments();
+    this.segmentsContainer = this.metricContainer
+      .append('g')
+      .attr('class', 'segmentsContainer')
     for (const s in segments) {
       this.renderSegment(segments[s]);
     }
@@ -197,7 +202,7 @@ export class HasticPod extends LinePod {
     const w = this.xScale(segment.to) - x;
     const h = this.height
 
-    const r = this.chartContainer
+    const r = this.segmentsContainer
       .append('rect')
       .attr('x', x)
       .attr('y', y)
@@ -210,6 +215,8 @@ export class HasticPod extends LinePod {
 
   private async _updateRange(range: AxisRange[]) {
     // in assumption that range have been changed
+    console.log('update range.....');
+    console.log(range)
     this.fetchData();
   }
 
