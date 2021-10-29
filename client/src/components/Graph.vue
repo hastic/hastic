@@ -6,7 +6,7 @@
 import { defineComponent } from 'vue';
 import { HasticPod, TimeRange } from "./hastic_pod";
 import { getMetrics } from '../services/metrics.service';
-import { postSegment } from '../services/segments';
+import { getSegments, postSegment } from '../services/segments';
 import { LineTimeSerie } from "@chartwerk/line-pod";
 
 import { SegmentArray } from '@/types/segment_array';
@@ -15,21 +15,27 @@ import { Segment, SegmentId } from '@/types/segment';
 import _ from "lodash";
 
 // TODO: move to store
-async function resolveData(range: TimeRange): Promise<LineTimeSerie[]> {
-  // TODO: return segments from the promise too
+async function resolveData(range: TimeRange): Promise<{ 
+  timeserie: LineTimeSerie[], 
+  segments: Segment[]
+}> {
+
   const endTime = Math.floor(range.to);
   const startTime = Math.floor(range.from);
 
   const step = Math.max(Math.round((endTime - startTime) / 5000), 1);
 
   try {
+    // TODO: request in parallel
     let [target, values] = await getMetrics(startTime, endTime, step);
-    return [
-      { target: target, datapoints: values, color: 'green' },
-    ];
+    let segments = await getSegments(startTime, endTime);
+    return {
+      timeserie: [{ target: target, datapoints: values, color: 'green' }],
+      segments: segments
+    }
   } catch (e) {
     this.$notify({
-      title: "Error during extracting metric",
+      title: "Error during extracting data",
       text: e,
       type: 'error'
     });

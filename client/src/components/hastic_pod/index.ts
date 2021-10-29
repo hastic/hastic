@@ -5,7 +5,10 @@ import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
 import { Segment, SegmentId } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
-export type UpdateDataCallback = (range: TimeRange) => Promise<LineTimeSerie[]>;
+export type UpdateDataCallback = (range: TimeRange) => Promise<{ 
+  timeserie: LineTimeSerie[], 
+  segments: Segment[]
+}>;
 export type UpdateSegmentCallback = (segment: Segment) => Promise<SegmentId>;
 
 export class HasticPod extends LinePod {
@@ -51,7 +54,10 @@ export class HasticPod extends LinePod {
     const from = to - 5000; // -5000 seconds
 
     this._udc({ from, to })
-      .then(ts => { this.updateData(ts); })
+      .then(resp => { 
+        this.updateData(resp.timeserie);
+        this.updateSegments(resp.segments);
+      })
       .catch(() => { /* set "error" message */ })
   }
 
@@ -103,11 +109,11 @@ export class HasticPod extends LinePod {
       const startTimestamp = this.xScale.invert(extent[0]);
       const endTimestamp = this.xScale.invert(extent[1]);
       
-      this.addLabeling(startTimestamp, endTimestamp);
+      this.addSegment(startTimestamp, endTimestamp);
     }
   }
 
-  protected async addLabeling(from: number, to: number) {
+  protected async addSegment(from: number, to: number) {
     // TODO: implement
     // TODO: persistance of the label
     const id = this.getNewTempSegmentId();
@@ -125,7 +131,7 @@ export class HasticPod extends LinePod {
   protected renderSegments() {
     const segments = this._segmentSet.getSegments();
     for (const s in segments) {
-      console.log(s);
+      this.renderSegment(segments[s]);
     }
   }
 
@@ -149,19 +155,22 @@ export class HasticPod extends LinePod {
     console.log('update range');
     console.log(range);
     
-    const ts = await this._udc({ from: range[0][0], to: range[0][1] });
+    const resp = await this._udc({ from: range[0][0], to: range[0][1] });
     const options = { axis: { x: { range: range[0] } } };
-    this.updateData(ts, options);
+    this.updateData(resp.timeserie, options);
+    this.updateSegments(resp.segments);
   }
 
   private _zoomOut({x, y}) {
     console.log(`${x} -- ${y}`);
   }
 
-  private _renderSegments() {
-    const m = this.metricContainer;
-    console.log(m);
+  protected updateSegments(segments: Segment[]) {
+    this._segmentSet.clear();
+    this._segmentSet.setSegments(segments);
+    this.renderSegments();
   }
+
 
   // TODO: move to "controller"
   private _tempIdCounted = -1;

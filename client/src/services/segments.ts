@@ -6,7 +6,7 @@ import _ from 'lodash';
 
 const SEGMENTS_API_URL = API_URL + "segments/";
 
-export async function getSegments(from: number, to: number) {
+export async function getSegments(from: number, to: number): Promise<Segment[]> {
   if(from >= to) {
     throw new Error("`from` can`t be less than `to`");
   }
@@ -14,9 +14,7 @@ export async function getSegments(from: number, to: number) {
   const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
   const res = await axios.get(uri);
 
-  const target = _.keys(res["data"]["data"])[0];
-  const values = res["data"]["data"][target];
-  return [target, values];
+  return res["data"] as Segment[];
 }
 
 export async function postSegment(segment: Segment): Promise<SegmentId> {
