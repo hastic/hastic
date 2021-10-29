@@ -107,16 +107,18 @@ export class HasticPod extends LinePod {
     }
   }
 
-  protected addLabeling(from: number, to: number) {
+  protected async addLabeling(from: number, to: number) {
     // TODO: implement
     // TODO: persistance of the label
-    // const id = this.getNewTempSegmentId();
+    const id = this.getNewTempSegmentId();
     from = Math.floor(from);
     to = Math.ceil(to);
 
-    const segment = new Segment(undefined, from, to);
+    const segment = new Segment(id, from, to);
+    const storedId = await this._usc(segment);
+    segment.id = storedId;
+
     this._segmentSet.addSegment(segment);
-    this._usc(segment);
     this.renderSegment(segment);
   }
 

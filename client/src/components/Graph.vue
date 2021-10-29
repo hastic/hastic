@@ -9,10 +9,12 @@ import { getMetrics } from '../services/metrics.service';
 import { postSegment } from '../services/segments';
 import { LineTimeSerie } from "@chartwerk/line-pod";
 
-import _ from "lodash";
 import { SegmentArray } from '@/types/segment_array';
+import { Segment, SegmentId } from '@/types/segment';
 
+import _ from "lodash";
 
+// TODO: move to store
 async function resolveData(range: TimeRange): Promise<LineTimeSerie[]> {
   // TODO: return segments from the promise too
   const endTime = Math.floor(range.to);
@@ -35,6 +37,21 @@ async function resolveData(range: TimeRange): Promise<LineTimeSerie[]> {
   }
 }
 
+// TODO: move to store
+async function addSegment(segment: Segment): Promise<SegmentId> {
+  try {
+    const id = await postSegment(segment);
+    return id;
+  } catch (e) {
+    this.$notify({
+      title: "Error during saving segment",
+      text: e,
+      type: 'error'
+    });
+    console.error(e);
+  }
+}
+
 export default defineComponent({
   name: 'Graph',
   props: {},
@@ -46,7 +63,7 @@ export default defineComponent({
     var pod = new HasticPod(
       document.getElementById('chart'),
       resolveData.bind(this),
-      postSegment,
+      addSegment.bind(this),
       s
     );
     pod.render();

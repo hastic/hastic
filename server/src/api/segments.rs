@@ -42,8 +42,7 @@ pub mod filters {
 mod handlers {
     use hastic::services::data_service;
 
-    use super::models::Db;
-    use super::models::ListOptions;
+    use super::models::{ Db, ListOptions, CreateResponse };
     use crate::api::BadQuery;
     use crate::api::API;
 
@@ -61,16 +60,19 @@ mod handlers {
     ) -> Result<impl warp::Reply, warp::Rejection> {
         // Just return a JSON array of todos, applying the limit and offset.
         match db.write().insert_segment(&segment) {
-            Ok(segments) => Ok(API::json(&segments)),
-            Err(e) => Err(warp::reject::custom(BadQuery)),
+            Ok(id) => Ok(API::json(&CreateResponse { id })),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
         }
     }
 }
 
 mod models {
-    use hastic::services::data_service;
+    use hastic::services::data_service::{self, SegmentId};
     use parking_lot::RwLock;
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
     use std::sync::Arc;
 
     pub type Db = Arc<RwLock<data_service::DataService>>;
@@ -80,5 +82,10 @@ mod models {
     pub struct ListOptions {
         pub from: u64,
         pub to: u64,
+    }
+
+    #[derive(Debug, Serialize )]
+    pub struct CreateResponse {
+        pub id: SegmentId,
     }
 }
