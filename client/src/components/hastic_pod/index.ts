@@ -49,21 +49,30 @@ export class HasticPod extends LinePod {
 
     this._udc = udc;
 
-    // TODO: move to params
-    const to = Math.floor(Date.now() / 1000);
-    const from = to - 5000; // -5000 seconds
+    this.fetchData();
+  }
 
+  renderMetrics() {
+    super.renderMetrics();
+    console.log('render my metrics');
+  }
+
+  protected fetchData() {
+    let to = Math.floor(Date.now() / 1000);
+    let from = to - 5000; // -5000 seconds
+
+    if(this.state?.xValueRange !== undefined) {
+      [from, to] = this.state?.xValueRange;
+      console.log('took from range');
+    }
+    console.log(from + " ---- " + to);
+    
     this._udc({ from, to })
       .then(resp => { 
         this.updateData(resp.timeserie);
         this.updateSegments(resp.segments);
       })
       .catch(() => { /* set "error" message */ })
-  }
-
-  renderMetrics() {
-    super.renderMetrics();
-    console.log('render my metrics');
   }
 
   protected addEvents(): void {    
@@ -125,11 +134,13 @@ export class HasticPod extends LinePod {
     }
 
     const segment = new Segment(id, from, to);
-    const storedId = await this._csc(segment);
-    segment.id = storedId;
+    //const storedId = 
+    await this._csc(segment);
+    this.fetchData();
+    // segment.id = storedId;
 
-    this._segmentSet.addSegment(segment);
-    this.renderSegment(segment);
+    // this._segmentSet.addSegment(segment);
+    // this.renderSegment(segment);
   }
 
   protected renderSegments() {

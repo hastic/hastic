@@ -2,7 +2,6 @@ use rusqlite::{params, Connection, ToSql};
 
 use serde::{Deserialize, Serialize};
 
-use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use std::iter::repeat_with;
