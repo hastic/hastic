@@ -1,6 +1,7 @@
 import { AxisRange } from "@chartwerk/core/dist/types";
 import { LinePod, LineTimeSerie } from "@chartwerk/line-pod";
 import { SegmentsSet } from "@/types/segment_set";
+import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
 import { Segment, SegmentId } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
@@ -110,8 +111,8 @@ export class HasticPod extends LinePod {
   }
 
   protected renderSegments() {
-    let segments = this._segmentSet.getSegments();
-    for (let s in segments) {
+    const segments = this._segmentSet.getSegments();
+    for (const s in segments) {
       console.log(s);
     }
   }
@@ -129,7 +130,7 @@ export class HasticPod extends LinePod {
       .attr('y', y)
       .attr('width', w)
       .attr('height', h)
-      .attr('fill', 'red')
+      .attr('fill', ANALYTIC_UNIT_COLORS[0])
       .attr('opacity', '0.8')
   }
 

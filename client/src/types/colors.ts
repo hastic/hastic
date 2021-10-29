@@ -8,7 +8,7 @@ export const OK_COLOR = 'rgba(11, 237, 50, 1)';
 export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
 export const REGION_FILL_ALPHA = 0.09;
 
-let colors = [
+const colors = [
   '#7EB26D',
   '#EAB839',
   '#6ED0E0',

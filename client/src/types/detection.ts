@@ -4,7 +4,7 @@ export enum DetectionStatus {
   READY = 'READY',
   RUNNING = 'RUNNING',
   FAILED = 'FAILED'
-};
+}
 
 export type DetectionSpan = {
   id: AnalyticUnitId,
