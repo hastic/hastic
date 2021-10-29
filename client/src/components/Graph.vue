@@ -9,9 +9,11 @@ import { getMetrics } from '../services/metrics.service';
 import { LineTimeSerie } from "@chartwerk/line-pod";
 
 import _ from "lodash";
+import { SegmentArray } from '@/types/segment_array';
 
 
 async function resolveData(range: TimeRange): Promise<LineTimeSerie[]> {
+  // TODO: return segments from the promise too
   const endTime = Math.floor(range.to);
   const startTime = Math.floor(range.from);
 
@@ -38,7 +40,9 @@ export default defineComponent({
   mounted() {
     // const endTime = Math.floor(Date.now() / 1000);
     // const startTime = endTime - 1000; // 1000 seconds
-    var pod = new HasticPod(document.getElementById('chart'), resolveData.bind(this));
+    // TODO: fill segmentArray from service
+    var s = new SegmentArray();
+    var pod = new HasticPod(document.getElementById('chart'), resolveData.bind(this), s);
     pod.render();
   }
 });

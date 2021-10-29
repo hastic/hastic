@@ -1,5 +1,7 @@
 import { AxisRange } from "@chartwerk/core/dist/types";
 import { LinePod, LineTimeSerie } from "@chartwerk/line-pod";
+import { SegmentsSet } from "@/types/segment_set";
+import { Segment, SegmentId } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
 export type UpdateDataCallback = (range: TimeRange) => Promise<LineTimeSerie[]>;
@@ -10,7 +12,9 @@ export class HasticPod extends LinePod {
   private _ctrlKeyIsDown: boolean;
   private _ctrlBrush: boolean;
 
-  constructor(el: HTMLElement, udc: UpdateDataCallback) {
+  
+
+  constructor(el: HTMLElement, udc: UpdateDataCallback, private _segmentSet: SegmentsSet<Segment>) {
     super(el, undefined, {
       renderLegend: false,
       eventsCallbacks: {
@@ -50,11 +54,7 @@ export class HasticPod extends LinePod {
     console.log('render my metrics');
   }
 
-  protected addEvents(): void {
-    // TODO: refactor for a new mouse/scroll events
-    // const panKeyEvent = this.options.zoomEvents.mouse.pan.keyEvent;
-    // const isPanActive = this.options.zoomEvents.mouse.pan.isActive;
-    
+  protected addEvents(): void {    
     this.initBrush();
     this.initPan();
 
@@ -82,8 +82,6 @@ export class HasticPod extends LinePod {
   }
 
   protected onBrushEnd(): void {
-    
-
     if(!this._ctrlBrush) {
       super.onBrushEnd();
     } else {
@@ -100,16 +98,29 @@ export class HasticPod extends LinePod {
       const endTimestamp = this.xScale.invert(extent[1]);
       this.addLabeling(startTimestamp, endTimestamp);
     }
-   
   }
 
   protected addLabeling(from: number, to: number) {
     // TODO: implement
     // TODO: persistance of the label
+    const id = this.getNewTempSegmentId();
+    const segment = new Segment(id, from, to);
+    this._segmentSet.addSegment(segment);
+    this.renderSegment(segment);
+  }
 
-    const x = this.xScale(from);
+  protected renderSegments() {
+    let segments = this._segmentSet.getSegments();
+    for (let s in segments) {
+      console.log(s);
+    }
+  }
+
+  protected renderSegment(segment: Segment) {
+
+    const x = this.xScale(segment.from);
     const y = 0;
-    const w = this.xScale(to) - x;
+    const w = this.xScale(segment.to) - x;
     const h = this.height
 
     const r = this.chartContainer
@@ -120,7 +131,6 @@ export class HasticPod extends LinePod {
       .attr('height', h)
       .attr('fill', 'red')
       .attr('opacity', '0.8')
-
   }
 
   private async _updateRange(range: AxisRange[]) {
@@ -139,5 +149,13 @@ export class HasticPod extends LinePod {
   private _renderSegments() {
     const m = this.metricContainer;
     console.log(m);
+  }
+
+
+  // TODO: move to "controller"
+  private _tempIdCounted = -1;
+  public getNewTempSegmentId(): SegmentId {
+    this._tempIdCounted--;
+    return this._tempIdCounted.toString();
   }
 }
