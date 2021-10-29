@@ -17,7 +17,7 @@ export class SegmentArray<T extends Segment> implements SegmentsSet<T> {
     if(to === undefined) {
       to = Infinity;
     }
-    let result = [];
+    const result = [];
     for(let i = 0; i < this._segments.length; i++) {
       const s = this._segments[i];
       if(from <= s.from && s.to <= to) {
@@ -53,10 +53,10 @@ export class SegmentArray<T extends Segment> implements SegmentsSet<T> {
   }
 
   removeInRange(from: number, to: number): T[] {
-    let deleted = [];
-    let newSegments = [];
+    const deleted = [];
+    const newSegments = [];
     for(let i = 0; i < this._segments.length; i++) {
-      let s = this._segments[i];
+      const s = this._segments[i];
       if(from <= s.from && s.to <= to) {
         this._keyToSegment.delete(s.id);
         deleted.push(s);

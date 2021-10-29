@@ -1,5 +1,13 @@
 <template>
-  <div id="chart"></div>
+  <div>
+    <div id="chart"></div>
+    <div id="controls">
+      <div>
+        Hold <pre>ctrl</pre> to label patterns <br/>
+        Holde key <pre>D</pre> to delete patterns
+      </div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -98,5 +106,9 @@ export default defineComponent({
   margin: auto;
   width: 80%;
   height: 350px;
+}
+
+pre { 
+  display: inline;
 }
 </style>
