@@ -7,8 +7,8 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
     pub id: Option<u64>,
-    pub start: u64,
-    pub end: u64,
+    pub from: u64,
+    pub to: u64,
 }
 
 // TODO: find a way to remove this unsafe
@@ -39,7 +39,7 @@ impl DataService {
         // TODO: merge with other segments
         self.connection.lock().unwrap().execute(
             "INSERT INTO segment (start, end) VALUES (?1, ?2)",
-            params![segment.start, segment.end],
+            params![segment.from, segment.to],
         )?;
         Ok(10)
     }
@@ -53,8 +53,8 @@ impl DataService {
             .query_map(params![from, to], |row| {
                 Ok(Segment {
                     id: row.get(0)?,
-                    start: row.get(1)?,
-                    end: row.get(2)?,
+                    from: row.get(1)?,
+                    to: row.get(2)?,
                 })
             })?
             .map(|e| e.unwrap())

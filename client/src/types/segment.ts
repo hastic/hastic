@@ -1,10 +1,10 @@
 export type SegmentId = string;
 
 export class Segment {
-  constructor(private _id: SegmentId, public from: number, public to: number) {
-    if(this._id === undefined) {
-      throw new Error('id is undefined');
-    }
+  constructor(private _id: SegmentId | undefined, public from: number, public to: number) {
+    // if(this._id === undefined) {
+    //   throw new Error('id is undefined');
+    // }
     if(isNaN(+from)) {
       throw new Error('from can`t be NaN');
     }
@@ -23,8 +23,8 @@ export class Segment {
   }
 
   expandDist(allDist: number, portion: number): Segment {
-    var p = Math.round(this.middle - allDist * portion / 2);
-    var q = Math.round(this.middle + allDist * portion / 2);
+    let p = Math.round(this.middle - allDist * portion / 2);
+    let q = Math.round(this.middle + allDist * portion / 2);
     p = Math.min(p, this.from);
     q = Math.max(q, this.to);
     return new Segment(this._id, p, q);

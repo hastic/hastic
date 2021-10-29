@@ -6,16 +6,20 @@ import { Segment, SegmentId } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
 export type UpdateDataCallback = (range: TimeRange) => Promise<LineTimeSerie[]>;
+export type UpdateSegmentCallback = (segment: Segment) => Promise<SegmentId>;
 
 export class HasticPod extends LinePod {
 
   private _udc: UpdateDataCallback;
+  private _usc: UpdateSegmentCallback;
+
   private _ctrlKeyIsDown: boolean;
   private _ctrlBrush: boolean;
-
   
-
-  constructor(el: HTMLElement, udc: UpdateDataCallback, private _segmentSet: SegmentsSet<Segment>) {
+  constructor(
+    el: HTMLElement, udc: UpdateDataCallback, usc: UpdateSegmentCallback,
+    private _segmentSet: SegmentsSet<Segment>
+  ) {
     super(el, undefined, {
       renderLegend: false,
       eventsCallbacks: {
@@ -25,6 +29,7 @@ export class HasticPod extends LinePod {
       }
     });
 
+    this._usc = usc;
     this._ctrlKeyIsDown = false;
     this._ctrlBrush = false;
 
@@ -97,6 +102,7 @@ export class HasticPod extends LinePod {
 
       const startTimestamp = this.xScale.invert(extent[0]);
       const endTimestamp = this.xScale.invert(extent[1]);
+      
       this.addLabeling(startTimestamp, endTimestamp);
     }
   }
@@ -104,9 +110,13 @@ export class HasticPod extends LinePod {
   protected addLabeling(from: number, to: number) {
     // TODO: implement
     // TODO: persistance of the label
-    const id = this.getNewTempSegmentId();
-    const segment = new Segment(id, from, to);
+    // const id = this.getNewTempSegmentId();
+    from = Math.floor(from);
+    to = Math.ceil(to);
+
+    const segment = new Segment(undefined, from, to);
     this._segmentSet.addSegment(segment);
+    this._usc(segment);
     this.renderSegment(segment);
   }
 
@@ -118,7 +128,6 @@ export class HasticPod extends LinePod {
   }
 
   protected renderSegment(segment: Segment) {
-
     const x = this.xScale(segment.from);
     const y = 0;
     const w = this.xScale(segment.to) - x;
@@ -151,7 +160,6 @@ export class HasticPod extends LinePod {
     const m = this.metricContainer;
     console.log(m);
   }
-
 
   // TODO: move to "controller"
   private _tempIdCounted = -1;
