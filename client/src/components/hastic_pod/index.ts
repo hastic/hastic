@@ -5,22 +5,29 @@ import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
 import { Segment, SegmentId } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
-export type UpdateDataCallback = (range: TimeRange) => Promise<{ 
-  timeserie: LineTimeSerie[], 
+export type UpdateDataCallback = (range: TimeRange) => Promise<{
+  timeserie: LineTimeSerie[],
   segments: Segment[]
 }>;
 export type CreateSegmentCallback = (segment: Segment) => Promise<SegmentId>;
+export type DeleteSegmentCallback = (from: number, to: number) => Promise<number>;
 
 export class HasticPod extends LinePod {
 
   private _udc: UpdateDataCallback;
   private _csc: CreateSegmentCallback;
+  private _dsc: DeleteSegmentCallback;
 
   private _ctrlKeyIsDown: boolean;
-  private _ctrlBrush: boolean;
-  
+  private _dKeyIsDown: boolean;
+  private _labelBrush: boolean;
+  private _deleteBrush: boolean;
+
   constructor(
-    el: HTMLElement, udc: UpdateDataCallback, csc: CreateSegmentCallback,
+    el: HTMLElement, 
+    udc: UpdateDataCallback, 
+    csc: CreateSegmentCallback,
+    dsc: DeleteSegmentCallback,
     private _segmentSet: SegmentsSet<Segment>
   ) {
     super(el, undefined, {
@@ -33,17 +40,24 @@ export class HasticPod extends LinePod {
     });
 
     this._csc = csc;
+    this._dsc = dsc;
     this._ctrlKeyIsDown = false;
-    this._ctrlBrush = false;
+    this._labelBrush = false;
 
     window.addEventListener("keydown", e => {
       if(e.code == "ControlLeft") {
         this._ctrlKeyIsDown = true;
       }
+      if(e.code == 'KeyD') {
+        this._dKeyIsDown = true;
+      }
     });
     window.addEventListener("keyup", (e) => {
       if(e.code == "ControlLeft") {
         this._ctrlKeyIsDown = false;
+      }
+      if(e.code == 'KeyD') {
+        this._dKeyIsDown = false;
       }
     });
 
@@ -63,19 +77,21 @@ export class HasticPod extends LinePod {
 
     if(this.state?.xValueRange !== undefined) {
       [from, to] = this.state?.xValueRange;
-      console.log('took from range');
+      console.log('took from range from state');
+    } else {
+      console.log('took from range from default');
     }
     console.log(from + " ---- " + to);
-    
+
     this._udc({ from, to })
-      .then(resp => { 
+      .then(resp => {
         this.updateData(resp.timeserie);
         this.updateSegments(resp.segments);
       })
       .catch(() => { /* set "error" message */ })
   }
 
-  protected addEvents(): void {    
+  protected addEvents(): void {
     this.initBrush();
     this.initPan();
 
@@ -88,11 +104,15 @@ export class HasticPod extends LinePod {
 
   protected onBrushStart(): void {
     if(this._ctrlKeyIsDown) {
-      this._ctrlBrush = true;
-      this.svg.select('.selection').attr('fill', 'red')
+      this._labelBrush = true;
+      this.svg.select('.selection')
+        .attr('fill', 'red')
+    } else if (this._dKeyIsDown) {
+      this._deleteBrush = true;
+      this.svg.select('.selection')
+        .attr('fill', 'blue')
     }
 
-    // this.in
     // TODO: move to state
     this.isBrushing === true;
     const selection = this.d3.event.selection;
@@ -103,12 +123,12 @@ export class HasticPod extends LinePod {
   }
 
   protected onBrushEnd(): void {
-    if(!this._ctrlBrush) {
+    if(!this._labelBrush && !this._deleteBrush) {
       super.onBrushEnd();
     } else {
       const extent = this.d3.event.selection;
       this.isBrushing === false;
-      this._ctrlBrush = false;
+      this._labelBrush = false;
       if(extent === undefined || extent === null || extent.length < 2) {
         return;
       }
@@ -117,8 +137,13 @@ export class HasticPod extends LinePod {
 
       const startTimestamp = this.xScale.invert(extent[0]);
       const endTimestamp = this.xScale.invert(extent[1]);
-      
-      this.addSegment(startTimestamp, endTimestamp);
+
+      if(this._labelBrush) {
+        this.addSegment(startTimestamp, endTimestamp);
+      }
+      if(this._deleteBrush) {
+        this.deleteSegment(startTimestamp, endTimestamp);
+      }
     }
   }
 
@@ -134,13 +159,28 @@ export class HasticPod extends LinePod {
     }
 
     const segment = new Segment(id, from, to);
-    //const storedId = 
+    //const storedId =
     await this._csc(segment);
     this.fetchData();
     // segment.id = storedId;
 
     // this._segmentSet.addSegment(segment);
     // this.renderSegment(segment);
+  }
+
+  protected async deleteSegment(from: number, to: number) {
+    from = Math.floor(from);
+    to = Math.ceil(to);
+
+    if (from > to) {
+      const t = from;
+      from = to;
+      to = t;
+    }
+
+    await this._dsc(from, to);
+    this.fetchData();
+
   }
 
   protected renderSegments() {
@@ -168,17 +208,12 @@ export class HasticPod extends LinePod {
   }
 
   private async _updateRange(range: AxisRange[]) {
-    console.log('update range');
-    console.log(range);
-    
-    const resp = await this._udc({ from: range[0][0], to: range[0][1] });
-    const options = { axis: { x: { range: range[0] } } };
-    this.updateData(resp.timeserie, options);
-    this.updateSegments(resp.segments);
+    // in assumption that range have been changed
+    this.fetchData();
   }
 
   private _zoomOut({x, y}) {
-    console.log(`${x} -- ${y}`);
+    this.fetchData();
   }
 
   protected updateSegments(segments: Segment[]) {

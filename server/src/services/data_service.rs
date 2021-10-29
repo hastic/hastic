@@ -112,6 +112,15 @@ impl DataService {
         Ok(res)
     }
 
+    pub fn delete_segments_in_range(&self, from: u64, to: u64) -> anyhow::Result<usize> {
+        let conn = self.connection.lock().unwrap();
+        let res = conn.execute(
+            "DELETE FROM segment where ?1 <= start AND end <= ?2",
+            params![from, to],
+        )?;
+        return Ok(res);
+    }
+
     pub fn delete_segments(&self, ids: &Vec<SegmentId>) -> anyhow::Result<usize> {
         if ids.len() == 0 {
             return Ok(0);

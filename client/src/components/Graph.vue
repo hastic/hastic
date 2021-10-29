@@ -6,7 +6,7 @@
 import { defineComponent } from 'vue';
 import { HasticPod, TimeRange } from "./hastic_pod";
 import { getMetrics } from '../services/metrics.service';
-import { getSegments, postSegment } from '../services/segments';
+import { getSegments, postSegment, deleteSegment } from '../services/segments';
 import { LineTimeSerie } from "@chartwerk/line-pod";
 
 import { SegmentArray } from '@/types/segment_array';
@@ -58,6 +58,21 @@ async function addSegment(segment: Segment): Promise<SegmentId> {
   }
 }
 
+// TODO: move to store
+async function _deleteSegment(from: number, to: number): Promise<SegmentId> {
+  try {
+    const id = await deleteSegment(from, to);
+    return id;
+  } catch (e) {
+    this.$notify({
+      title: "Error during saving segment",
+      text: e,
+      type: 'error'
+    });
+    console.error(e);
+  }
+}
+
 export default defineComponent({
   name: 'Graph',
   props: {},
@@ -70,6 +85,7 @@ export default defineComponent({
       document.getElementById('chart'),
       resolveData.bind(this),
       addSegment.bind(this),
+      _deleteSegment.bind(this),
       s
     );
     pod.render();

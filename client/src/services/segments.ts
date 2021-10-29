@@ -22,3 +22,9 @@ export async function postSegment(segment: Segment): Promise<SegmentId> {
   const resp = await axios.post(SEGMENTS_API_URL, segment);
   return resp['data']['id'];
 }
+
+export async function deleteSegment(from: number, to: number): Promise<SegmentId> {
+  const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
+  const resp = await axios.delete(uri);
+  return resp['data']['count'];
+}
