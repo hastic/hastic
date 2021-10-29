@@ -9,18 +9,18 @@ export type UpdateDataCallback = (range: TimeRange) => Promise<{
   timeserie: LineTimeSerie[], 
   segments: Segment[]
 }>;
-export type UpdateSegmentCallback = (segment: Segment) => Promise<SegmentId>;
+export type CreateSegmentCallback = (segment: Segment) => Promise<SegmentId>;
 
 export class HasticPod extends LinePod {
 
   private _udc: UpdateDataCallback;
-  private _usc: UpdateSegmentCallback;
+  private _csc: CreateSegmentCallback;
 
   private _ctrlKeyIsDown: boolean;
   private _ctrlBrush: boolean;
   
   constructor(
-    el: HTMLElement, udc: UpdateDataCallback, usc: UpdateSegmentCallback,
+    el: HTMLElement, udc: UpdateDataCallback, csc: CreateSegmentCallback,
     private _segmentSet: SegmentsSet<Segment>
   ) {
     super(el, undefined, {
@@ -32,7 +32,7 @@ export class HasticPod extends LinePod {
       }
     });
 
-    this._usc = usc;
+    this._csc = csc;
     this._ctrlKeyIsDown = false;
     this._ctrlBrush = false;
 
@@ -114,14 +114,18 @@ export class HasticPod extends LinePod {
   }
 
   protected async addSegment(from: number, to: number) {
-    // TODO: implement
-    // TODO: persistance of the label
     const id = this.getNewTempSegmentId();
     from = Math.floor(from);
     to = Math.ceil(to);
 
+    if (from < to) {
+      const t = from;
+      from = to;
+      to = t;
+    }
+
     const segment = new Segment(id, from, to);
-    const storedId = await this._usc(segment);
+    const storedId = await this._csc(segment);
     segment.id = storedId;
 
     this._segmentSet.addSegment(segment);

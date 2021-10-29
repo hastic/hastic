@@ -2,6 +2,7 @@ use rusqlite::{params, Connection};
 
 use serde::{Deserialize, Serialize};
 
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use std::iter::repeat_with;
@@ -36,7 +37,7 @@ impl DataService {
         )?;
 
         Ok(DataService {
-            connection: Arc::new(Mutex::new(conn))
+            connection: Arc::new(Mutex::new(conn)),
         })
     }
 
@@ -45,6 +46,11 @@ impl DataService {
         let id: SegmentId = repeat_with(fastrand::alphanumeric)
             .take(ID_LENGTH)
             .collect();
+        {
+            // merging
+            // TODO extract intersected ids
+        }
+
         // TODO: merge with other segments
         self.connection.lock().unwrap().execute(
             "INSERT INTO segment (id, start, end) VALUES (?1, ?2, ?3)",
@@ -53,7 +59,7 @@ impl DataService {
         Ok(id)
     }
 
-    pub fn get_segments(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
+    pub fn get_segments_inside(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let conn = self.connection.lock().unwrap();
         let mut stmt =
             conn.prepare("SELECT id, start, end FROM segment WHERE ?1 < start AND end < ?2")?;
@@ -69,5 +75,30 @@ impl DataService {
             .map(|e| e.unwrap())
             .collect();
         Ok(res)
+    }
+
+    pub fn get_segments_intersected(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
+        let conn = self.connection.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, start, end FROM segment 
+                                                  WHERE (start <= ?1 and ?1 <= end) OR 
+                                                        (start <= ?2 AND ?2 <= end) OR
+                                                        (?1 <= start AND start <= ?2) OR 
+                                                        (?1 <= end AND end <= ?2) ")?;
+
+        let res = stmt
+            .query_map(params![from, to], |row| {
+                Ok(Segment {
+                    id: row.get(0)?,
+                    from: row.get(1)?,
+                    to: row.get(2)?,
+                })
+            })?
+            .map(|e| e.unwrap())
+            .collect();
+        Ok(res)
+    }
+
+    pub fn delete_segments(&self, ids: &Vec<SegmentId>) {
+        let v = Rc::new(ids);
     }
 }

@@ -42,13 +42,12 @@ pub mod filters {
 mod handlers {
     use hastic::services::data_service;
 
-    use super::models::{ Db, ListOptions, CreateResponse };
+    use super::models::{CreateResponse, Db, ListOptions};
     use crate::api::BadQuery;
     use crate::api::API;
 
     pub async fn list(opts: ListOptions, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-        // Just return a JSON array of todos, applying the limit and offset.
-        match db.read().get_segments(opts.from, opts.to) {
+        match db.read().get_segments_intersected(opts.from, opts.to) {
             Ok(segments) => Ok(API::json(&segments)),
             Err(e) => Err(warp::reject::custom(BadQuery)),
         }
@@ -58,7 +57,6 @@ mod handlers {
         segment: data_service::Segment,
         db: Db,
     ) -> Result<impl warp::Reply, warp::Rejection> {
-        // Just return a JSON array of todos, applying the limit and offset.
         match db.write().insert_segment(&segment) {
             Ok(id) => Ok(API::json(&CreateResponse { id })),
             Err(e) => {
@@ -84,7 +82,7 @@ mod models {
         pub to: u64,
     }
 
-    #[derive(Debug, Serialize )]
+    #[derive(Debug, Serialize)]
     pub struct CreateResponse {
         pub id: SegmentId,
     }
