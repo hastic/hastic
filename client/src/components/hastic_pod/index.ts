@@ -26,8 +26,8 @@ export class HasticPod extends LinePod {
   protected segmentsContainer;
 
   constructor(
-    el: HTMLElement, 
-    udc: UpdateDataCallback, 
+    el: HTMLElement,
+    udc: UpdateDataCallback,
     csc: CreateSegmentCallback,
     dsc: DeleteSegmentCallback,
     private _segmentSet: SegmentsSet<Segment>

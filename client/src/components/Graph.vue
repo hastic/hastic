@@ -23,8 +23,8 @@ import { Segment, SegmentId } from '@/types/segment';
 import _ from "lodash";
 
 // TODO: move to store
-async function resolveData(range: TimeRange): Promise<{ 
-  timeserie: LineTimeSerie[], 
+async function resolveData(range: TimeRange): Promise<{
+  timeserie: LineTimeSerie[],
   segments: Segment[]
 }> {
 
@@ -108,7 +108,7 @@ export default defineComponent({
   height: 350px;
 }
 
-pre { 
+pre {
   display: inline;
 }
 </style>
