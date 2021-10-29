@@ -118,7 +118,7 @@ export class HasticPod extends LinePod {
     from = Math.floor(from);
     to = Math.ceil(to);
 
-    if (from < to) {
+    if (from > to) {
       const t = from;
       from = to;
       to = t;
