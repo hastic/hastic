@@ -41,6 +41,7 @@ pub mod filters {
 
 mod handlers {
     use hastic::services::data_service;
+    use hastic::services::data_service::Segment;
 
     use super::models::{CreateResponse, Db, ListOptions};
     use crate::api::BadQuery;
@@ -58,7 +59,7 @@ mod handlers {
         db: Db,
     ) -> Result<impl warp::Reply, warp::Rejection> {
         match db.write().insert_segment(&segment) {
-            Ok(id) => Ok(API::json(&CreateResponse { id })),
+            Ok(segment) => Ok(API::json(&segment)),
             Err(e) => {
                 println!("{:?}", e);
                 Err(warp::reject::custom(BadQuery))

@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, ToSql, params};
 
 use serde::{Deserialize, Serialize};
 
@@ -42,21 +42,30 @@ impl DataService {
     }
 
     // returns id of created segment
-    pub fn insert_segment(&self, segment: &Segment) -> anyhow::Result<SegmentId> {
+    pub fn insert_segment(&self, segment: &Segment) -> anyhow::Result<Segment> {
         let id: SegmentId = repeat_with(fastrand::alphanumeric)
             .take(ID_LENGTH)
             .collect();
-        {
-            // merging
-            // TODO extract intersected ids
-        }
-
+        
+        // merging
+        // TODO extract intersected ids
         // TODO: merge with other segments
+        let sgms = self.get_segments_intersected(segment.from, segment.to)?;
+        let mut min = segment.from;
+        let mut max = segment.to;
+        let mut ids_to_delete = Vec::<SegmentId>::new();
+        for s in sgms {
+            min = min.min(s.from);
+            max = max.max(s.to);
+            ids_to_delete.push(s.id.unwrap());
+        }
+        self.delete_segments(&ids_to_delete)?;
+
         self.connection.lock().unwrap().execute(
             "INSERT INTO segment (id, start, end) VALUES (?1, ?2, ?3)",
-            params![id, segment.from, segment.to],
+            params![id, min, max],
         )?;
-        Ok(id)
+        Ok(Segment { id: Some(id), from: min, to: max })
     }
 
     pub fn get_segments_inside(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
@@ -98,7 +107,14 @@ impl DataService {
         Ok(res)
     }
 
-    pub fn delete_segments(&self, ids: &Vec<SegmentId>) {
-        let v = Rc::new(ids);
+    pub fn delete_segments(&self, ids: &Vec<SegmentId>) -> anyhow::Result<usize>  {
+        // TODO: here could be sql injection if you substitute id with string :)
+        let conn = self.connection.lock().unwrap();
+        let ids_comma = ids.iter().map(|id| "\"".to_string() + id + "\"").collect::<Vec<String>>().join(",");
+        let query_str = format!("DELETE FROM segment WHERE id in ({})", ids_comma);
+        let mut stmt = conn.prepare(&query_str)?;
+        let res = stmt.execute([])?;
+        Ok(res)
     }
 }
+
