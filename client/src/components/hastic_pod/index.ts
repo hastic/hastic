@@ -153,6 +153,7 @@ export class HasticPod extends LinePod {
       .attr('height', h)
       .attr('fill', ANALYTIC_UNIT_COLORS[0])
       .attr('opacity', '0.8')
+      .attr('pointer-events', 'none')
   }
 
   private async _updateRange(range: AxisRange[]) {
