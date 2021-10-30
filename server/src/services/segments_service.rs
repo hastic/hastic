@@ -91,8 +91,6 @@ impl SegmentsService {
             .collect();
 
         // merging
-        // TODO extract intersected ids
-        // TODO: merge with other segments
         let sgms = self.get_segments_intersected(segment.from, segment.to)?;
         let mut min = segment.from;
         let mut max = segment.to;
@@ -153,7 +151,7 @@ impl SegmentsService {
             "DELETE FROM segment where ?1 <= start AND end <= ?2",
             params![from, to],
         )?;
-        return Ok(res);
+        Ok(res)
     }
 
     pub fn delete_segments(&self, ids: &Vec<SegmentId>) -> anyhow::Result<usize> {

@@ -1,6 +1,5 @@
 use anyhow;
 
-mod analytic_unit;
 mod api;
 
 #[tokio::main]
