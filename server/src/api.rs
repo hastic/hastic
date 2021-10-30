@@ -1,4 +1,5 @@
 use hastic::config::Config;
+use hastic::services::analytic_service::AnalyticService;
 use hastic::services::{metric_service, segments_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
@@ -9,6 +10,7 @@ use warp::{http::Response, Filter};
 mod auth;
 mod metric;
 mod segments;
+mod analytics;
 
 use serde::Serialize;
 
@@ -30,6 +32,7 @@ pub struct API<'a> {
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: Arc<RwLock<metric_service::MetricService>>,
     data_service: Arc<RwLock<segments_service::SegmentsService>>,
+    analytic_service: AnalyticService
 }
 
 impl API<'_> {
@@ -42,6 +45,7 @@ impl API<'_> {
                 &config.query,
             ))),
             data_service: Arc::new(RwLock::new(segments_service::SegmentsService::new()?)),
+            analytic_service: AnalyticService::new(config)
         })
     }
 
@@ -77,12 +81,13 @@ impl API<'_> {
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
         let segments = segments::filters::filters(self.data_service.clone());
+        let analytics = analytics::filters::filters(self.analytic_service.clone());
         let public = warp::fs::dir("public");
 
         println!("Start server on {} port", self.config.port);
         // TODO: move it to "server"
         let routes = warp::path("api")
-            .and(login.or(metrics).or(segments).or(options))
+            .and(login.or(metrics).or(segments).or(analytics).or(options))
             .or(public)
             .or(not_found);
         warp::serve(routes)

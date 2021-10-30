@@ -17,8 +17,6 @@ use crate::api::{self, API};
 
 use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::Debug;
 use std::sync::Arc;
 
 use super::BadQuery;
@@ -54,7 +52,6 @@ async fn query(
     p: HashMap<String, String>,
     ms: Arc<RwLock<metric_service::MetricService>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    //Err(warp::reject::custom(BadQuery));
     match get_query(p, ms).await {
         Ok(res) => Ok(API::json(&res)),
         // TODO: parse different error types

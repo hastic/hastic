@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use std::iter::repeat_with;
 
+
 const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
 
@@ -55,8 +56,6 @@ impl Segment {
     }
 }
 
-// TODO: find a way to remove this unsafe
-unsafe impl Sync for SegmentsService {}
 
 pub struct SegmentsService {
     connection: Arc<Mutex<Connection>>,

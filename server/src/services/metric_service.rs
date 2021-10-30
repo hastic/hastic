@@ -1,5 +1,6 @@
 use subbeat::datasources::prometheus::Prometheus;
 
+#[derive(Clone)]
 pub struct MetricService {
     url: String,
     query: String,
