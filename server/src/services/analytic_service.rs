@@ -1,9 +1,6 @@
-use crate::{config::Config, utils::get_random_str};
+use crate::{utils::get_random_str};
 
-use super::{
-    metric_service::MetricService,
-    segments_service::{Segment, SegmentType, ID_LENGTH},
-};
+use super::{metric_service::MetricService, segments_service::{self, ID_LENGTH, Segment, SegmentType, SegmentsService}};
 
 use subbeat::metric::Metric;
 
@@ -12,12 +9,14 @@ use anyhow;
 #[derive(Clone)]
 pub struct AnalyticService {
     metric_service: MetricService,
+    segments_service: SegmentsService
 }
 
 impl AnalyticService {
-    pub fn new(config: &Config) -> AnalyticService {
+    pub fn new(metric_service: MetricService, segments_service: segments_service::SegmentsService) -> AnalyticService {
         AnalyticService {
-            metric_service: MetricService::new(&config.prom_url, &config.query),
+            metric_service,
+            segments_service
         }
     }
 

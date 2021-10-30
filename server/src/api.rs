@@ -30,22 +30,25 @@ pub struct Message {
 pub struct API<'a> {
     config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
-    metric_service: Arc<RwLock<metric_service::MetricService>>,
+    metric_service: metric_service::MetricService,
     data_service: segments_service::SegmentsService,
     analytic_service: AnalyticService,
 }
 
 impl API<'_> {
     pub fn new(config: &Config) -> anyhow::Result<API<'_>> {
+        let ss = segments_service::SegmentsService::new()?;
+        let ms = metric_service::MetricService::new(
+            &config.prom_url,
+            &config.query,
+        );
+
         Ok(API {
             config: config,
             user_service: Arc::new(RwLock::new(user_service::UserService::new())),
-            metric_service: Arc::new(RwLock::new(metric_service::MetricService::new(
-                &config.prom_url,
-                &config.query,
-            ))),
-            data_service: segments_service::SegmentsService::new()?,
-            analytic_service: AnalyticService::new(config),
+            metric_service: ms.clone(),
+            data_service: ss.clone(),
+            analytic_service: AnalyticService::new(ms, ss),
         })
     }
 

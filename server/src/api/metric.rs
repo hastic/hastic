@@ -15,9 +15,8 @@ use anyhow;
 
 use crate::api::{self, API};
 
-use parking_lot::RwLock;
 use std::collections::HashMap;
-use std::sync::Arc;
+
 
 use super::BadQuery;
 
@@ -28,7 +27,7 @@ struct QueryResponse {
 
 async fn get_query(
     p: HashMap<String, String>,
-    ms: Arc<RwLock<metric_service::MetricService>>,
+    ms: metric_service::MetricService,
 ) -> anyhow::Result<MetricResult> {
     if !p.contains_key("from") {
         return Err(anyhow::anyhow!("Missing attribute from"));
@@ -43,14 +42,14 @@ async fn get_query(
     let to = p.get("to").unwrap().parse::<u64>()?;
     let step = p.get("step").unwrap().parse::<u64>()?;
 
-    let prom = ms.read().get_prom();
+    let prom = ms.get_prom();
     drop(ms);
     Ok(prom.query(from, to, step).await?)
 }
 
 async fn query(
     p: HashMap<String, String>,
-    ms: Arc<RwLock<metric_service::MetricService>>,
+    ms: metric_service::MetricService,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match get_query(p, ms).await {
         Ok(res) => Ok(API::json(&res)),
@@ -60,7 +59,7 @@ async fn query(
 }
 
 pub fn get_route(
-    metric_service: Arc<RwLock<metric_service::MetricService>>,
+    metric_service: metric_service::MetricService,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     return warp::path!("metric")
         .and(get())
