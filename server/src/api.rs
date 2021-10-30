@@ -7,10 +7,10 @@ use warp::reject::Reject;
 use warp::{body, options, Rejection, Reply};
 use warp::{http::Response, Filter};
 
+mod analytics;
 mod auth;
 mod metric;
 mod segments;
-mod analytics;
 
 use serde::Serialize;
 
@@ -31,8 +31,8 @@ pub struct API<'a> {
     config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: Arc<RwLock<metric_service::MetricService>>,
-    data_service: Arc<RwLock<segments_service::SegmentsService>>,
-    analytic_service: AnalyticService
+    data_service: segments_service::SegmentsService,
+    analytic_service: AnalyticService,
 }
 
 impl API<'_> {
@@ -44,8 +44,8 @@ impl API<'_> {
                 &config.prom_url,
                 &config.query,
             ))),
-            data_service: Arc::new(RwLock::new(segments_service::SegmentsService::new()?)),
-            analytic_service: AnalyticService::new(config)
+            data_service: segments_service::SegmentsService::new()?,
+            analytic_service: AnalyticService::new(config),
         })
     }
 

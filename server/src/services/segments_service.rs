@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, Row, ToSql};
+use rusqlite::{params, Connection, Row};
 
 use serde::{Deserialize, Serialize};
 
@@ -6,10 +6,8 @@ use std::sync::{Arc, Mutex};
 
 use crate::utils::get_random_str;
 
-
 pub const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
-
 
 // TODO: make logic with this enum shorter
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
@@ -36,7 +34,6 @@ impl SegmentType {
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
     pub id: Option<SegmentId>,
@@ -56,14 +53,13 @@ impl Segment {
     }
 }
 
-
+#[derive(Clone)]
 pub struct SegmentsService {
     connection: Arc<Mutex<Connection>>,
 }
 
 impl SegmentsService {
     pub fn new() -> anyhow::Result<SegmentsService> {
-
         // TODO: move it to data service
         std::fs::create_dir_all("./data").unwrap();
 

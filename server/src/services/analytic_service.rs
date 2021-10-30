@@ -1,11 +1,13 @@
 use crate::{config::Config, utils::get_random_str};
 
-use super::{metric_service::MetricService, segments_service::{ID_LENGTH, Segment, SegmentType}};
+use super::{
+    metric_service::MetricService,
+    segments_service::{Segment, SegmentType, ID_LENGTH},
+};
 
 use subbeat::metric::Metric;
 
 use anyhow;
-
 
 #[derive(Clone)]
 pub struct AnalyticService {
@@ -19,7 +21,12 @@ impl AnalyticService {
         }
     }
 
-    pub async fn get_detections(&self, from: u64, to: u64, step: u64) -> anyhow::Result<Vec<Segment>> {
+    pub async fn get_detections(
+        &self,
+        from: u64,
+        to: u64,
+        step: u64,
+    ) -> anyhow::Result<Vec<Segment>> {
         let prom = self.metric_service.get_prom();
         let mr = prom.query(from, to, step).await?;
 
@@ -33,7 +40,7 @@ impl AnalyticService {
         let mut result = Vec::<Segment>::new();
         let mut from: Option<u64> = None;
         for (t, v) in ts {
-            if *v > 10_000.0 {
+            if *v > 100_000.0 {
                 if from.is_some() {
                     continue;
                 } else {

@@ -1,6 +1,6 @@
 pub mod filters {
     use super::handlers;
-    use super::models::{Srv, ListOptions};
+    use super::models::{ListOptions, Srv};
     use warp::Filter;
 
     /// The 4 REST API filters combined.
@@ -8,11 +8,11 @@ pub mod filters {
         srv: Srv,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         list(srv.clone())
-            // .or(create(db.clone()))
-            // // .or(update(db.clone()))
-            // .or(delete(db.clone()))
+        // .or(create(db.clone()))
+        // // .or(update(db.clone()))
+        // .or(delete(db.clone()))
     }
-        
+
     /// GET /analytics?from=3&to=5
     pub fn list(
         db: Srv,
@@ -24,7 +24,9 @@ pub mod filters {
             .and_then(handlers::list)
     }
 
-    fn with_srv(srv: Srv) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
+    fn with_srv(
+        srv: Srv,
+    ) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
         warp::any().map(move || srv.clone())
     }
 }
@@ -32,8 +34,8 @@ pub mod filters {
 mod handlers {
 
     use super::models::{ListOptions, Srv};
-    use crate::api::{API, BadQuery};
-    
+    use crate::api::{BadQuery, API};
+
     pub async fn list(opts: ListOptions, srv: Srv) -> Result<impl warp::Reply, warp::Rejection> {
         match srv.get_detections(opts.from, opts.to, 10).await {
             Ok(segments) => Ok(API::json(&segments)),

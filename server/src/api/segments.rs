@@ -53,17 +53,17 @@ pub mod filters {
 
 mod handlers {
     use hastic::services::segments_service;
-    use hastic::services::segments_service::Segment;
 
-    use super::models::{CreateResponse, Db, ListOptions};
+    use super::models::{Db, ListOptions};
     use crate::api;
     use crate::api::BadQuery;
     use crate::api::API;
 
     pub async fn list(opts: ListOptions, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-        match db.read().get_segments_intersected(opts.from, opts.to) {
+        match db.get_segments_intersected(opts.from, opts.to) {
             Ok(segments) => Ok(API::json(&segments)),
-            Err(e) => Err(warp::reject::custom(BadQuery)),
+            // TODO: return proper http error
+            Err(_e) => Err(warp::reject::custom(BadQuery)),
         }
     }
 
@@ -71,32 +71,32 @@ mod handlers {
         segment: segments_service::Segment,
         db: Db,
     ) -> Result<impl warp::Reply, warp::Rejection> {
-        match db.write().insert_segment(&segment) {
+        match db.insert_segment(&segment) {
             Ok(segment) => Ok(API::json(&segment)),
             Err(e) => {
                 println!("{:?}", e);
+                // TODO: return proper http error
                 Err(warp::reject::custom(BadQuery))
             }
         }
     }
 
     pub async fn delete(opts: ListOptions, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-        match db.read().delete_segments_in_range(opts.from, opts.to) {
+        match db.delete_segments_in_range(opts.from, opts.to) {
             Ok(count) => Ok(API::json(&api::Message {
                 message: count.to_string(),
             })),
-            Err(e) => Err(warp::reject::custom(BadQuery)),
+            // TODO: return proper http error
+            Err(_e) => Err(warp::reject::custom(BadQuery)),
         }
     }
 }
 
 mod models {
     use hastic::services::segments_service::{self, SegmentId};
-    use parking_lot::RwLock;
     use serde::{Deserialize, Serialize};
-    use std::sync::Arc;
 
-    pub type Db = Arc<RwLock<segments_service::SegmentsService>>;
+    pub type Db = segments_service::SegmentsService;
 
     // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]
