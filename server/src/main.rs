@@ -1,6 +1,7 @@
 use anyhow;
 
 mod api;
+mod analytic_unit;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

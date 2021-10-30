@@ -1,5 +1,6 @@
-import { AxisRange } from "@chartwerk/core/dist/types";
 import { LinePod, LineTimeSerie } from "@chartwerk/line-pod";
+import { AxisRange } from "@chartwerk/core/dist/types";
+import { BrushOrientation } from "@chartwerk/core";
 import { SegmentsSet } from "@/types/segment_set";
 import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
 import { Segment, SegmentId } from "@/types/segment";
@@ -34,12 +35,22 @@ export class HasticPod extends LinePod {
   ) {
     super(el, undefined, {
       renderLegend: false,
+      zoomEvents: {
+        mouse: {
+          zoom: {
+            isActive: true,
+            orientation: BrushOrientation.HORIZONTAL
+          }
+        }
+      },
       eventsCallbacks: {
         zoomIn: range => { this._updateRange(range) },
         zoomOut: ({x, y}) => { this._zoomOut({x, y}) },
         panningEnd: range => { this._updateRange(range) }
       }
     });
+
+    console.log( BrushOrientation.VERTICAL);
 
     this._csc = csc;
     this._dsc = dsc;
@@ -73,7 +84,7 @@ export class HasticPod extends LinePod {
     console.log('render my metrics');
   }
 
-  protected fetchData() {
+  protected fetchData(): void {
     let to = Math.floor(Date.now() / 1000);
     let from = to - 5000; // -5000 seconds
 
@@ -150,7 +161,7 @@ export class HasticPod extends LinePod {
     }
   }
 
-  protected async addSegment(from: number, to: number) {
+  protected async addSegment(from: number, to: number): Promise<void> {
     const id = this.getNewTempSegmentId();
     from = Math.floor(from);
     to = Math.ceil(to);
@@ -171,7 +182,7 @@ export class HasticPod extends LinePod {
     // this.renderSegment(segment);
   }
 
-  protected async deleteSegment(from: number, to: number) {
+  protected async deleteSegment(from: number, to: number): Promise<void> {
     from = Math.floor(from);
     to = Math.ceil(to);
 
@@ -186,7 +197,7 @@ export class HasticPod extends LinePod {
 
   }
 
-  protected renderSegments() {
+  protected renderSegments(): void {
     const segments = this._segmentSet.getSegments();
     this.segmentsContainer = this.metricContainer
       .append('g')
@@ -196,7 +207,7 @@ export class HasticPod extends LinePod {
     }
   }
 
-  protected renderSegment(segment: Segment) {
+  protected renderSegment(segment: Segment): void {
     const x = this.xScale(segment.from);
     const y = 0;
     const w = this.xScale(segment.to) - x;
@@ -220,11 +231,11 @@ export class HasticPod extends LinePod {
     this.fetchData();
   }
 
-  private _zoomOut({x, y}) {
+  private _zoomOut({x, y}): void {
     this.fetchData();
   }
 
-  protected updateSegments(segments: Segment[]) {
+  protected updateSegments(segments: Segment[]): void {
     this._segmentSet.clear();
     this._segmentSet.setSegments(segments);
     this.renderSegments();
