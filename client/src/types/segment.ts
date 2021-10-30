@@ -1,7 +1,7 @@
 export type SegmentId = string;
 
 export class Segment {
-  constructor(private _id: SegmentId | undefined, public from: number, public to: number) {
+  constructor(private _id: SegmentId | undefined, public from: number, public to: number, segmentType = 1) {
     if(this._id === undefined) {
       throw new Error('id is undefined');
     }
@@ -11,6 +11,7 @@ export class Segment {
     if(isNaN(+to)) {
       throw new Error('to can`t be NaN');
     }
+    this._segmentType = segmentType;
   }
   
   get id(): SegmentId { return this._id; }
@@ -33,4 +34,19 @@ export class Segment {
   equals(segment: Segment) {
     return this._id === segment._id;
   }
+
+  // TODO: remove this and make original inheritence
+  _segmentType: number
+  get segmentType(): number { return this._segmentType; }
+  set segmentType(value) { this._segmentType = value; }
+
+  toObject() {
+    return {
+      id: this.id,
+      from: this.from,
+      to: this.to,
+      segment_type: "Label"
+    }
+  }
+
 }

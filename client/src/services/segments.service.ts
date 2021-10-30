@@ -18,8 +18,10 @@ export async function getSegments(from: number, to: number): Promise<Segment[]> 
 }
 
 export async function postSegment(segment: Segment): Promise<SegmentId> {
-  segment.id = undefined; // because we post a new segment. It's a hack
-  const resp = await axios.post(SEGMENTS_API_URL, segment);
+  const segObj = segment.toObject();
+  segObj.id = undefined; // because we post a new segment. It's a hack
+
+  const resp = await axios.post(SEGMENTS_API_URL, segObj);
   return resp['data']['id'];
 }
 

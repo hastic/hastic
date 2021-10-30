@@ -9,7 +9,9 @@ use std::iter::repeat_with;
 const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+
+// TODO: make logic with this enum shorter
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum SegmentType {
     Label = 1,
     Detection = 2,
@@ -23,7 +25,16 @@ impl SegmentType {
             SegmentType::Detection
         }
     }
+
+    fn to_integer(&self) -> u64 {
+        if *self == SegmentType::Label {
+            1
+        } else {
+            2
+        }
+    }
 }
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
@@ -53,13 +64,17 @@ pub struct SegmentsService {
 
 impl SegmentsService {
     pub fn new() -> anyhow::Result<SegmentsService> {
-        let conn = Connection::open("./segments.db")?;
+
+        // TODO: move it to data service
+        std::fs::create_dir_all("./data").unwrap();
+
+        let conn = Connection::open("./data/segments.db")?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS segment (
-                      id        TEXT PRIMARY KEY,
-                      start     INTEGER NOT NULL,
-                      end       INTEGER NOT NULL,
-                      segment_type INTEGER NOT NULL
+                      id            TEXT PRIMARY KEY,
+                      start         INTEGER NOT NULL,
+                      end           INTEGER NOT NULL,
+                      segment_type  INTEGER NOT NULL
                  )",
             [],
         )?;
@@ -91,7 +106,7 @@ impl SegmentsService {
 
         self.connection.lock().unwrap().execute(
             "INSERT INTO segment (id, start, end, segment_type) VALUES (?1, ?2, ?3, ?4)",
-            params![id, min, max],
+            params![id, min, max, segment.segment_type.to_integer()],
         )?;
         Ok(Segment {
             id: Some(id),
