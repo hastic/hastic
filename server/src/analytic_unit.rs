@@ -1,22 +1,18 @@
-use hastic::config::Config;
-use hastic::services::data_service::Segment;
-use hastic::services::metric_service::MetricService;
 use anyhow;
+use hastic::services::metric_service::MetricService;
+use hastic::services::segments_service::Segment;
+use hastic::{config::Config, services::segments_service::SegmentType};
 
 use subbeat::metric::{Metric, MetricResult};
 
-
 struct AnalyticUnit {
-    metric_service: MetricService
+    metric_service: MetricService,
 }
 
 impl AnalyticUnit {
     fn new(config: &Config) -> AnalyticUnit {
-        AnalyticUnit{
-            metric_service: MetricService::new(
-                &config.prom_url,
-                &config.query
-            )
+        AnalyticUnit {
+            metric_service: MetricService::new(&config.prom_url, &config.query),
         }
     }
 
@@ -38,7 +34,12 @@ impl AnalyticUnit {
                 }
             } else {
                 if from.is_some() {
-                    result.push(Segment{ id: None, from: from.unwrap(), to: *t });
+                    result.push(Segment {
+                        id: None,
+                        from: from.unwrap(),
+                        to: *t,
+                        segment_type: SegmentType::Detection,
+                    });
                     from = None;
                 }
             }

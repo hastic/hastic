@@ -7,9 +7,10 @@ pub mod filters {
     pub fn filters(
         db: Db,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        list(db.clone()).or(create(db.clone()))
-        // .or(update(db.clone()))
-        .or(delete(db.clone()))
+        list(db.clone())
+            .or(create(db.clone()))
+            // .or(update(db.clone()))
+            .or(delete(db.clone()))
     }
 
     /// GET /segments?from=3&to=5
@@ -51,8 +52,8 @@ pub mod filters {
 }
 
 mod handlers {
-    use hastic::services::data_service;
-    use hastic::services::data_service::Segment;
+    use hastic::services::segments_service;
+    use hastic::services::segments_service::Segment;
 
     use super::models::{CreateResponse, Db, ListOptions};
     use crate::api;
@@ -67,7 +68,7 @@ mod handlers {
     }
 
     pub async fn create(
-        segment: data_service::Segment,
+        segment: segments_service::Segment,
         db: Db,
     ) -> Result<impl warp::Reply, warp::Rejection> {
         match db.write().insert_segment(&segment) {
@@ -81,20 +82,21 @@ mod handlers {
 
     pub async fn delete(opts: ListOptions, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
         match db.read().delete_segments_in_range(opts.from, opts.to) {
-            Ok(count) => Ok(API::json(&api::Message{ message: count.to_string() })),
+            Ok(count) => Ok(API::json(&api::Message {
+                message: count.to_string(),
+            })),
             Err(e) => Err(warp::reject::custom(BadQuery)),
         }
     }
-
 }
 
 mod models {
-    use hastic::services::data_service::{self, SegmentId};
+    use hastic::services::segments_service::{self, SegmentId};
     use parking_lot::RwLock;
     use serde::{Deserialize, Serialize};
     use std::sync::Arc;
 
-    pub type Db = Arc<RwLock<data_service::DataService>>;
+    pub type Db = Arc<RwLock<segments_service::SegmentsService>>;
 
     // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]

@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, ToSql};
+use rusqlite::{params, Connection, Row, ToSql};
 
 use serde::{Deserialize, Serialize};
 
@@ -9,33 +9,62 @@ use std::iter::repeat_with;
 const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum SegmentType {
+    Label = 1,
+    Detection = 2,
+}
+
+impl SegmentType {
+    fn from(u: u64) -> SegmentType {
+        if u == 1 {
+            SegmentType::Label
+        } else {
+            SegmentType::Detection
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
     pub id: Option<SegmentId>,
     pub from: u64,
     pub to: u64,
+    pub segment_type: SegmentType,
+}
+
+impl Segment {
+    fn from(row: &Row) -> anyhow::Result<Segment, rusqlite::Error> {
+        Ok(Segment {
+            id: row.get(0)?,
+            from: row.get(1)?,
+            to: row.get(2)?,
+            segment_type: SegmentType::from(row.get(3)?),
+        })
+    }
 }
 
 // TODO: find a way to remove this unsafe
-unsafe impl Sync for DataService {}
+unsafe impl Sync for SegmentsService {}
 
-pub struct DataService {
+pub struct SegmentsService {
     connection: Arc<Mutex<Connection>>,
 }
 
-impl DataService {
-    pub fn new() -> anyhow::Result<DataService> {
-        let conn = Connection::open("./data.db")?;
+impl SegmentsService {
+    pub fn new() -> anyhow::Result<SegmentsService> {
+        let conn = Connection::open("./segments.db")?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS segment (
                       id        TEXT PRIMARY KEY,
                       start     INTEGER NOT NULL,
-                      end       INTEGER NOT NULL
+                      end       INTEGER NOT NULL,
+                      segment_type INTEGER NOT NULL
                  )",
             [],
         )?;
 
-        Ok(DataService {
+        Ok(SegmentsService {
             connection: Arc::new(Mutex::new(conn)),
         })
     }
@@ -61,29 +90,25 @@ impl DataService {
         self.delete_segments(&ids_to_delete)?;
 
         self.connection.lock().unwrap().execute(
-            "INSERT INTO segment (id, start, end) VALUES (?1, ?2, ?3)",
+            "INSERT INTO segment (id, start, end, segment_type) VALUES (?1, ?2, ?3, ?4)",
             params![id, min, max],
         )?;
         Ok(Segment {
             id: Some(id),
             from: min,
             to: max,
+            segment_type: segment.segment_type,
         })
     }
 
     pub fn get_segments_inside(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let conn = self.connection.lock().unwrap();
-        let mut stmt =
-            conn.prepare("SELECT id, start, end FROM segment WHERE ?1 < start AND end < ?2")?;
+        let mut stmt = conn.prepare(
+            "SELECT id, start, end, segment_type FROM segment WHERE ?1 < start AND end < ?2",
+        )?;
 
         let res = stmt
-            .query_map(params![from, to], |row| {
-                Ok(Segment {
-                    id: row.get(0)?,
-                    from: row.get(1)?,
-                    to: row.get(2)?,
-                })
-            })?
+            .query_map(params![from, to], Segment::from)?
             .map(|e| e.unwrap())
             .collect();
         Ok(res)
@@ -92,21 +117,16 @@ impl DataService {
     pub fn get_segments_intersected(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let conn = self.connection.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, start, end FROM segment 
-                                                  WHERE (start <= ?1 and ?1 <= end) OR 
-                                                        (start <= ?2 AND ?2 <= end) OR
-                                                        (?1 <= start AND start <= ?2) OR 
-                                                        (?1 <= end AND end <= ?2) ",
+            "SELECT id, start, end, segment_type
+                    FROM segment
+                    WHERE (start <= ?1 and ?1 <= end) OR 
+                          (start <= ?2 AND ?2 <= end) OR
+                          (?1 <= start AND start <= ?2) OR 
+                          (?1 <= end AND end <= ?2) ",
         )?;
 
         let res = stmt
-            .query_map(params![from, to], |row| {
-                Ok(Segment {
-                    id: row.get(0)?,
-                    from: row.get(1)?,
-                    to: row.get(2)?,
-                })
-            })?
+            .query_map(params![from, to], Segment::from)?
             .map(|e| e.unwrap())
             .collect();
         Ok(res)

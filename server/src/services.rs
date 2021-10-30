@@ -1,3 +1,3 @@
-pub mod data_service;
 pub mod metric_service;
+pub mod segments_service;
 pub mod user_service;

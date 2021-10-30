@@ -1,5 +1,5 @@
 use hastic::config::Config;
-use hastic::services::{data_service, metric_service, user_service};
+use hastic::services::{metric_service, segments_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
 use warp::reject::Reject;
@@ -29,7 +29,7 @@ pub struct API<'a> {
     config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: Arc<RwLock<metric_service::MetricService>>,
-    data_service: Arc<RwLock<data_service::DataService>>,
+    data_service: Arc<RwLock<segments_service::SegmentsService>>,
 }
 
 impl API<'_> {
@@ -41,7 +41,7 @@ impl API<'_> {
                 &config.prom_url,
                 &config.query,
             ))),
-            data_service: Arc::new(RwLock::new(data_service::DataService::new()?)),
+            data_service: Arc::new(RwLock::new(segments_service::SegmentsService::new()?)),
         })
     }
 
