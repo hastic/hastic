@@ -5,6 +5,7 @@ import axios from 'axios';
 import _ from 'lodash';
 
 const SEGMENTS_API_URL = API_URL + "segments/";
+const ANALYTICS_API_URL = API_URL + "analytics/";
 
 export async function getSegments(from: number, to: number): Promise<Segment[]> {
   if(from >= to) {
@@ -14,7 +15,13 @@ export async function getSegments(from: number, to: number): Promise<Segment[]> 
   const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
   const res = await axios.get(uri);
 
-  return res["data"] as Segment[];
+  const uriAnalytics = ANALYTICS_API_URL + `?from=${from}&to=${to}`;
+  const resAnalytics = await axios.get(uriAnalytics);
+
+  const result = res["data"] as Segment[];
+  const resultAnalytics = resAnalytics["data"] as Segment[];
+
+  return result.concat(resultAnalytics);
 }
 
 export async function postSegment(segment: Segment): Promise<SegmentId> {
