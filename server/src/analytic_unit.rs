@@ -1,3 +1,0 @@
-struct AnalyticUnit {
-    // TODO: field 
-}

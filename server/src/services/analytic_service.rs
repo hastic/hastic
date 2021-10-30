@@ -6,6 +6,9 @@ use subbeat::metric::Metric;
 
 use anyhow;
 
+mod pattern_detector;
+
+
 #[derive(Clone)]
 pub struct AnalyticService {
     metric_service: MetricService,
@@ -20,11 +23,21 @@ impl AnalyticService {
         }
     }
 
-    pub async fn get_detections(
+    pub async fn get_pattern_detection() -> anyhow::Result<Vec<Segment>> {
+        // TODO: get segments
+        // TODO: get reads from segments
+        // TODO: run learn
+        // TODO: run detections
+        // TODO: convert detections to segments
+        Ok(Vec::new())
+    }
+
+    pub async fn get_threshold_detections(
         &self,
         from: u64,
         to: u64,
         step: u64,
+        threashold: f64
     ) -> anyhow::Result<Vec<Segment>> {
         let prom = self.metric_service.get_prom();
         let mr = prom.query(from, to, step).await?;
@@ -39,7 +52,7 @@ impl AnalyticService {
         let mut result = Vec::<Segment>::new();
         let mut from: Option<u64> = None;
         for (t, v) in ts {
-            if *v > 100_000.0 {
+            if *v > threashold {
                 if from.is_some() {
                     continue;
                 } else {
