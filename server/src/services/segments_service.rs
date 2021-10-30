@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 use std::sync::{Arc, Mutex};
 
-use std::iter::repeat_with;
+use crate::utils::get_random_str;
 
 
-const ID_LENGTH: usize = 20;
+pub const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
 
 
@@ -85,9 +85,7 @@ impl SegmentsService {
 
     // returns id of created segment
     pub fn insert_segment(&self, segment: &Segment) -> anyhow::Result<Segment> {
-        let id: SegmentId = repeat_with(fastrand::alphanumeric)
-            .take(ID_LENGTH)
-            .collect();
+        let id: SegmentId = get_random_str(ID_LENGTH);
 
         // merging
         let sgms = self.get_segments_intersected(segment.from, segment.to)?;

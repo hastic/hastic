@@ -1,6 +1,6 @@
-use crate::config::Config;
+use crate::{config::Config, utils::get_random_str};
 
-use super::{metric_service::MetricService, segments_service::{Segment, SegmentType}};
+use super::{metric_service::MetricService, segments_service::{ID_LENGTH, Segment, SegmentType}};
 
 use subbeat::metric::Metric;
 
@@ -42,7 +42,8 @@ impl AnalyticService {
             } else {
                 if from.is_some() {
                     result.push(Segment {
-                        id: None,
+                        // TODO: persist detections together with id
+                        id: Some(get_random_str(ID_LENGTH)),
                         from: from.unwrap(),
                         to: *t,
                         segment_type: SegmentType::Detection,
@@ -52,9 +53,10 @@ impl AnalyticService {
             }
         }
 
+        // TODO: don't repeat myself
         if from.is_some() {
             result.push(Segment {
-                id: None,
+                id: Some(get_random_str(ID_LENGTH)),
                 from: from.unwrap(),
                 to,
                 segment_type: SegmentType::Detection,

@@ -3,7 +3,7 @@ import { AxisRange } from "@chartwerk/core/dist/types";
 import { BrushOrientation } from "@chartwerk/core";
 import { SegmentsSet } from "@/types/segment_set";
 import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
-import { Segment, SegmentId } from "@/types/segment";
+import { Segment, SegmentId, SegmentType } from "@/types/segment";
 
 export type TimeRange = { from: number, to: number };
 export type UpdateDataCallback = (range: TimeRange) => Promise<{
@@ -49,8 +49,6 @@ export class HasticPod extends LinePod {
         panningEnd: range => { this._updateRange(range) }
       }
     });
-
-    console.log( BrushOrientation.VERTICAL);
 
     this._csc = csc;
     this._dsc = dsc;
@@ -222,6 +220,10 @@ export class HasticPod extends LinePod {
       .attr('fill', ANALYTIC_UNIT_COLORS[0])
       .attr('opacity', '0.8')
       .attr('pointer-events', 'none')
+    
+    if(segment.segmentType == SegmentType.LABEL) {
+      r.attr('style', 'stroke:rgb(0,0,0); stroke-width:2')
+    }
   }
 
   private async _updateRange(range: AxisRange[]) {

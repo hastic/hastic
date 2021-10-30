@@ -1,7 +1,12 @@
 export type SegmentId = string;
 
+export enum SegmentType {
+  LABEL = 'Label',
+  DETECTION = 'Detection'
+}
+
 export class Segment {
-  constructor(private _id: SegmentId | undefined, public from: number, public to: number, segmentType = 1) {
+  constructor(private _id: SegmentId | undefined, public from: number, public to: number, segmentType = SegmentType.LABEL) {
     if(this._id === undefined) {
       throw new Error('id is undefined');
     }
@@ -36,17 +41,26 @@ export class Segment {
   }
 
   // TODO: remove this and make original inheritence
-  _segmentType: number
-  get segmentType(): number { return this._segmentType; }
-  set segmentType(value) { this._segmentType = value; }
+  _segmentType: SegmentType
+  get segmentType(): SegmentType { return this._segmentType; }
+  set segmentType(value: SegmentType) { this._segmentType = value; }
 
   toObject() {
     return {
       id: this.id,
       from: this.from,
       to: this.to,
-      segment_type: "Label"
+      segment_type: 'Label'
     }
+  }
+
+  static fromObject(obj: any) {
+    return new Segment(
+      obj.id,
+      obj.from,
+      obj.to,
+      obj.segment_type
+    );
   }
 
 }

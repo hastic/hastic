@@ -18,10 +18,10 @@ export async function getSegments(from: number, to: number): Promise<Segment[]> 
   const uriAnalytics = ANALYTICS_API_URL + `?from=${from}&to=${to}`;
   const resAnalytics = await axios.get(uriAnalytics);
 
-  const result = res["data"] as Segment[];
-  const resultAnalytics = resAnalytics["data"] as Segment[];
+  const result = res["data"] as any[];
+  const resultAnalytics = resAnalytics["data"] as any[];
 
-  return result.concat(resultAnalytics);
+  return result.concat(resultAnalytics).map(Segment.fromObject);
 }
 
 export async function postSegment(segment: Segment): Promise<SegmentId> {
