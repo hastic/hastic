@@ -1,8 +1,20 @@
-use tokio::sync::oneshot;
+use super::pattern_detector::LearningResults;
 
-#[derive(Debug, PartialEq)]
-pub enum AnalyticRequest {
+#[derive(Debug)]
+pub enum ResponseType {
+    LearningStarted,
+    LearningFinished(LearningResults)
+}
+
+#[derive(Debug)]
+pub enum RequestType {
+    RunLearning
+}
+
+#[derive(Debug)]
+pub enum AnalyticServiceMessage {
     // Status,
-    RunLearning,
+    Request(RequestType),
+    Response(ResponseType)
     // Detect { from: u64, to: u64 },
 }

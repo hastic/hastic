@@ -1,7 +1,7 @@
 use std::{thread, time};
 use tokio::time::{sleep, Duration};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LearningResults {
     backet_size: usize,
 }

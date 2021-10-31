@@ -2,22 +2,22 @@ use tokio::sync::mpsc;
 
 use crate::services::segments_service::Segment;
 
-use super::types::{AnalyticRequest};
+use super::types::{AnalyticServiceMessage, RequestType};
 
 /// CLient to be used multithreaded
 ///
 ///
 #[derive(Clone)]
 pub struct AnalyticClient {
-    tx: mpsc::Sender<AnalyticRequest>,
+    tx: mpsc::Sender<AnalyticServiceMessage>,
 }
 
 impl AnalyticClient {
-    pub fn new(tx: mpsc::Sender<AnalyticRequest>) -> AnalyticClient {
+    pub fn new(tx: mpsc::Sender<AnalyticServiceMessage>) -> AnalyticClient {
         AnalyticClient { tx }
     }
     pub async fn run_learning(&self) -> anyhow::Result<()> {
-        self.tx.send(AnalyticRequest::RunLearning).await?;
+        self.tx.send(AnalyticServiceMessage::Request(RequestType::RunLearning)).await?;
         Ok(())
     }
 

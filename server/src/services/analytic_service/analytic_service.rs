@@ -1,8 +1,4 @@
-use super::{
-    analytic_client::AnalyticClient,
-    pattern_detector::{self, LearningResults, PatternDetector},
-    types::AnalyticRequest,
-};
+use super::{analytic_client::AnalyticClient, pattern_detector::{self, LearningResults, PatternDetector}, types::{AnalyticServiceMessage, RequestType, ResponseType}};
 
 use crate::services::{
     metric_service::MetricService,
@@ -14,7 +10,7 @@ use subbeat::metric::Metric;
 
 use anyhow;
 
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc};
 use tokio::time::{sleep, Duration};
 
 use futures::future;
@@ -34,13 +30,14 @@ enum LearningStatus {
     Ready,
 }
 
+// TODO: now it's basically single analytic unit, service will opreate many AU
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
     learning_results: Option<LearningResults>,
     learning_status: LearningStatus,
-    tx: mpsc::Sender<AnalyticRequest>,
-    rx: mpsc::Receiver<AnalyticRequest>,
+    tx: mpsc::Sender<AnalyticServiceMessage>,
+    rx: mpsc::Receiver<AnalyticServiceMessage>,
 }
 
 impl AnalyticService {
@@ -48,7 +45,7 @@ impl AnalyticService {
         metric_service: MetricService,
         segments_service: segments_service::SegmentsService,
     ) -> AnalyticService {
-        let (tx, rx) = mpsc::channel::<AnalyticRequest>(32);
+        let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
         AnalyticService {
             metric_service,
@@ -65,68 +62,79 @@ impl AnalyticService {
         AnalyticClient::new(self.tx.clone())
     }
 
+    fn consume_request(&mut self, req: types::RequestType) {
+        match req {
+            RequestType::RunLearning => tokio::spawn({
+                self.learning_status = LearningStatus::Starting;
+                let tx = self.tx.clone();
+                let ms = self.metric_service.clone();
+                let ss = self.segments_service.clone();
+                async move {
+                    AnalyticService::run_learning(tx, ms, ss)
+                }})
+        };
+    }
+
+    fn consume_response(&mut self, res: types::ResponseType) {
+        match res {
+            // TODO: handle when learning panic
+            ResponseType::LearningStarted => self.learning_status = LearningStatus::Learning,
+            ResponseType::LearningFinished(results) => {
+                self.learning_results = Some(results)
+            }
+        }
+    }
+
     pub async fn serve(&mut self) {
-        while let Some(request) = self.rx.recv().await {
-            match request {
-                types::AnalyticRequest::RunLearning => {
-                    // TODO: not block and do logic when it's finished
-                    self.run_learning().await;
-                }
+        while let Some(message) = self.rx.recv().await {
+            match message {
+                AnalyticServiceMessage::Request(req) => self.consume_request(req),
+                AnalyticServiceMessage::Response(res) => self.consume_response(res)
             }
         }
     }
 
     // call this from api
-    async fn run_learning(&mut self) {
-        self.learning_status = LearningStatus::Starting;
-        println!("Learning starting");
-        let prom = self.metric_service.get_prom();
-        let ss = self.segments_service.clone();
+    async fn run_learning(tx: mpsc::Sender<AnalyticServiceMessage>, ms: MetricService, ss : SegmentsService) {
 
-        let (tx, rx) = oneshot::channel();
-
-        tokio::spawn(async move {
-            // TODO: logic for returning error
-
-            // be careful if decide to store detections in db
-            let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
-
-            let fs = segments
-                .iter()
-                .map(|s| prom.query(s.from, s.to, DETECTION_STEP));
-            let rs = future::join_all(fs).await;
-
-            // TODO: run this on label adding
-            // TODO: save learning results in cache
-            let mut learn_tss = Vec::new();
-            for r in rs {
-                let mr = r.unwrap();
-                if mr.data.keys().len() == 0 {
-                    continue;
-                }
-                let k = mr.data.keys().nth(0).unwrap();
-                let ts = &mr.data[k];
-                // TODO: maybe not clone
-                learn_tss.push(ts.clone());
-            }
-
-            let lr = PatternDetector::learn(&learn_tss).await;
-
-            if let Err(_) = tx.send(lr) {
-                println!("Error: receive of learning results dropped");
-            }
-        });
-
-        match rx.await {
-            Ok(lr) => {
-                self.learning_results = Some(lr);
-                self.learning_status = LearningStatus::Ready;
-            }
-            Err(_) => {
-                self.learning_status = LearningStatus::Error;
-                println!("learning dropped")
-            }
+        match tx.send(AnalyticServiceMessage::Response(ResponseType::LearningStarted)).await {
+            Ok(_) => println!("Learning starting"),
+            Err(_e) => println!("Fail to send notification about learning start")
         }
+
+        let prom = ms.get_prom();
+
+        // TODO: logic for returning error
+
+        // be careful if decide to store detections in db
+        let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
+
+        let fs = segments
+            .iter()
+            .map(|s| prom.query(s.from, s.to, DETECTION_STEP));
+        let rs = future::join_all(fs).await;
+
+        // TODO: run this on label adding
+        // TODO: save learning results in cache
+        let mut learn_tss = Vec::new();
+        for r in rs {
+            let mr = r.unwrap();
+            if mr.data.keys().len() == 0 {
+                continue;
+            }
+            let k = mr.data.keys().nth(0).unwrap();
+            let ts = &mr.data[k];
+            // TODO: maybe not clone
+            learn_tss.push(ts.clone());
+        }
+
+        let lr = PatternDetector::learn(&learn_tss).await;
+
+        match tx.send(AnalyticServiceMessage::Response(ResponseType::LearningFinished(lr))).await {
+            Ok(_) => println!("Learning resuls sent"),
+            Err(_e) => println!("Fail to send learning results")
+        }
+        
     }
 
     async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
