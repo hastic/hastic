@@ -1,13 +1,13 @@
 pub mod filters {
     use super::handlers;
-    use super::models::{ListOptions, Srv};
+    use super::models::{Client, ListOptions};
     use warp::Filter;
 
     /// The 4 REST API filters combined.
     pub fn filters(
-        srv: Srv,
+        client: Client,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        list(srv.clone())
+        list(client.clone())
         // TODO: /status endpoint
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
@@ -16,30 +16,30 @@ pub mod filters {
 
     /// GET /analytics?from=3&to=5
     pub fn list(
-        db: Srv,
+        client: Client,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("analytics")
             .and(warp::get())
             .and(warp::query::<ListOptions>())
-            .and(with_srv(db))
+            .and(with_client(client))
             .and_then(handlers::list)
     }
 
-    fn with_srv(
-        srv: Srv,
-    ) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
-        warp::any().map(move || srv.clone())
+    fn with_client(
+        client: Client,
+    ) -> impl Filter<Extract = (Client,), Error = std::convert::Infallible> + Clone {
+        warp::any().map(move || client.clone())
     }
 }
 
 mod handlers {
 
-    use super::models::{ListOptions, Srv};
+    use super::models::{Client, ListOptions};
     use crate::api::{BadQuery, API};
 
-    pub async fn list(opts: ListOptions, srv: Srv) -> Result<impl warp::Reply, warp::Rejection> {
+    pub async fn list(opts: ListOptions, srv: Client) -> Result<impl warp::Reply, warp::Rejection> {
         // match srv.get_threshold_detections(opts.from, opts.to, 10, 100_000.).await {
-        match srv.read().get_pattern_detection(opts.from, opts.to).await {
+        match srv.get_pattern_detection(opts.from, opts.to).await {
             Ok(segments) => Ok(API::json(&segments)),
             Err(e) => {
                 println!("{:?}", e);
@@ -53,13 +53,10 @@ mod models {
     use std::sync::Arc;
 
     use hastic::services::analytic_service;
-    use parking_lot::RwLock;
+
     use serde::{Deserialize, Serialize};
 
-    // use parking_lot::RwLock;
-    // use std::sync::Arc;
-
-    pub type Srv = Arc<RwLock<analytic_service::AnalyticService>>;
+    pub type Client = analytic_service::analytic_client::AnalyticClient;
 
     // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]

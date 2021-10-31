@@ -1,21 +1,26 @@
-use crate::utils::{self, get_random_str};
-
-use self::pattern_detector::{LearningResults, PatternDetector};
-
 use super::{
+    analytic_client::AnalyticClient,
+    pattern_detector::{self, LearningResults, PatternDetector},
+    types::AnalyticRequest,
+};
+
+use crate::services::{
     metric_service::MetricService,
     segments_service::{self, Segment, SegmentType, SegmentsService, ID_LENGTH},
 };
+use crate::utils::{self, get_random_str};
 
 use subbeat::metric::Metric;
 
 use anyhow;
 
-mod pattern_detector;
+use tokio::sync::{mpsc, oneshot};
+use tokio::time::{sleep, Duration};
 
 use futures::future;
-use tokio::sync::oneshot;
-use tokio::time::{sleep, Duration};
+
+use super::types;
+
 
 const DETECTION_STEP: u64 = 10;
 const LEARNING_WAITING_INTERVAL: u64 = 100;
@@ -23,17 +28,19 @@ const LEARNING_WAITING_INTERVAL: u64 = 100;
 #[derive(Clone, PartialEq)]
 enum LearningStatus {
     Initialization,
+    Starting,
     Learning,
     Error,
     Ready,
 }
 
-#[derive(Clone)]
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
     learning_results: Option<LearningResults>,
     learning_status: LearningStatus,
+    tx: mpsc::Sender<AnalyticRequest>,
+    rx: mpsc::Receiver<AnalyticRequest>,
 }
 
 impl AnalyticService {
@@ -41,17 +48,38 @@ impl AnalyticService {
         metric_service: MetricService,
         segments_service: segments_service::SegmentsService,
     ) -> AnalyticService {
+        let (tx, rx) = mpsc::channel::<AnalyticRequest>(32);
+
         AnalyticService {
             metric_service,
             segments_service,
             // TODO: get it from persistance
             learning_results: None,
             learning_status: LearningStatus::Initialization,
+            tx,
+            rx,
+        }
+    }
+
+    pub fn get_client(&self) -> AnalyticClient {
+        AnalyticClient::new(self.tx.clone())
+    }
+
+    pub async fn serve(&mut self) {
+        while let Some(request) = self.rx.recv().await {
+            match request {
+                types::AnalyticRequest::RunLearning => {
+                    // TODO: not block and do logic when it's finished
+                    self.run_learning().await;
+                }
+            }
         }
     }
 
     // call this from api
-    pub async fn run_learning(&mut self) {
+    async fn run_learning(&mut self) {
+        self.learning_status = LearningStatus::Starting;
+        println!("Learning starting");
         let prom = self.metric_service.get_prom();
         let ss = self.segments_service.clone();
 
@@ -101,7 +129,7 @@ impl AnalyticService {
         }
     }
 
-    pub async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
+    async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let prom = self.metric_service.get_prom();
 
         while self.learning_status == LearningStatus::Learning {
@@ -136,7 +164,7 @@ impl AnalyticService {
         Ok(result_segments)
     }
 
-    pub async fn get_threshold_detections(
+    async fn get_threshold_detections(
         &self,
         from: u64,
         to: u64,
