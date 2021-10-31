@@ -50,7 +50,6 @@ impl AnalyticService {
             tx,
             rx,
         }
-
     }
 
     pub fn get_client(&self) -> AnalyticClient {
@@ -80,7 +79,10 @@ impl AnalyticService {
         match res {
             // TODO: handle when learning panic
             ResponseType::LearningStarted => self.learning_status = LearningStatus::Learning,
-            ResponseType::LearningFinished(results) => self.learning_results = Some(results),
+            ResponseType::LearningFinished(results) => {
+                self.learning_results = Some(results);
+                self.learning_status = LearningStatus::Ready;
+            }
         }
     }
 

@@ -32,7 +32,6 @@ pub struct API<'a> {
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: metric_service::MetricService,
     segments_service: segments_service::SegmentsService,
-    
 }
 
 impl API<'_> {
@@ -70,8 +69,8 @@ impl API<'_> {
     }
 
     pub async fn serve(&self) {
-
-        let mut analytic_service = AnalyticService::new(self.metric_service.clone(), self.segments_service.clone());
+        let mut analytic_service =
+            AnalyticService::new(self.metric_service.clone(), self.segments_service.clone());
 
         let not_found =
             warp::any().map(|| warp::reply::with_status("Not found", StatusCode::NOT_FOUND));
@@ -95,12 +94,10 @@ impl API<'_> {
             .and(login.or(metrics).or(segments).or(analytics).or(options))
             .or(public)
             .or(not_found);
-        
-        let s1= analytic_service.serve();
-        let s2 = warp::serve(routes)
-            .run(([127, 0, 0, 1], self.config.port));
-        
+
+        let s1 = analytic_service.serve();
+        let s2 = warp::serve(routes).run(([127, 0, 0, 1], self.config.port));
+
         futures::future::join(s1, s2).await;
-            
     }
 }
