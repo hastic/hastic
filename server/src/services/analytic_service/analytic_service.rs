@@ -31,6 +31,9 @@ pub struct AnalyticService {
     learning_status: LearningStatus,
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
+
+    // handlers
+    learning_handler: Option<tokio::task::JoinHandle<()>>
 }
 
 impl AnalyticService {
@@ -48,6 +51,9 @@ impl AnalyticService {
             learning_status: LearningStatus::Initialization,
             tx,
             rx,
+
+            // handlers
+            learning_handler: None
         }
     }
 
@@ -58,7 +64,11 @@ impl AnalyticService {
     fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
             RequestType::RunLearning => {
-                tokio::spawn({
+                if self.learning_handler.is_some() {
+                    self.learning_handler.as_ref().unwrap().abort();
+                    self.learning_handler = None;
+                }
+                self.learning_handler = Some(tokio::spawn({
                     self.learning_status = LearningStatus::Starting;
                     let tx = self.tx.clone();
                     let ms = self.metric_service.clone();
@@ -66,7 +76,7 @@ impl AnalyticService {
                     async move {
                         AnalyticService::run_learning(tx, ms, ss).await;
                     }
-                });
+                }));
             }
             RequestType::GetStatus(tx) => {
                 tx.send(self.learning_status.clone()).unwrap();
@@ -79,6 +89,7 @@ impl AnalyticService {
             // TODO: handle when learning panic
             ResponseType::LearningStarted => self.learning_status = LearningStatus::Learning,
             ResponseType::LearningFinished(results) => {
+                self.learning_handler = None;
                 self.learning_results = Some(results);
                 self.learning_status = LearningStatus::Ready;
             },
