@@ -15,6 +15,7 @@ pub enum LearningStatus {
 pub enum ResponseType {
     LearningStarted,
     LearningFinished(LearningResults),
+    LearningFinishedEmpty
 }
 
 #[derive(Debug)]

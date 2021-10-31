@@ -82,6 +82,10 @@ impl AnalyticService {
             ResponseType::LearningFinished(results) => {
                 self.learning_results = Some(results);
                 self.learning_status = LearningStatus::Ready;
+            },
+            ResponseType::LearningFinishedEmpty => {
+                self.learning_results = None;
+                self.learning_status = LearningStatus::Initialization;
             }
         }
     }
@@ -95,7 +99,6 @@ impl AnalyticService {
         }
     }
 
-    // call this from api
     async fn run_learning(
         tx: mpsc::Sender<AnalyticServiceMessage>,
         ms: MetricService,
@@ -117,6 +120,20 @@ impl AnalyticService {
 
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
+        
+        if segments.len() == 0 {
+            match tx
+                .send(AnalyticServiceMessage::Response(
+                    ResponseType::LearningFinishedEmpty,
+                ))
+                .await
+            {
+                Ok(_) => {}
+                Err(_e) => println!("Fail to send learning results"),
+            }
+
+            return;
+        }
 
         let fs = segments
             .iter()
@@ -150,27 +167,32 @@ impl AnalyticService {
         }
     }
 
-    async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
-        let prom = self.metric_service.get_prom();
+    async fn get_pattern_detection(tx: mpsc::Sender<AnalyticServiceMessage>, lr: LearningResults, ms: MetricService, from: u64, to: u64) {
+        
+        // TODO: move this loop to init closure
+        // while let status =  ac.get_status().await.unwrap() {
+        //     if status == LearningStatus::Learning {
+        //         sleep(Duration::from_millis(LEARNING_WAITING_INTERVAL)).await;
+        //         continue;
+        //     }
+        // }
 
-        while self.learning_status == LearningStatus::Learning {
-            sleep(Duration::from_millis(LEARNING_WAITING_INTERVAL)).await;
-        }
-
-        let lr = self.learning_results.as_ref().unwrap().clone();
+        let prom = ms.get_prom();
+        
         let pt = pattern_detector::PatternDetector::new(lr);
-        let mr = prom.query(from, to, DETECTION_STEP).await?;
+        let mr = prom.query(from, to, DETECTION_STEP).await.unwrap();
 
-        if mr.data.keys().len() == 0 {
-            return Ok(Vec::new());
-        }
+        // TODO: uncomment
+        // if mr.data.keys().len() == 0 {
+        //     return Ok(Vec::new());
+        // }
 
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
 
         let result = pt.detect(ts);
 
-        let result_segments = result
+        let result_segments: Vec<Segment> = result
             .iter()
             .map(|(p, q)| Segment {
                 from: *p,
@@ -182,7 +204,7 @@ impl AnalyticService {
 
         // TODO: run detections
         // TODO: convert detections to segments
-        Ok(result_segments)
+        // Ok(result_segments)
     }
 
     async fn get_threshold_detections(

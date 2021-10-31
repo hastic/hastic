@@ -4,7 +4,7 @@ export async function *getGenerator<T>(
   ...args
 ): AsyncIterableIterator<T> {
 
-  let timeout = async () => new Promise(
+  const timeout = async () => new Promise(
     resolve => setTimeout(resolve, duration)
   );
 
