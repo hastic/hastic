@@ -8,6 +8,7 @@ pub mod filters {
         srv: Srv,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         list(srv.clone())
+        // TODO: /status endpoint
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
         // .or(delete(db.clone()))
@@ -38,7 +39,7 @@ mod handlers {
 
     pub async fn list(opts: ListOptions, srv: Srv) -> Result<impl warp::Reply, warp::Rejection> {
         // match srv.get_threshold_detections(opts.from, opts.to, 10, 100_000.).await {
-        match srv.get_pattern_detection(opts.from, opts.to).await {
+        match srv.read().get_pattern_detection(opts.from, opts.to).await {
             Ok(segments) => Ok(API::json(&segments)),
             Err(e) => {
                 println!("{:?}", e);
@@ -49,13 +50,16 @@ mod handlers {
 }
 
 mod models {
+    use std::sync::Arc;
+
     use hastic::services::analytic_service;
+    use parking_lot::RwLock;
     use serde::{Deserialize, Serialize};
 
     // use parking_lot::RwLock;
     // use std::sync::Arc;
 
-    pub type Srv = analytic_service::AnalyticService;
+    pub type Srv = Arc<RwLock<analytic_service::AnalyticService>>;
 
     // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]

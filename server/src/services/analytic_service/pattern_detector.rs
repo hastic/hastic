@@ -1,20 +1,22 @@
+use std::{thread, time};
+use tokio::time::{sleep, Duration};
 
-struct LearningResults {
-    backet_size: usize
+#[derive(Clone)]
+pub struct LearningResults {
+    backet_size: usize,
 }
 
+#[derive(Clone)]
 pub struct PatternDetector {
-    learning_results: Option<LearningResults>
+    learning_results: LearningResults,
 }
 
 impl PatternDetector {
-    pub fn new() -> PatternDetector {
-        PatternDetector{
-            learning_results: None
-        }
+    pub fn new(learning_results: LearningResults) -> PatternDetector {
+        PatternDetector { learning_results }
     }
 
-    pub fn learn(&mut self, reads: &Vec<Vec<(u64, f64)>>) {
+    pub async fn learn(reads: &Vec<Vec<(u64, f64)>>) -> LearningResults {
         // TODO: implement
         let mut min_size = usize::MAX;
         let mut max_size = 0usize;
@@ -23,9 +25,14 @@ impl PatternDetector {
             max_size = max_size.max(r.len());
         }
 
-        self.learning_results = Some(LearningResults{
-            backet_size: (min_size + max_size) / 2
-        });
+        let ten_millis = time::Duration::from_millis(1000);
+        thread::sleep(ten_millis);
+
+        sleep(Duration::from_millis(1000)).await;
+
+        LearningResults {
+            backet_size: (min_size + max_size) / 2,
+        }
     }
 
     pub fn detect(&self, ts: &Vec<(u64, f64)>) -> Vec<(u64, u64)> {

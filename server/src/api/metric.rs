@@ -17,7 +17,6 @@ use crate::api::{self, API};
 
 use std::collections::HashMap;
 
-
 use super::BadQuery;
 
 #[derive(Serialize)]
