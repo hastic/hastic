@@ -19,3 +19,4 @@ openssl = { version = "=0.10.33", features = ["vendored"] }
 rusqlite = "0.26.1"
 # https://github.com/rusqlite/rusqlite/issues/914
 libsqlite3-sys = { version = "*", features = ["bundled"] }
+futures = "0.3.17"

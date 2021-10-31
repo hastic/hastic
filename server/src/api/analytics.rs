@@ -37,9 +37,13 @@ mod handlers {
     use crate::api::{BadQuery, API};
 
     pub async fn list(opts: ListOptions, srv: Srv) -> Result<impl warp::Reply, warp::Rejection> {
-        match srv.get_threshold_detections(opts.from, opts.to, 10, 100_000.).await {
+        // match srv.get_threshold_detections(opts.from, opts.to, 10, 100_000.).await {
+        match srv.get_pattern_detection(opts.from, opts.to).await {
             Ok(segments) => Ok(API::json(&segments)),
-            Err(e) => Err(warp::reject::custom(BadQuery)),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
         }
     }
 }

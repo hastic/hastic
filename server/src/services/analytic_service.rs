@@ -1,3 +1,4 @@
+
 use crate::{utils::get_random_str};
 
 use super::{metric_service::MetricService, segments_service::{self, ID_LENGTH, Segment, SegmentType, SegmentsService}};
@@ -7,6 +8,8 @@ use subbeat::metric::Metric;
 use anyhow;
 
 mod pattern_detector;
+
+use futures::future;
 
 
 #[derive(Clone)]
@@ -23,10 +26,39 @@ impl AnalyticService {
         }
     }
 
-    pub async fn get_pattern_detection() -> anyhow::Result<Vec<Segment>> {
-        // TODO: get segments
-        // TODO: get reads from segments
-        // TODO: run learn
+    pub async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
+
+        let innter_step = 10u64;
+        let segments = self.segments_service.get_segments_inside(0, u64::MAX / 2)?;
+
+        let prom = self.metric_service.get_prom();
+        let fs = segments.iter().map(|s| prom.query(s.from, s.to, innter_step));
+        let rs = future::join_all(fs).await;
+
+        let mut pt = pattern_detector::PatternDetector::new();
+
+        // TODO: run this on label adding
+        // TODO: save learning results in cache
+        let mut learn_tss = Vec::new();
+        for r in rs {
+            let mr = r.unwrap();
+            if mr.data.keys().len() == 0 {
+                continue;
+            }
+            let k = mr.data.keys().nth(0).unwrap();
+            let ts = &mr.data[k];
+            // TODO: maybe not clone
+            learn_tss.push(ts.clone());
+        }
+
+        pt.learn(&learn_tss);
+
+        let ts = prom.query(from, to, innter_step).await?;
+
+
+
+        // pt.detect(ts);
+
         // TODO: run detections
         // TODO: convert detections to segments
         Ok(Vec::new())

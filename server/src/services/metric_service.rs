@@ -14,6 +14,7 @@ impl MetricService {
         }
     }
 
+    // TODO: make prom as field, but Prometheus should be clonable first
     pub fn get_prom(&self) -> Prometheus {
         Prometheus::new(&self.url.to_string(), &self.query.to_string())
     }
