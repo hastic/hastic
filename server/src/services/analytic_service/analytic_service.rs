@@ -50,6 +50,7 @@ impl AnalyticService {
             tx,
             rx,
         }
+
     }
 
     pub fn get_client(&self) -> AnalyticClient {

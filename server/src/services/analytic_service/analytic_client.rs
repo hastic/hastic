@@ -27,6 +27,7 @@ impl AnalyticClient {
     pub async fn get_status(&self) -> anyhow::Result<LearningStatus> {
         let (tx, rx) = oneshot::channel();
         let req = AnalyticServiceMessage::Request(RequestType::GetStatus(tx));
+        self.tx.send(req).await?;
         let r = rx.await?;
         Ok(r)
     }

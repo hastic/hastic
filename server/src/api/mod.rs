@@ -31,9 +31,8 @@ pub struct API<'a> {
     config: &'a Config,
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: metric_service::MetricService,
-    data_service: segments_service::SegmentsService,
-    // TODO: get analytic service as reference and create it in main
-    analytic_service: AnalyticService,
+    segments_service: segments_service::SegmentsService,
+    
 }
 
 impl API<'_> {
@@ -45,8 +44,7 @@ impl API<'_> {
             config: config,
             user_service: Arc::new(RwLock::new(user_service::UserService::new())),
             metric_service: ms.clone(),
-            data_service: ss.clone(),
-            analytic_service: AnalyticService::new(ms, ss),
+            segments_service: ss.clone(),
         })
     }
 
@@ -72,6 +70,9 @@ impl API<'_> {
     }
 
     pub async fn serve(&self) {
+
+        let mut analytic_service = AnalyticService::new(self.metric_service.clone(), self.segments_service.clone());
+
         let not_found =
             warp::any().map(|| warp::reply::with_status("Not found", StatusCode::NOT_FOUND));
         let options = warp::any().and(options()).map(|| {
@@ -82,10 +83,10 @@ impl API<'_> {
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
         let segments = segments::filters::filters(
-            self.data_service.clone(),
-            self.analytic_service.get_client(),
+            self.segments_service.clone(),
+            analytic_service.get_client(),
         );
-        let analytics = analytics::filters::filters(self.analytic_service.get_client());
+        let analytics = analytics::filters::filters(analytic_service.get_client());
         let public = warp::fs::dir("public");
 
         println!("Start server on {} port", self.config.port);
@@ -94,8 +95,12 @@ impl API<'_> {
             .and(login.or(metrics).or(segments).or(analytics).or(options))
             .or(public)
             .or(not_found);
-        warp::serve(routes)
-            .run(([127, 0, 0, 1], self.config.port))
-            .await;
+        
+        let s1= analytic_service.serve();
+        let s2 = warp::serve(routes)
+            .run(([127, 0, 0, 1], self.config.port));
+        
+        futures::future::join(s1, s2).await;
+            
     }
 }
