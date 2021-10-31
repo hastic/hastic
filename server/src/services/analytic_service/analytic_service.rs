@@ -15,7 +15,6 @@ use subbeat::metric::Metric;
 use anyhow;
 
 use tokio::sync::mpsc;
-use tokio::time::{sleep, Duration};
 
 use futures::future;
 
@@ -91,6 +90,9 @@ impl AnalyticService {
     }
 
     pub async fn serve(&mut self) {
+        // TODO: remove this hack
+        self.consume_request(RequestType::RunLearning);
+
         while let Some(message) = self.rx.recv().await {
             match message {
                 AnalyticServiceMessage::Request(req) => self.consume_request(req),
