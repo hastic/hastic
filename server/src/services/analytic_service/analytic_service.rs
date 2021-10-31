@@ -1,4 +1,8 @@
-use super::{analytic_client::AnalyticClient, pattern_detector::{self, LearningResults, PatternDetector}, types::{AnalyticServiceMessage, RequestType, ResponseType}};
+use super::{
+    analytic_client::AnalyticClient,
+    pattern_detector::{self, LearningResults, PatternDetector},
+    types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
+};
 
 use crate::services::{
     metric_service::MetricService,
@@ -10,25 +14,15 @@ use subbeat::metric::Metric;
 
 use anyhow;
 
-use tokio::sync::{mpsc};
+use tokio::sync::mpsc;
 use tokio::time::{sleep, Duration};
 
 use futures::future;
 
 use super::types;
 
-
 const DETECTION_STEP: u64 = 10;
 const LEARNING_WAITING_INTERVAL: u64 = 100;
-
-#[derive(Clone, PartialEq)]
-enum LearningStatus {
-    Initialization,
-    Starting,
-    Learning,
-    Error,
-    Ready,
-}
 
 // TODO: now it's basically single analytic unit, service will opreate many AU
 pub struct AnalyticService {
@@ -62,16 +56,22 @@ impl AnalyticService {
         AnalyticClient::new(self.tx.clone())
     }
 
-    fn consume_request(&mut self, req: types::RequestType) {
+    fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
-            RequestType::RunLearning => tokio::spawn({
-                self.learning_status = LearningStatus::Starting;
-                let tx = self.tx.clone();
-                let ms = self.metric_service.clone();
-                let ss = self.segments_service.clone();
-                async move {
-                    AnalyticService::run_learning(tx, ms, ss)
-                }})
+            RequestType::RunLearning => {
+                tokio::spawn({
+                    self.learning_status = LearningStatus::Starting;
+                    let tx = self.tx.clone();
+                    let ms = self.metric_service.clone();
+                    let ss = self.segments_service.clone();
+                    async move {
+                        AnalyticService::run_learning(tx, ms, ss).await;
+                    }
+                });
+            }
+            RequestType::GetStatus(tx) => {
+                tx.send(self.learning_status.clone()).unwrap();
+            }
         };
     }
 
@@ -79,9 +79,7 @@ impl AnalyticService {
         match res {
             // TODO: handle when learning panic
             ResponseType::LearningStarted => self.learning_status = LearningStatus::Learning,
-            ResponseType::LearningFinished(results) => {
-                self.learning_results = Some(results)
-            }
+            ResponseType::LearningFinished(results) => self.learning_results = Some(results),
         }
     }
 
@@ -89,17 +87,25 @@ impl AnalyticService {
         while let Some(message) = self.rx.recv().await {
             match message {
                 AnalyticServiceMessage::Request(req) => self.consume_request(req),
-                AnalyticServiceMessage::Response(res) => self.consume_response(res)
+                AnalyticServiceMessage::Response(res) => self.consume_response(res),
             }
         }
     }
 
     // call this from api
-    async fn run_learning(tx: mpsc::Sender<AnalyticServiceMessage>, ms: MetricService, ss : SegmentsService) {
-
-        match tx.send(AnalyticServiceMessage::Response(ResponseType::LearningStarted)).await {
+    async fn run_learning(
+        tx: mpsc::Sender<AnalyticServiceMessage>,
+        ms: MetricService,
+        ss: SegmentsService,
+    ) {
+        match tx
+            .send(AnalyticServiceMessage::Response(
+                ResponseType::LearningStarted,
+            ))
+            .await
+        {
             Ok(_) => println!("Learning starting"),
-            Err(_e) => println!("Fail to send notification about learning start")
+            Err(_e) => println!("Fail to send notification about learning start"),
         }
 
         let prom = ms.get_prom();
@@ -130,11 +136,15 @@ impl AnalyticService {
 
         let lr = PatternDetector::learn(&learn_tss).await;
 
-        match tx.send(AnalyticServiceMessage::Response(ResponseType::LearningFinished(lr))).await {
+        match tx
+            .send(AnalyticServiceMessage::Response(
+                ResponseType::LearningFinished(lr),
+            ))
+            .await
+        {
             Ok(_) => println!("Learning resuls sent"),
-            Err(_e) => println!("Fail to send learning results")
+            Err(_e) => println!("Fail to send learning results"),
         }
-        
     }
 
     async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {

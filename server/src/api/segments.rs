@@ -1,14 +1,16 @@
 pub mod filters {
     use super::handlers;
     use super::models::{Db, ListOptions};
+    use hastic::services::analytic_service::analytic_client::AnalyticClient;
     use warp::Filter;
 
     /// The 4 REST API filters combined.
     pub fn filters(
         db: Db,
+        ac: AnalyticClient,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         list(db.clone())
-            .or(create(db.clone()))
+            .or(create(db.clone(), ac))
             // .or(update(db.clone()))
             .or(delete(db.clone()))
     }
@@ -27,11 +29,13 @@ pub mod filters {
     /// POST /segments with JSON body
     pub fn create(
         db: Db,
+        ac: AnalyticClient,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("segments")
             .and(warp::post())
             .and(warp::body::json())
             .and(with_db(db))
+            .and(warp::any().map(move || ac.clone()))
             .and_then(handlers::create)
     }
 
@@ -52,6 +56,7 @@ pub mod filters {
 }
 
 mod handlers {
+    use hastic::services::analytic_service::analytic_client::AnalyticClient;
     use hastic::services::segments_service;
 
     use super::models::{Db, ListOptions};
@@ -70,9 +75,13 @@ mod handlers {
     pub async fn create(
         segment: segments_service::Segment,
         db: Db,
+        ac: AnalyticClient,
     ) -> Result<impl warp::Reply, warp::Rejection> {
         match db.insert_segment(&segment) {
-            Ok(segment) => Ok(API::json(&segment)),
+            Ok(segment) => {
+                ac.run_learning().await.unwrap();
+                Ok(API::json(&segment))
+            }
             Err(e) => {
                 println!("{:?}", e);
                 // TODO: return proper http error

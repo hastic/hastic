@@ -1,6 +1,6 @@
 mod analytic_service;
 mod pattern_detector;
-mod types;
+pub mod types;
 
 pub mod analytic_client;
 

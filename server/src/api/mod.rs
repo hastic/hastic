@@ -32,7 +32,7 @@ pub struct API<'a> {
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: metric_service::MetricService,
     data_service: segments_service::SegmentsService,
-    // TODO: get analytic service as reference
+    // TODO: get analytic service as reference and create it in main
     analytic_service: AnalyticService,
 }
 
@@ -81,7 +81,10 @@ impl API<'_> {
         });
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
-        let segments = segments::filters::filters(self.data_service.clone());
+        let segments = segments::filters::filters(
+            self.data_service.clone(),
+            self.analytic_service.get_client(),
+        );
         let analytics = analytics::filters::filters(self.analytic_service.get_client());
         let public = warp::fs::dir("public");
 
