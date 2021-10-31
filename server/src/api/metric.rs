@@ -1,19 +1,16 @@
-use hastic::services::{metric_service, user_service};
+use hastic::services::metric_service;
 
 use subbeat::metric::{Metric, MetricResult};
 use warp::filters::method::get;
-use warp::http::HeaderValue;
-use warp::hyper::server::conn::Http;
-use warp::hyper::{Body, StatusCode};
-use warp::reject::Reject;
-use warp::{http::Response, Filter};
-use warp::{reject, Rejection, Reply};
+
+use warp::Filter;
+use warp::{Rejection, Reply};
 
 use serde::Serialize;
 
 use anyhow;
 
-use crate::api::{self, API};
+use crate::api::API;
 
 use std::collections::HashMap;
 

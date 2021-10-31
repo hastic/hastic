@@ -1,14 +1,14 @@
 use hastic::services::user_service;
 
 use warp::filters::method::post;
-use warp::http::HeaderValue;
-use warp::hyper::{Body, StatusCode};
-use warp::{http::Response, Filter};
+
+use warp::hyper::StatusCode;
+use warp::Filter;
 use warp::{Rejection, Reply};
 
 use serde::Serialize;
 
-use crate::api::{self, API};
+use crate::api::{self};
 
 use parking_lot::RwLock;
 use std::sync::Arc;

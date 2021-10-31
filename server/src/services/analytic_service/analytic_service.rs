@@ -107,7 +107,7 @@ impl AnalyticService {
             ))
             .await
         {
-            Ok(_) => println!("Learning starting"),
+            Ok(_) => {}
             Err(_e) => println!("Fail to send notification about learning start"),
         }
 
@@ -145,7 +145,7 @@ impl AnalyticService {
             ))
             .await
         {
-            Ok(_) => println!("Learning resuls sent"),
+            Ok(_) => {}
             Err(_e) => println!("Fail to send learning results"),
         }
     }

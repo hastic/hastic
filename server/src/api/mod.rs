@@ -4,8 +4,8 @@ use hastic::services::{metric_service, segments_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
 use warp::reject::Reject;
-use warp::{body, options, Rejection, Reply};
 use warp::{http::Response, Filter};
+use warp::{options, Reply};
 
 mod analytics;
 mod auth;
