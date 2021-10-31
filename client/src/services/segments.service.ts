@@ -32,7 +32,7 @@ export async function postSegment(segment: Segment): Promise<SegmentId> {
   return resp['data']['id'];
 }
 
-export async function deleteSegment(from: number, to: number): Promise<SegmentId> {
+export async function deleteSegment(from: number, to: number): Promise<number> {
   const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
   const resp = await axios.delete(uri);
   return resp['data']['count'];

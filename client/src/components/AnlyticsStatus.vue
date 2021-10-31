@@ -9,7 +9,6 @@ import { defineComponent } from 'vue';
 import { getStatusGenerator } from '@/services/analytics.service';
 
 
-
 export default defineComponent({
   name: 'AnalyticStatus',
   components: {

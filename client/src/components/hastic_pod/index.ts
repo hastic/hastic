@@ -82,7 +82,7 @@ export class HasticPod extends LinePod {
     console.log('render my metrics');
   }
 
-  protected fetchData(): void {
+  public fetchData(): void {
     let to = Math.floor(Date.now() / 1000);
     let from = to - 5000; // -5000 seconds
 

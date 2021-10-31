@@ -13,7 +13,6 @@ export async function getStatus(): Promise<string> {
   const uri = ANALYTICS_API_URL + `status`;
   const res = await axios.get(uri);
   const data = res['data'] as any;
-  console.log(data.status);
   return data.status;
 }
 

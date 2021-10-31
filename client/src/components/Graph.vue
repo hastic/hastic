@@ -61,10 +61,9 @@ async function addSegment(segment: Segment): Promise<SegmentId> {
 }
 
 // TODO: move to store
-async function _deleteSegment(from: number, to: number): Promise<SegmentId> {
+async function _deleteSegment(from: number, to: number): Promise<number> {
   try {
-    const id = await deleteSegment(from, to);
-    return id;
+    return await deleteSegment(from, to);
   } catch (e) {
     this.$notify({
       title: "Error during saving segment",
@@ -79,18 +78,21 @@ export default defineComponent({
   name: 'Graph',
   props: {},
   mounted() {
-    // const endTime = Math.floor(Date.now() / 1000);
-    // const startTime = endTime - 1000; // 1000 seconds
-    // TODO: fill segmentArray from service
     var s = new SegmentArray();
-    var pod = new HasticPod(
+    this.pod = new HasticPod(
       document.getElementById('chart'),
       resolveData.bind(this),
       addSegment.bind(this),
       _deleteSegment.bind(this),
       s
     );
-    pod.render();
+    this.pod.render();
+  },
+  methods: {
+    async rerender() {
+      await _deleteSegment.bind(this)(0, Date.now());
+      this.pod.fetchData();
+    }
   }
 });
 </script>

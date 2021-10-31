@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
-    <graph />
+    <graph ref="graph" />
     
     <div id="controls">
       <div>
@@ -9,6 +9,8 @@
         Holde key <pre>D</pre> to delete patterns
       </div>
       <analytic-status />
+
+      <button @click="clearOrLabeling"> clear all labeling </button>
     </div>
 
   </div>
@@ -25,6 +27,11 @@ export default defineComponent({
   components: {    
     Graph,
     AnalyticStatus
+  },
+  methods: {
+    clearOrLabeling() {
+      this.$refs.graph.rerender();
+    }
   }
 });
 </script>
