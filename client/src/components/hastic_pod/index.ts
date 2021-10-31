@@ -79,7 +79,7 @@ export class HasticPod extends LinePod {
 
   renderMetrics() {
     super.renderMetrics();
-    console.log('render my metrics');
+    this.renderSegments();
   }
 
   public fetchData(): void {
@@ -197,6 +197,10 @@ export class HasticPod extends LinePod {
 
   protected renderSegments(): void {
     const segments = this._segmentSet.getSegments();
+    // TODO: this is a bad hack, don't know why
+    if(this.metricContainer == null) {
+      return;
+    }
     this.segmentsContainer = this.metricContainer
       .append('g')
       .attr('class', 'segmentsContainer')
