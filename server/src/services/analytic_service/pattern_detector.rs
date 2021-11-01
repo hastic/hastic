@@ -11,6 +11,7 @@ pub struct PatternDetector {
     learning_results: LearningResults,
 }
 
+// TODO: move this to loginc of analytic unit
 impl PatternDetector {
     pub fn new(learning_results: LearningResults) -> PatternDetector {
         PatternDetector { learning_results }

@@ -1,6 +1,6 @@
 pub mod filters {
     use super::handlers;
-    use super::models::{Srv, ListOptions};
+    use super::models::{ListOptions, Srv};
     use hastic::services::analytic_service::analytic_client::AnalyticClient;
     use warp::Filter;
 
@@ -52,7 +52,9 @@ pub mod filters {
             .and_then(handlers::delete)
     }
 
-    fn with_srv(db: Srv) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
+    fn with_srv(
+        db: Srv,
+    ) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
         warp::any().map(move || db.clone())
     }
 }
@@ -61,7 +63,7 @@ mod handlers {
     use hastic::services::analytic_service::analytic_client::AnalyticClient;
     use hastic::services::segments_service;
 
-    use super::models::{Srv, ListOptions};
+    use super::models::{ListOptions, Srv};
     use crate::api;
     use crate::api::BadQuery;
     use crate::api::API;
@@ -92,14 +94,18 @@ mod handlers {
         }
     }
 
-    pub async fn delete(opts: ListOptions, db: Srv, ac: AnalyticClient,) -> Result<impl warp::Reply, warp::Rejection> {
+    pub async fn delete(
+        opts: ListOptions,
+        db: Srv,
+        ac: AnalyticClient,
+    ) -> Result<impl warp::Reply, warp::Rejection> {
         match db.delete_segments_in_range(opts.from, opts.to) {
             Ok(count) => {
                 ac.run_learning().await.unwrap();
                 Ok(API::json(&api::Message {
                     message: count.to_string(),
                 }))
-            },
+            }
             // TODO: return proper http error
             Err(_e) => Err(warp::reject::custom(BadQuery)),
         }

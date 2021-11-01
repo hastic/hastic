@@ -18,14 +18,14 @@ pub enum LearningStatus {
 pub enum ResponseType {
     LearningStarted,
     LearningFinished(LearningResults),
-    LearningFinishedEmpty
+    LearningFinishedEmpty,
 }
 
 #[derive(Debug)]
 pub struct DetectionTask {
     pub sender: oneshot::Sender<Result<Vec<Segment>>>,
     pub from: u64,
-    pub to: u64
+    pub to: u64,
 }
 
 #[derive(Debug)]

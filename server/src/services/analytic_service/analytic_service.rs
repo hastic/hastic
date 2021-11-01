@@ -1,4 +1,9 @@
-use super::{analytic_client::AnalyticClient, pattern_detector::{self, LearningResults, PatternDetector}, types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType}};
+use super::{
+    analytic_client::AnalyticClient,
+    pattern_detector::{self, LearningResults, PatternDetector},
+    types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
+};
+use super::types;
 
 use crate::services::{
     metric_service::MetricService,
@@ -14,13 +19,12 @@ use tokio::sync::{mpsc, oneshot};
 
 use futures::future;
 
-use super::types;
 
+
+// TODO: get this from pattern detector
 const DETECTION_STEP: u64 = 10;
-const LEARNING_WAITING_INTERVAL: u64 = 100;
 
-
-// TODO: now it's basically single analytic unit, service will opreate many AU
+// TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
@@ -33,8 +37,7 @@ pub struct AnalyticService {
     learning_handler: Option<tokio::task::JoinHandle<()>>,
 
     // awaiters
-    learning_waiters: Vec<DetectionTask>
-    
+    learning_waiters: Vec<DetectionTask>,
 }
 
 impl AnalyticService {
@@ -57,7 +60,7 @@ impl AnalyticService {
             learning_handler: None,
 
             // awaiters
-            learning_waiters: Vec::new()
+            learning_waiters: Vec::new(),
         }
     }
 
@@ -71,10 +74,10 @@ impl AnalyticService {
             let lr = self.learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
             async move {
-            AnalyticService::get_pattern_detection(
-                task.sender, lr, ms, task.from, task.to
-            ).await;
-        }});
+                AnalyticService::get_pattern_detection(task.sender, lr, ms, task.from, task.to)
+                    .await;
+            }
+        });
     }
 
     fn consume_request(&mut self, req: types::RequestType) -> () {
@@ -95,19 +98,12 @@ impl AnalyticService {
                 }));
             }
             RequestType::RunDetection(task) => {
-                // TODO: move this loop to init closure
-                // while let status =  ac.get_status().await.unwrap() {
-                //     if status == LearningStatus::Learning {
-                //         sleep(Duration::from_millis(LEARNING_WAITING_INTERVAL)).await;
-                //         continue;
-                //     }
-                // }
                 if self.learning_status == LearningStatus::Ready {
                     self.run_detection_task(task);
                 } else {
                     self.learning_waiters.push(task);
                 }
-            },
+            }
             RequestType::GetStatus(tx) => {
                 tx.send(self.learning_status.clone()).unwrap();
             }
@@ -128,7 +124,7 @@ impl AnalyticService {
                     let task = self.learning_waiters.pop().unwrap();
                     self.run_detection_task(task);
                 }
-            },
+            }
             ResponseType::LearningFinishedEmpty => {
                 self.learning_results = None;
                 self.learning_status = LearningStatus::Initialization;
@@ -169,7 +165,7 @@ impl AnalyticService {
 
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
-        
+
         if segments.len() == 0 {
             match tx
                 .send(AnalyticServiceMessage::Response(
@@ -216,18 +212,24 @@ impl AnalyticService {
         }
     }
 
-    async fn get_pattern_detection(tx: oneshot::Sender<anyhow::Result<Vec<Segment>>>, lr: LearningResults, ms: MetricService, from: u64, to: u64) {
-        
+    async fn get_pattern_detection(
+        tx: oneshot::Sender<anyhow::Result<Vec<Segment>>>,
+        lr: LearningResults,
+        ms: MetricService,
+        from: u64,
+        to: u64,
+    ) {
         let prom = ms.get_prom();
-        
+
         let pt = pattern_detector::PatternDetector::new(lr);
         let mr = prom.query(from, to, DETECTION_STEP).await.unwrap();
 
-        
         if mr.data.keys().len() == 0 {
             match tx.send(Ok(Vec::new())) {
-                Ok(_) => {},
-                Err(_e) => { println!("failed to send empty results"); }
+                Ok(_) => {}
+                Err(_e) => {
+                    println!("failed to send empty results");
+                }
             }
             return;
         }
@@ -250,15 +252,17 @@ impl AnalyticService {
         // TODO: run detections
         // TODO: convert detections to segments
         // Ok(result_segments)
-        
+
         match tx.send(Ok(result_segments)) {
-            Ok(_) => {},
-            Err(_e) => { println!("failed to send results"); }
+            Ok(_) => {}
+            Err(_e) => {
+                println!("failed to send results");
+            }
         }
         return;
-        
     }
 
+    // TODO: move this to another analytic unit
     async fn get_threshold_detections(
         &self,
         from: u64,

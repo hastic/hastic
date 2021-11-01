@@ -3,6 +3,7 @@ use tokio::sync::oneshot;
 
 use crate::services::segments_service::Segment;
 
+use super::types::DetectionTask;
 use super::types::LearningStatus;
 use super::types::{AnalyticServiceMessage, RequestType};
 
@@ -33,6 +34,15 @@ impl AnalyticClient {
     }
 
     pub async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
-        return Ok(Vec::new());
+        let (tx, rx) = oneshot::channel();
+        let req = AnalyticServiceMessage::Request(RequestType::RunDetection(DetectionTask {
+            sender: tx,
+            from,
+            to,
+        }));
+        self.tx.send(req).await?;
+        // TODO: handle second error
+        let r = rx.await??;
+        return Ok(r);
     }
 }
