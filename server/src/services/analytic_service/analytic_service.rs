@@ -249,10 +249,6 @@ impl AnalyticService {
             })
             .collect();
 
-        // TODO: run detections
-        // TODO: convert detections to segments
-        // Ok(result_segments)
-
         match tx.send(Ok(result_segments)) {
             Ok(_) => {}
             Err(_e) => {
