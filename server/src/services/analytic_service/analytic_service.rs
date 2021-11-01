@@ -159,6 +159,7 @@ impl AnalyticService {
         ms: MetricService,
         ss: SegmentsService,
     ) {
+        
         match tx
             .send(AnalyticServiceMessage::Response(
                 ResponseType::LearningStarted,
@@ -199,6 +200,10 @@ impl AnalyticService {
         // TODO: save learning results in cache
         let mut learn_tss = Vec::new();
         for r in rs {
+            if r.is_err() {
+                println!("Error extracting metrics from datasource");
+                return;
+            }
             let mr = r.unwrap();
             if mr.data.keys().len() == 0 {
                 continue;

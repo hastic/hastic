@@ -30,6 +30,7 @@ pub struct DetectionTask {
 
 #[derive(Debug)]
 pub enum RequestType {
+    // TODO: convert to result RunLearning(anyhow::Result<()>)
     RunLearning,
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
