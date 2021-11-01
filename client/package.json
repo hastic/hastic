@@ -9,7 +9,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@chartwerk/line-pod": "^0.4.1",
+    "@chartwerk/line-pod": "0.4.1",
     "@kyvg/vue3-notification": "^2.3.4",
     "@types/lodash": "^4.14.176",
     "@types/tinycolor2": "^1.4.3",
