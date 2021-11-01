@@ -1,6 +1,7 @@
 use crate::services::segments_service::Segment;
 
 use super::pattern_detector::LearningResults;
+use anyhow::Result;
 use serde::Serialize;
 use tokio::sync::oneshot;
 
@@ -22,8 +23,8 @@ pub enum ResponseType {
 
 #[derive(Debug)]
 pub struct DetectionTask {
-    pub sender: oneshot::Sender<LearningStatus>,
-    pub from: u64, 
+    pub sender: oneshot::Sender<Result<Vec<Segment>>>,
+    pub from: u64,
     pub to: u64
 }
 
