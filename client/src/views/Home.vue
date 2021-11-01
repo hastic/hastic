@@ -32,9 +32,6 @@ export default defineComponent({
     clearAllLabeling() {
       this.$refs.graph.rerender();
     }
-  },
-  mounted: function name() {
-    this.$store.dispatch('runStatusGenerator');
   }
 });
 </script>
