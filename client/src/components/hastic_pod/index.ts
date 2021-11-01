@@ -84,7 +84,7 @@ export class HasticPod extends LinePod {
 
   public fetchData(): void {
     let to = Math.floor(Date.now() / 1000);
-    let from = to - 5000; // -5000 seconds
+    let from = to - 50000; // -50000 seconds
 
     if(this.state?.xValueRange !== undefined) {
       [from, to] = this.state?.xValueRange;
