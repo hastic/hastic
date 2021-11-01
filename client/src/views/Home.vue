@@ -30,7 +30,7 @@ export default defineComponent({
   },
   methods: {
     clearAllLabeling() {
-      this.$refs.graph.rerender();
+      this.$refs.graph.deleteAllSegments();
     }
   }
 });

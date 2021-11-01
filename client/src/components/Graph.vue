@@ -89,9 +89,12 @@ export default defineComponent({
     this.pod.render();
   },
   methods: {
-    async rerender() {
-      await _deleteSegment.bind(this)(0, Date.now());
+    rerender() {
       this.pod.fetchData();
+    },
+    async deleteAllSegments() {
+      await _deleteSegment.bind(this)(0, Date.now());
+      this.rerender();
     }
   }
 });

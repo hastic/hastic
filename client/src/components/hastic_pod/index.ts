@@ -96,8 +96,8 @@ export class HasticPod extends LinePod {
 
     this._udc({ from, to })
       .then(resp => {
-        this.updateData(resp.timeserie);
         this.updateSegments(resp.segments);
+        this.updateData(resp.timeserie);
       })
       .catch(() => { /* set "error" message */ })
   }
@@ -244,7 +244,6 @@ export class HasticPod extends LinePod {
   protected updateSegments(segments: Segment[]): void {
     this._segmentSet.clear();
     this._segmentSet.setSegments(segments);
-    this.renderSegments();
   }
 
 
