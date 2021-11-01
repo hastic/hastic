@@ -42,7 +42,9 @@ impl AnalyticClient {
         }));
         self.tx.send(req).await?;
         // TODO: handle second error
-        let r = rx.await??;
-        return Ok(r);
+        match rx.await? {
+            Ok(r) => Ok(r),
+            Err(e) => Ok(Vec::new()),
+        }
     }
 }

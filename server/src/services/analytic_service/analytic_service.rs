@@ -1,9 +1,9 @@
+use super::types;
 use super::{
     analytic_client::AnalyticClient,
     pattern_detector::{self, LearningResults, PatternDetector},
     types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
 };
-use super::types;
 
 use crate::services::{
     metric_service::MetricService,
@@ -18,8 +18,6 @@ use anyhow;
 use tokio::sync::{mpsc, oneshot};
 
 use futures::future;
-
-
 
 // TODO: get this from pattern detector
 const DETECTION_STEP: u64 = 10;
@@ -98,6 +96,18 @@ impl AnalyticService {
                 }));
             }
             RequestType::RunDetection(task) => {
+                if self.learning_status == LearningStatus::Initialization {
+                    match task
+                        .sender
+                        .send(Err(anyhow::format_err!("Analytics in initialization")))
+                    {
+                        Ok(_) => {}
+                        Err(e_) => {
+                            println!("failed to send error about initialization");
+                        }
+                    }
+                    return;
+                }
                 if self.learning_status == LearningStatus::Ready {
                     self.run_detection_task(task);
                 } else {

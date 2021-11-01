@@ -43,13 +43,15 @@ impl PatternDetector {
 
     // TODO: get iterator instead of vector
     pub fn detect(&self, ts: &Vec<(u64, f64)>) -> Vec<(u64, u64)> {
-
         let mut results = Vec::new();
         let mut i = 0;
         while i < ts.len() - self.learning_results.backet_size {
+            let backet: Vec<_> = ts
+                .iter()
+                .skip(i)
+                .take(self.learning_results.backet_size)
+                .collect();
 
-            let backet: Vec<_> = ts.iter().skip(i).take(self.learning_results.backet_size).collect();
-            
             let mut min = f64::MAX;
             let mut max = f64::MIN;
 
@@ -59,8 +61,8 @@ impl PatternDetector {
             }
 
             if min > 10_000. && max < 100_000. {
-                let from = backet[i].0;
-                let to = backet[i + self.learning_results.backet_size - 1].0;
+                let from = backet[0].0;
+                let to = backet[backet.len() - 1].0;
                 results.push((from, to));
             }
 
