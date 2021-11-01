@@ -19,6 +19,7 @@ pub enum ResponseType {
     LearningStarted,
     LearningFinished(LearningResults),
     LearningFinishedEmpty,
+    LearningDatasourceError,
 }
 
 #[derive(Debug)]

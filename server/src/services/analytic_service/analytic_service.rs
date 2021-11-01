@@ -136,8 +136,14 @@ impl AnalyticService {
                 }
             }
             ResponseType::LearningFinishedEmpty => {
+                // TODO: drop all learning_waiters with empty results
                 self.learning_results = None;
                 self.learning_status = LearningStatus::Initialization;
+            }
+            ResponseType::LearningDatasourceError => {
+                // TODO: drop all learning_waiters with error
+                self.learning_results = None;
+                self.learning_status = LearningStatus::Error;
             }
         }
     }
@@ -159,7 +165,6 @@ impl AnalyticService {
         ms: MetricService,
         ss: SegmentsService,
     ) {
-        
         match tx
             .send(AnalyticServiceMessage::Response(
                 ResponseType::LearningStarted,
@@ -202,6 +207,15 @@ impl AnalyticService {
         for r in rs {
             if r.is_err() {
                 println!("Error extracting metrics from datasource");
+                match tx
+                    .send(AnalyticServiceMessage::Response(
+                        ResponseType::LearningDatasourceError,
+                    ))
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(_e) => println!("Fail send error abour extracting error"),
+                }
                 return;
             }
             let mr = r.unwrap();
