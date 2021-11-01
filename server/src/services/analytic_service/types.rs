@@ -1,3 +1,5 @@
+use crate::services::segments_service::Segment;
+
 use super::pattern_detector::LearningResults;
 use serde::Serialize;
 use tokio::sync::oneshot;
@@ -19,8 +21,16 @@ pub enum ResponseType {
 }
 
 #[derive(Debug)]
+pub struct DetectionTask {
+    pub sender: oneshot::Sender<LearningStatus>,
+    pub from: u64, 
+    pub to: u64
+}
+
+#[derive(Debug)]
 pub enum RequestType {
     RunLearning,
+    RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
 }
 
