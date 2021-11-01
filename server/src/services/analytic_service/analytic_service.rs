@@ -225,7 +225,10 @@ impl AnalyticService {
 
         
         if mr.data.keys().len() == 0 {
-            tx.send(Ok(Vec::new()));
+            match tx.send(Ok(Vec::new())) {
+                Ok(_) => {},
+                Err(_e) => { println!("failed to send empty results"); }
+            }
             return;
         }
 
@@ -247,7 +250,12 @@ impl AnalyticService {
         // TODO: run detections
         // TODO: convert detections to segments
         // Ok(result_segments)
-        tx.send(Ok(result_segments));
+        
+        match tx.send(Ok(result_segments)) {
+            Ok(_) => {},
+            Err(_e) => { println!("failed to send results"); }
+        }
+        return;
         
     }
 
