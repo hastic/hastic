@@ -68,12 +68,12 @@ impl AnalyticService {
     fn run_detection_task(&self, task: DetectionTask) {
         // TODO: save handler of the task
         tokio::spawn({
-            let lr = self.learning_results.unwrap().clone();
+            let lr = self.learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
             async move {
             AnalyticService::get_pattern_detection(
                 task.sender, lr, ms, task.from, task.to
-            );
+            ).await;
         }});
     }
 
@@ -103,7 +103,7 @@ impl AnalyticService {
                 //     }
                 // }
                 if self.learning_status == LearningStatus::Ready {
-                    AnalyticService::run_detection_task(task);
+                    self.run_detection_task(task);
                 } else {
                     self.learning_waiters.push(task);
                 }
@@ -126,7 +126,7 @@ impl AnalyticService {
                 // TODO: run tasks from self.learning_waiter
                 while self.learning_waiters.len() > 0 {
                     let task = self.learning_waiters.pop().unwrap();
-                    AnalyticService::run_detection_task(task);
+                    self.run_detection_task(task);
                 }
             },
             ResponseType::LearningFinishedEmpty => {
@@ -225,7 +225,7 @@ impl AnalyticService {
 
         
         if mr.data.keys().len() == 0 {
-            tx.send(Vec::new());
+            tx.send(Ok(Vec::new()));
             return;
         }
 
@@ -247,7 +247,7 @@ impl AnalyticService {
         // TODO: run detections
         // TODO: convert detections to segments
         // Ok(result_segments)
-        tx.send(result_segments);
+        tx.send(Ok(result_segments));
         
     }
 
