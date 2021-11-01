@@ -10,7 +10,7 @@
       </div>
       <analytic-status />
 
-      <button @click="clearOrLabeling"> clear all labeling </button>
+      <button @click="clearAllLabeling"> clear all labeling </button>
     </div>
 
   </div>
@@ -29,9 +29,12 @@ export default defineComponent({
     AnalyticStatus
   },
   methods: {
-    clearOrLabeling() {
+    clearAllLabeling() {
       this.$refs.graph.rerender();
     }
+  },
+  mounted: function name() {
+    this.$store.dispatch('runStatusGenerator');
   }
 });
 </script>
