@@ -202,7 +202,7 @@ export class HasticPod extends LinePod {
       return;
     }
     this.segmentsContainer = this.metricContainer
-      .append('g')
+      .insert('g', ':first-child')
       .attr('class', 'segmentsContainer')
     for (const s in segments) {
       this.renderSegment(segments[s]);
