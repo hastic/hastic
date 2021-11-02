@@ -1,6 +1,7 @@
 use crate::services::segments_service::Segment;
 
 use super::pattern_detector::LearningResults;
+
 use anyhow::Result;
 use serde::Serialize;
 use tokio::sync::oneshot;

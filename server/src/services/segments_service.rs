@@ -1,10 +1,10 @@
+use crate::utils::get_random_str;
+
 use rusqlite::{params, Connection, Row};
 
 use serde::{Deserialize, Serialize};
 
 use std::sync::{Arc, Mutex};
-
-use crate::utils::get_random_str;
 
 pub const ID_LENGTH: usize = 20;
 pub type SegmentId = String;

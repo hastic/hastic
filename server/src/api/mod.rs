@@ -1,16 +1,17 @@
+mod analytics;
+mod auth;
+mod metric;
+mod segments;
+
 use hastic::config::Config;
 use hastic::services::analytic_service::{analytic_client, AnalyticService};
 use hastic::services::{metric_service, segments_service, user_service};
+
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
 use warp::reject::Reject;
 use warp::{http::Response, Filter};
 use warp::{options, Reply};
-
-mod analytics;
-mod auth;
-mod metric;
-mod segments;
 
 use serde::Serialize;
 

@@ -1,8 +1,11 @@
+use super::BadQuery;
+use crate::api::API;
+
 use hastic::services::metric_service;
 
 use subbeat::metric::{Metric, MetricResult};
-use warp::filters::method::get;
 
+use warp::filters::method::get;
 use warp::Filter;
 use warp::{Rejection, Reply};
 
@@ -10,11 +13,7 @@ use serde::Serialize;
 
 use anyhow;
 
-use crate::api::API;
-
 use std::collections::HashMap;
-
-use super::BadQuery;
 
 #[derive(Serialize)]
 struct QueryResponse {

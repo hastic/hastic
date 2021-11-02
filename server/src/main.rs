@@ -1,7 +1,8 @@
-use anyhow;
+mod api;
+
 use hastic::services::{analytic_service, metric_service, segments_service};
 
-mod api;
+use anyhow;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
