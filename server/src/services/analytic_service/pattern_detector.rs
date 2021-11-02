@@ -58,7 +58,7 @@ impl PatternDetector {
 
         // let model = stat.iter().map(|(c, v)| v / *c as f64).collect();
 
-        LearningResults { 
+        LearningResults {
             patterns
             //model
         }

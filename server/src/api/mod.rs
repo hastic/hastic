@@ -1,5 +1,5 @@
 use hastic::config::Config;
-use hastic::services::analytic_service::AnalyticService;
+use hastic::services::analytic_service::{analytic_client, AnalyticService};
 use hastic::services::{metric_service, segments_service, user_service};
 use warp::http::HeaderValue;
 use warp::hyper::{Body, StatusCode};
@@ -32,19 +32,23 @@ pub struct API<'a> {
     user_service: Arc<RwLock<user_service::UserService>>,
     metric_service: metric_service::MetricService,
     segments_service: segments_service::SegmentsService,
+    analytic_client: analytic_client::AnalyticClient,
 }
 
 impl API<'_> {
-    pub fn new(config: &Config) -> anyhow::Result<API<'_>> {
-        let ss = segments_service::SegmentsService::new()?;
-        let ms = metric_service::MetricService::new(&config.prom_url, &config.query);
-
-        Ok(API {
+    pub fn new(
+        config: &Config,
+        metric_service: metric_service::MetricService,
+        segments_service: segments_service::SegmentsService,
+        analytic_client: analytic_client::AnalyticClient,
+    ) -> API<'_> {
+        API {
             config: config,
             user_service: Arc::new(RwLock::new(user_service::UserService::new())),
-            metric_service: ms.clone(),
-            segments_service: ss.clone(),
-        })
+            metric_service,
+            segments_service,
+            analytic_client,
+        }
     }
 
     fn json<T: Serialize>(t: &T) -> Response<Body> {
@@ -69,9 +73,6 @@ impl API<'_> {
     }
 
     pub async fn serve(&self) {
-        let mut analytic_service =
-            AnalyticService::new(self.metric_service.clone(), self.segments_service.clone());
-
         let not_found =
             warp::any().map(|| warp::reply::with_status("Not found", StatusCode::NOT_FOUND));
         let options = warp::any().and(options()).map(|| {
@@ -81,11 +82,9 @@ impl API<'_> {
         });
         let metrics = metric::get_route(self.metric_service.clone());
         let login = auth::get_route(self.user_service.clone());
-        let segments = segments::filters::filters(
-            self.segments_service.clone(),
-            analytic_service.get_client(),
-        );
-        let analytics = analytics::filters::filters(analytic_service.get_client());
+        let segments =
+            segments::filters::filters(self.segments_service.clone(), self.analytic_client.clone());
+        let analytics = analytics::filters::filters(self.analytic_client.clone());
         let public = warp::fs::dir("public");
 
         println!("Start server on {} port", self.config.port);
@@ -95,9 +94,8 @@ impl API<'_> {
             .or(public)
             .or(not_found);
 
-        let s1 = analytic_service.serve();
-        let s2 = warp::serve(routes).run(([127, 0, 0, 1], self.config.port));
-
-        futures::future::join(s1, s2).await;
+        warp::serve(routes)
+            .run(([127, 0, 0, 1], self.config.port))
+            .await;
     }
 }
