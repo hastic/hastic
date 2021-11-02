@@ -1,0 +1,3 @@
+port = 8000
+query = "rate(go_memstats_alloc_bytes_total[5m])"
+prom_url = "http://localhost:9090"
