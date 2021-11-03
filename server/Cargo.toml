@@ -13,7 +13,7 @@ parking_lot = "0.11.2"
 serde = { version = "1.0", features = ["derive"] }
 fastrand = "1.5.0"
 # subbeat = { path = "../../../subbeat/subbeat/" }
-subbeat = "0.0.6"
+subbeat = "0.0.7"
 config = "0.11.0"
 openssl = { version = "=0.10.33", features = ["vendored"] }
 rusqlite = "0.26.1"

@@ -175,7 +175,7 @@ impl AnalyticService {
             Err(_e) => println!("Fail to send notification about learning start"),
         }
 
-        let prom = ms.get_prom();
+        
 
         // TODO: logic for returning error
 
@@ -198,7 +198,7 @@ impl AnalyticService {
 
         let fs = segments
             .iter()
-            .map(|s| prom.query(s.from, s.to, DETECTION_STEP));
+            .map(|s| ms.query(s.from, s.to, DETECTION_STEP));
         let rs = future::join_all(fs).await;
 
         // TODO: run this on label adding
@@ -248,10 +248,9 @@ impl AnalyticService {
         from: u64,
         to: u64,
     ) {
-        let prom = ms.get_prom();
 
         let pt = pattern_detector::PatternDetector::new(lr);
-        let mr = prom.query(from, to, DETECTION_STEP).await.unwrap();
+        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
             match tx.send(Ok(Vec::new())) {
@@ -295,8 +294,7 @@ impl AnalyticService {
         step: u64,
         threashold: f64,
     ) -> anyhow::Result<Vec<Segment>> {
-        let prom = self.metric_service.get_prom();
-        let mr = prom.query(from, to, step).await?;
+        let mr = self.metric_service.query(from, to, step).await?;
 
         if mr.data.keys().len() == 0 {
             return Ok(Vec::new());

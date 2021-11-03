@@ -37,9 +37,7 @@ async fn get_query(
     let to = p.get("to").unwrap().parse::<u64>()?;
     let step = p.get("step").unwrap().parse::<u64>()?;
 
-    let prom = ms.get_prom();
-    drop(ms);
-    Ok(prom.query(from, to, step).await?)
+    Ok(ms.query(from, to, step).await?)
 }
 
 async fn query(
