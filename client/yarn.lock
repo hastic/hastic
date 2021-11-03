@@ -223,17 +223,17 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
-"@chartwerk/core@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.2.0.tgz#208604a51a38f307e45b751f2fe6f13e655b67c1"
-  integrity sha512-VWlBMn6FiYts3RbDdFd3ChQ9QzpdewUlv7Scwc8e/54863abtG4YHyD/X9cVB5RjRivEJd9cJPHWkPaWKuik3g==
+"@chartwerk/core@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.3.2.tgz#40187a4d1dda5045effc04c01559ff16c236bca7"
+  integrity sha512-E4Bb2rDBDTNXRM7koSXDwM6IYYNdLnqxJel1y2BmH4p9R0Z+3L0C4B+jYurkiwcnIWdGlHXVFL0E0khPeLypfA==
 
-"@chartwerk/line-pod@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.1.tgz#b4a8ed21aa41a268ab5567ada7dbd13621c9a36e"
-  integrity sha512-6CVVQvtFnK46BwevCFskNiCP0eabvGOva+sqcK0LnrC4ifVPiIdOIHbY3qHiTWaT2bQw1frpYPN6x8aitLUliw==
+"@chartwerk/line-pod@0.4.4":
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.4.tgz#724152e886c529df97019ba3dfed335ef42b2f57"
+  integrity sha512-L7RmTzy+TVMueV91E3upVCK/V7t9ZYLwC0tIYhFJxSJjrLOhRMAOLxZdkp7CqxXFj+u+FuFDhY0Dch2nYDvLpg==
   dependencies:
-    "@chartwerk/core" "^0.2.0"
+    "@chartwerk/core" "^0.3.2"
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"

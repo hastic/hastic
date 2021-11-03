@@ -86,7 +86,7 @@ export class HasticPod extends LinePod {
     let to = Math.floor(Date.now() / 1000);
     let from = to - 50000; // -50000 seconds
 
-    if(this.state?.xValueRange !== undefined) {
+    if(!(this.state.xValueRange[0] == 0 && this.state.xValueRange[1] == 1)) {
       [from, to] = this.state?.xValueRange;
       console.log('took from range from state');
     } else {
@@ -97,7 +97,7 @@ export class HasticPod extends LinePod {
     this._udc({ from, to })
       .then(resp => {
         this.updateSegments(resp.segments);
-        this.updateData(resp.timeserie);
+        this.updateData(resp.timeserie, undefined, true);
       })
       .catch(() => { /* set "error" message */ })
   }
