@@ -6,9 +6,9 @@ use anyhow;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = hastic::config::Config::new();
+    let config = hastic::config::Config::new()?;
 
-    let metric_service = metric_service::MetricService::new(&config.prom_url, &config.query);
+    let metric_service = metric_service::MetricService::new(&config.datasource_config);
     let segments_service = segments_service::SegmentsService::new()?;
 
     let mut analytic_service =

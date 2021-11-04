@@ -1,14 +1,45 @@
 use std::collections::HashMap;
+use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
 pub struct Config {
-    pub prom_url: String,
-    pub query: String,
     pub port: u16,
+    pub datasource_config: DatasourceConfig
+}
+
+fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceConfig> {
+
+    if config.get::<String>("prometheus.url").is_ok() {
+        return Ok(DatasourceConfig::Prometheus(PrometheusConfig {
+            url: config.get("prometheus.url")?,
+            query: config.get("prometheus.query")?,
+        }));
+    }
+
+    if config.get::<String>("influx.url").is_ok() {
+        return Ok(DatasourceConfig::Influx(InfluxConfig {
+            url: config.get("influx.url")?,
+            org_id: config.get("influx.org_id")?,
+            token: config.get("influx.token")?,
+            query: config.get("influx.query")?,
+        }));
+    }
+
+    return Err(anyhow::format_err!("no datasource found"));
+
+
+    // if config.get::<String>("prometheus.url").is_err() {
+    //     config.set("url", "http://localhost:9090").unwrap();
+    // }
+    // if config.get::<String>("prometheus.query").is_err() {
+    //     config
+    //         .set("query", "rate(go_memstats_alloc_bytes_total[5m])")
+    //         .unwrap();
+    // }
 }
 
 // TODO: use actual config and env variables
 impl Config {
-    pub fn new() -> Config {
+    pub fn new() -> anyhow::Result<Config> {
         let mut config = config::Config::default();
 
         if std::path::Path::new("config.toml").exists() {
@@ -21,19 +52,11 @@ impl Config {
         if config.get::<u16>("port").is_err() {
             config.set("port", "8000").unwrap();
         }
-        if config.get::<String>("prom_url").is_err() {
-            config.set("prom_url", "http://localhost:9090").unwrap();
-        }
-        if config.get::<String>("query").is_err() {
-            config
-                .set("query", "rate(go_memstats_alloc_bytes_total[5m])")
-                .unwrap();
-        }
+        
 
-        Config {
+        Ok(Config {
             port: config.get::<u16>("port").unwrap(),
-            prom_url: config.get("prom_url").unwrap(),
-            query: config.get("query").unwrap(),
-        }
+            datasource_config: resolve_datasource(&mut config)?
+        })
     }
 }
