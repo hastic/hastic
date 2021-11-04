@@ -17,6 +17,8 @@ use tokio::sync::{mpsc, oneshot};
 
 use futures::future;
 
+use chrono::Utc;
+
 // TODO: get this from pattern detector
 const DETECTION_STEP: u64 = 10;
 
@@ -29,17 +31,23 @@ pub struct AnalyticService {
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
 
+    endpoint: Option<String>,
+
     // handlers
     learning_handler: Option<tokio::task::JoinHandle<()>>,
 
     // awaiters
     learning_waiters: Vec<DetectionTask>,
+
+    // runner
+    runner_handler: Option<tokio::task::JoinHandle<()>>,
 }
 
 impl AnalyticService {
     pub fn new(
         metric_service: MetricService,
         segments_service: segments_service::SegmentsService,
+        endpoint: Option<String>,
     ) -> AnalyticService {
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
@@ -52,11 +60,15 @@ impl AnalyticService {
             tx,
             rx,
 
+            endpoint,
+
             // handlers
             learning_handler: None,
 
             // awaiters
             learning_waiters: Vec::new(),
+
+            runner_handler: None,
         }
     }
 
@@ -76,15 +88,18 @@ impl AnalyticService {
         });
     }
 
-    fn run_detection_runner(&self, task: DetectionRunnerConfig) {
+    fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
+        if self.runner_handler.is_some() {
+            self.runner_handler.as_mut().unwrap().abort();
+        }
         // TODO: save handler of the task
-        tokio::spawn({
+        self.runner_handler = Some(tokio::spawn({
             let lr = self.learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
             async move {
-                
+                // TODO: implement
             }
-        });
+        }));
     }
 
     fn consume_request(&mut self, req: types::RequestType) -> () {
@@ -143,6 +158,14 @@ impl AnalyticService {
                 while self.learning_waiters.len() > 0 {
                     let task = self.learning_waiters.pop().unwrap();
                     self.run_detection_task(task);
+                }
+
+                // TODO: fix this
+                if self.endpoint.is_some() {
+                    self.run_detection_runner(DetectionRunnerConfig {
+                        endpoint: self.endpoint.as_ref().unwrap().clone(),
+                        from: Utc::now().timestamp() as u64,
+                    });
                 }
             }
             ResponseType::LearningFinishedEmpty => {

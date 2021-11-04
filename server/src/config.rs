@@ -3,6 +3,17 @@ use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 pub struct Config {
     pub port: u16,
     pub datasource_config: DatasourceConfig,
+    pub endpoint: Option<String>,
+}
+
+impl Clone for Config {
+    fn clone(&self) -> Self {
+        return Config {
+            port: self.port,
+            datasource_config: self.datasource_config.clone(),
+            endpoint: self.endpoint.clone(),
+        };
+    }
 }
 
 fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceConfig> {
@@ -41,9 +52,15 @@ impl Config {
             config.set("port", "8000").unwrap();
         }
 
+        let mut endpoint = None;
+        if config.get::<String>("webhook.endpoint").is_ok() {
+            endpoint = Some(config.get("webhook.endpoint").unwrap());
+        }
+
         Ok(Config {
             port: config.get::<u16>("port").unwrap(),
             datasource_config: resolve_datasource(&mut config)?,
+            endpoint,
         })
     }
 }

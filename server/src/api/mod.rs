@@ -96,7 +96,7 @@ impl API<'_> {
             .or(not_found);
 
         warp::serve(routes)
-            .run(([127, 0, 0, 1], self.config.port))
+            .run(([0, 0, 0, 0], self.config.port))
             .await;
     }
 }

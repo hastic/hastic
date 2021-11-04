@@ -32,9 +32,9 @@ pub struct DetectionTask {
 
 #[derive(Debug)]
 pub struct DetectionRunnerConfig {
-    pub sender: mpsc::Sender<Result<Vec<Segment>>>,
+    // pub sender: mpsc::Sender<Result<Vec<Segment>>>,
     pub endpoint: String,
-    pub from: u64
+    pub from: u64,
 }
 
 #[derive(Debug)]

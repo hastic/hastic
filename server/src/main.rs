@@ -7,15 +7,19 @@ use anyhow;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = hastic::config::Config::new()?;
+    let cfg_clone = config.clone();
 
     let metric_service = metric_service::MetricService::new(&config.datasource_config);
     let segments_service = segments_service::SegmentsService::new()?;
 
-    let mut analytic_service =
-        analytic_service::AnalyticService::new(metric_service.clone(), segments_service.clone());
+    let mut analytic_service = analytic_service::AnalyticService::new(
+        metric_service.clone(),
+        segments_service.clone(),
+        config.endpoint,
+    );
 
     let api = api::API::new(
-        &config,
+        &cfg_clone,
         metric_service.clone(),
         segments_service.clone(),
         analytic_service.get_client(),
