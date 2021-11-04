@@ -4,7 +4,7 @@ use super::pattern_detector::LearningResults;
 
 use anyhow::Result;
 use serde::Serialize;
-use tokio::sync::oneshot;
+use tokio::sync::{mpsc, oneshot};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum LearningStatus {
@@ -28,6 +28,13 @@ pub struct DetectionTask {
     pub sender: oneshot::Sender<Result<Vec<Segment>>>,
     pub from: u64,
     pub to: u64,
+}
+
+#[derive(Debug)]
+pub struct DetectionRunnerConfig {
+    pub sender: mpsc::Sender<Result<Vec<Segment>>>,
+    pub endpoint: String,
+    pub from: u64
 }
 
 #[derive(Debug)]

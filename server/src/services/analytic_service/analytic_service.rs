@@ -1,4 +1,4 @@
-use super::types;
+use super::types::{self, DetectionRunnerConfig};
 use super::{
     analytic_client::AnalyticClient,
     pattern_detector::{self, LearningResults, PatternDetector},
@@ -76,6 +76,17 @@ impl AnalyticService {
         });
     }
 
+    fn run_detection_runner(&self, task: DetectionRunnerConfig) {
+        // TODO: save handler of the task
+        tokio::spawn({
+            let lr = self.learning_results.as_ref().unwrap().clone();
+            let ms = self.metric_service.clone();
+            async move {
+                
+            }
+        });
+    }
+
     fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
             RequestType::RunLearning => {
@@ -100,8 +111,9 @@ impl AnalyticService {
                         .send(Err(anyhow::format_err!("Analytics in initialization")))
                     {
                         Ok(_) => {}
-                        Err(e_) => {
+                        Err(e) => {
                             println!("failed to send error about initialization");
+                            println!("{:?}", e);
                         }
                     }
                     return;
