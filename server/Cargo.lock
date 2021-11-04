@@ -1321,9 +1321,9 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "subbeat"
-version = "0.0.12"
+version = "0.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1293b7c5e75d456eb4a22a4eabe0327029f437250da8b0c70e1183f76a84132"
+checksum = "e935262d66772027700000fb1d8c81bb4bc7db8ef884880ce658686406e5416b"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -25,12 +25,12 @@ impl PatternDetector {
     }
 
     pub async fn learn(reads: &Vec<Vec<(u64, f64)>>) -> LearningResults {
-        let size_avg = reads.iter().map(|r| r.len()).sum::<usize>() / reads.len();
+        // let size_avg = reads.iter().map(|r| r.len()).sum::<usize>() / reads.len();
 
-        let mut stat = Vec::<(usize, f64)>::new();
-        for _i in 0..size_avg {
-            stat.push((0usize, 0f64));
-        }
+        // let mut stat = Vec::<(usize, f64)>::new();
+        // for _i in 0..size_avg {
+        //     stat.push((0usize, 0f64));
+        // }
 
         let mut patterns = Vec::<Vec<f64>>::new();
 

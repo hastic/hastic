@@ -11,8 +11,6 @@ use crate::services::{
 };
 use crate::utils::{self, get_random_str};
 
-use subbeat::metric::Metric;
-
 use anyhow;
 
 use tokio::sync::{mpsc, oneshot};

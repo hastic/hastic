@@ -1,6 +1,4 @@
-use subbeat::{
-    metric::{Metric, MetricResult},
-};
+use subbeat::metric::{Metric, MetricResult};
 
 pub struct MetricService {
     datasource: Box<dyn Metric + Sync + Send>,
