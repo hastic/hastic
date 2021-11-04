@@ -1,13 +1,11 @@
-use std::collections::HashMap;
 use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
 pub struct Config {
     pub port: u16,
-    pub datasource_config: DatasourceConfig
+    pub datasource_config: DatasourceConfig,
 }
 
 fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceConfig> {
-
     if config.get::<String>("prometheus.url").is_ok() {
         return Ok(DatasourceConfig::Prometheus(PrometheusConfig {
             url: config.get("prometheus.url")?,
@@ -25,16 +23,6 @@ fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceC
     }
 
     return Err(anyhow::format_err!("no datasource found"));
-
-
-    // if config.get::<String>("prometheus.url").is_err() {
-    //     config.set("url", "http://localhost:9090").unwrap();
-    // }
-    // if config.get::<String>("prometheus.query").is_err() {
-    //     config
-    //         .set("query", "rate(go_memstats_alloc_bytes_total[5m])")
-    //         .unwrap();
-    // }
 }
 
 // TODO: use actual config and env variables
@@ -52,11 +40,10 @@ impl Config {
         if config.get::<u16>("port").is_err() {
             config.set("port", "8000").unwrap();
         }
-        
 
         Ok(Config {
             port: config.get::<u16>("port").unwrap(),
-            datasource_config: resolve_datasource(&mut config)?
+            datasource_config: resolve_datasource(&mut config)?,
         })
     }
 }

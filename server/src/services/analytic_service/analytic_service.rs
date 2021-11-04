@@ -175,8 +175,6 @@ impl AnalyticService {
             Err(_e) => println!("Fail to send notification about learning start"),
         }
 
-        
-
         // TODO: logic for returning error
 
         // be careful if decide to store detections in db
@@ -248,7 +246,6 @@ impl AnalyticService {
         from: u64,
         to: u64,
     ) {
-
         let pt = pattern_detector::PatternDetector::new(lr);
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
