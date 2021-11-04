@@ -9,4 +9,4 @@ query = "rate(go_memstats_alloc_bytes_total[5m])"
 # url = "http://localhost:8086"
 # org_id = "5abe4759f7360f1c"
 # token = "sCAB2MVo8TJxhUH8UDJZIeCPwf-cykBtO0jhr207qCQSZ9d43JXObCYK_uAml2BL26JBYFauz95yIeC51kxQog=="
-# query = 'from(bucket:"main-backet") |> $range |> filter(fn:(r) => r._measurement == "cpu")'
+# query = 'from(bucket: "main-backet") |> $range |> filter(fn: (r) => r["_measurement"] == "cpu") |> filter(fn: (r) => r["_field"] == "usage_system") |> filter(fn: (r) => r["cpu"] == "cpu-total") |> filter(fn: (r) => r["host"] == "roid") |> yield(name: "mean")'
