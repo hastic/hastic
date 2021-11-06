@@ -19,9 +19,11 @@ export class HasticPod extends LinePod {
   private _csc: CreateSegmentCallback;
   private _dsc: DeleteSegmentCallback;
 
-  private _ctrlKeyIsDown: boolean;
+  private _aKeyIsDown: boolean;
+  private _sKeyIsDown: boolean;
   private _dKeyIsDown: boolean;
   private _labelBrush: boolean;
+  private _antiLabelBrush: boolean;
   private _deleteBrush: boolean;
 
   protected segmentsContainer;
@@ -52,20 +54,31 @@ export class HasticPod extends LinePod {
 
     this._csc = csc;
     this._dsc = dsc;
-    this._ctrlKeyIsDown = false;
+
+    this._sKeyIsDown = false;
+    this._aKeyIsDown = false;
+    this._dKeyIsDown = false;
+
     this._labelBrush = false;
+    this._antiLabelBrush = false;
 
     window.addEventListener("keydown", e => {
-      if(e.code == "ControlLeft") {
-        this._ctrlKeyIsDown = true;
+      if(e.code == "KeyA") {
+        this._aKeyIsDown = true;
+      }
+      if(e.code == "KeyS") {
+        this._sKeyIsDown = true;
       }
       if(e.code == 'KeyD') {
         this._dKeyIsDown = true;
       }
     });
     window.addEventListener("keyup", (e) => {
-      if(e.code == "ControlLeft") {
-        this._ctrlKeyIsDown = false;
+      if(e.code == "KeyA") {
+        this._aKeyIsDown = false;
+      }
+      if(e.code == "KeyS") {
+        this._sKeyIsDown = false;
       }
       if(e.code == 'KeyD') {
         this._dKeyIsDown = false;
@@ -114,14 +127,18 @@ export class HasticPod extends LinePod {
   }
 
   protected onBrushStart(): void {
-    if(this._ctrlKeyIsDown) {
+    if(this._sKeyIsDown) {
       this._labelBrush = true;
       this.svg.select('.selection')
-        .attr('fill', 'red')
+        .attr('fill', 'red');
+    } else if (this._aKeyIsDown) {
+      this._antiLabelBrush = true;
+      this.svg.select('.selection')
+        .attr('fill', 'blue');
     } else if (this._dKeyIsDown) {
       this._deleteBrush = true;
       this.svg.select('.selection')
-        .attr('fill', 'blue')
+        .attr('fill', 'darkgreen');
     }
 
     // TODO: move to state
@@ -134,7 +151,7 @@ export class HasticPod extends LinePod {
   }
 
   protected onBrushEnd(): void {
-    if(!this._labelBrush && !this._deleteBrush) {
+    if(!this._labelBrush && !this._antiLabelBrush && !this._deleteBrush) {
       super.onBrushEnd();
     } else {
       const extent = this.d3.event.selection;
@@ -149,8 +166,12 @@ export class HasticPod extends LinePod {
       const endTimestamp = this.xScale.invert(extent[1]);
 
       if(this._labelBrush) {
-        this.addSegment(startTimestamp, endTimestamp);
+        this.addSegment(startTimestamp, endTimestamp, SegmentType.LABEL);
         this._labelBrush = false;
+      }
+      if(this._antiLabelBrush) {
+        this.addSegment(startTimestamp, endTimestamp, SegmentType.ANTI_LABEL);
+        this._antiLabelBrush = false;
       }
       if(this._deleteBrush) {
         this.deleteSegment(startTimestamp, endTimestamp);
@@ -159,7 +180,7 @@ export class HasticPod extends LinePod {
     }
   }
 
-  protected async addSegment(from: number, to: number): Promise<void> {
+  protected async addSegment(from: number, to: number, type: SegmentType): Promise<void> {
     const id = this.getNewTempSegmentId();
     from = Math.floor(from);
     to = Math.ceil(to);
@@ -170,7 +191,7 @@ export class HasticPod extends LinePod {
       to = t;
     }
 
-    const segment = new Segment(id, from, to);
+    const segment = new Segment(id, from, to, type);
     //const storedId =
     await this._csc(segment);
     this.fetchData();
@@ -224,9 +245,12 @@ export class HasticPod extends LinePod {
       .attr('fill', ANALYTIC_UNIT_COLORS[0])
       .attr('opacity', '0.8')
       .attr('pointer-events', 'none')
-    
-    if(segment.segmentType == SegmentType.LABEL) {
+
+    if(segment.segmentType == SegmentType.LABEL || segment.segmentType == SegmentType.ANTI_LABEL) {
       r.attr('style', 'stroke:rgb(0,0,0); stroke-width:2')
+    }
+    if(segment.segmentType == SegmentType.ANTI_LABEL) {
+      r.attr('fill', ANALYTIC_UNIT_COLORS[1])
     }
   }
 

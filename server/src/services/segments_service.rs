@@ -12,14 +12,17 @@ pub type SegmentId = String;
 // TODO: make logic with this enum shorter
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum SegmentType {
+    Detection = 0,
     Label = 1,
-    Detection = 2,
+    AntiLabel = 2
 }
 
 impl SegmentType {
     fn from(u: u64) -> SegmentType {
         if u == 1 {
             SegmentType::Label
+        } else if u == 2 {
+            SegmentType::AntiLabel
         } else {
             SegmentType::Detection
         }
@@ -28,8 +31,10 @@ impl SegmentType {
     fn to_integer(&self) -> u64 {
         if *self == SegmentType::Label {
             1
-        } else {
+        } else if *self == SegmentType::AntiLabel {
             2
+        } else {
+            0
         }
     }
 }
@@ -125,9 +130,9 @@ impl SegmentsService {
         let mut stmt = conn.prepare(
             "SELECT id, start, end, segment_type
                     FROM segment
-                    WHERE (start <= ?1 and ?1 <= end) OR 
+                    WHERE (start <= ?1 and ?1 <= end) OR
                           (start <= ?2 AND ?2 <= end) OR
-                          (?1 <= start AND start <= ?2) OR 
+                          (?1 <= start AND start <= ?2) OR
                           (?1 <= end AND end <= ?2) ",
         )?;
 

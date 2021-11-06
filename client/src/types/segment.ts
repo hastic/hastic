@@ -2,6 +2,7 @@ export type SegmentId = string;
 
 export enum SegmentType {
   LABEL = 'Label',
+  ANTI_LABEL = 'AntiLabel',
   DETECTION = 'Detection'
 }
 
@@ -50,7 +51,7 @@ export class Segment {
       id: this.id,
       from: this.from,
       to: this.to,
-      segment_type: 'Label'
+      segment_type: this.segmentType
     }
   }
 
