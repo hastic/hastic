@@ -59,40 +59,46 @@ impl PatternDetector {
         let mut results = Vec::new();
         // let mut i = 0;
 
-        // let m = &self.learning_results.model;
-
-        // // TODO: here we ignoring gaps in data
-        // while i < ts.len() - self.learning_results.model.len() {
-        //     let mut backet = Vec::<f64>::new();
-
-        //     for j in 0..m.len() {
-        //         backet.push(nan_to_zero(ts[j + i].1));
-        //     }
-
-        //     let c = PatternDetector::corr_aligned(&backet, &m);
-
-        //     if c >= CORR_THRESHOLD {
-        //         let from = ts[i].0;
-        //         let to = ts[i + backet.len() - 1].0;
-        //         results.push((from, to));
-        //     }
-
-        //     i += m.len();
-        // }
 
         let pt = &self.learning_results.patterns;
+        let apt = &self.learning_results.anti_patterns;
 
+        
         for i in 0..ts.len() {
+
+            let mut pattern_match_score = 0f64;
+            let mut pattern_match_len = 0usize;
+            let mut anti_pattern_match_score = 0f64;
+
             for p in pt {
                 if i + p.len() < ts.len() {
                     let mut backet = Vec::<f64>::new();
                     for j in 0..p.len() {
                         backet.push(nan_to_zero(ts[i + j].1));
                     }
-                    if PatternDetector::corr_aligned(p, &backet) >= CORR_THRESHOLD {
-                        results.push((ts[i].0, ts[i + p.len() - 1].0));
+                    let score = PatternDetector::corr_aligned(p, &backet);
+                    if score > pattern_match_score {
+                        pattern_match_score = score;
+                        pattern_match_len = p.len();
                     }
                 }
+            }
+
+            for p in apt {
+                if i + p.len() < ts.len() {
+                    let mut backet = Vec::<f64>::new();
+                    for j in 0..p.len() {
+                        backet.push(nan_to_zero(ts[i + j].1));
+                    }
+                    let score = PatternDetector::corr_aligned(p, &backet);
+                    if score > anti_pattern_match_score {
+                        anti_pattern_match_score = score;
+                    }
+                }
+            }
+
+            if pattern_match_score > anti_pattern_match_score && pattern_match_score >= CORR_THRESHOLD {
+                results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
             }
         }
 
