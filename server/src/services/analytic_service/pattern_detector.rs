@@ -2,6 +2,7 @@
 pub struct LearningResults {
     // model: Vec<f64>,
     patterns: Vec<Vec<f64>>,
+    anti_patterns: Vec<Vec<f64>>,
 }
 
 const CORR_THRESHOLD: f64 = 0.95;
@@ -24,43 +25,32 @@ impl PatternDetector {
         PatternDetector { learning_results }
     }
 
-    pub async fn learn(reads: &Vec<Vec<(u64, f64)>>) -> LearningResults {
+    pub async fn learn(
+        reads: &Vec<Vec<(u64, f64)>>,
+        anti_reads: &Vec<Vec<(u64, f64)>>,
+    ) -> LearningResults {
         // let size_avg = reads.iter().map(|r| r.len()).sum::<usize>() / reads.len();
 
-        // let mut stat = Vec::<(usize, f64)>::new();
-        // for _i in 0..size_avg {
-        //     stat.push((0usize, 0f64));
-        // }
-
         let mut patterns = Vec::<Vec<f64>>::new();
+        let mut anti_patterns = Vec::<Vec<f64>>::new();
 
-        // for r in reads {
-        //     let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
-        //     if xs.len() > size_avg {
-        //         let offset = (xs.len() - size_avg) / 2;
-        //         for i in 0..size_avg {
-        //             stat[i].0 += 1;
-        //             stat[i].1 += xs[i + offset];
-        //         }
-        //     } else {
-        //         let offset = (size_avg - xs.len()) / 2;
-        //         for i in 0..xs.len() {
-        //             stat[i + offset].0 += 1;
-        //             stat[i + offset].1 += xs[i];
-        //         }
-        //     }
-        // }
+        // TODO: implement actual learning
 
         for r in reads {
             let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
             patterns.push(xs);
         }
 
+        for r in anti_reads {
+            let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
+            anti_patterns.push(xs);
+        }
+
         // let model = stat.iter().map(|(c, v)| v / *c as f64).collect();
 
         LearningResults {
-            patterns
-            //model
+            patterns,
+            anti_patterns,
         }
     }
 

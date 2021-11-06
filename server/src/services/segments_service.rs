@@ -14,7 +14,7 @@ pub type SegmentId = String;
 pub enum SegmentType {
     Detection = 0,
     Label = 1,
-    AntiLabel = 2
+    AntiLabel = 2,
 }
 
 impl SegmentType {

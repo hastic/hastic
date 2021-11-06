@@ -13,6 +13,7 @@ use crate::utils::{self, get_random_str};
 
 use anyhow;
 
+use subbeat::metric::MetricResult;
 use tokio::sync::{mpsc, oneshot};
 
 use futures::future;
@@ -21,6 +22,30 @@ use chrono::Utc;
 
 // TODO: get this from pattern detector
 const DETECTION_STEP: u64 = 10;
+
+struct SegData {
+    label: bool,
+    data: Vec<(u64, f64)>,
+}
+
+async fn segment_to_segdata(ms: &MetricService, segment: &Segment) -> anyhow::Result<SegData> {
+    let mut mr = ms.query(segment.from, segment.to, DETECTION_STEP).await?;
+
+    if mr.data.keys().len() == 0 {
+        return Ok(SegData {
+            label: segment.segment_type == SegmentType::Label,
+            data: Default::default(),
+        });
+    }
+
+    let k = mr.data.keys().nth(0).unwrap().clone();
+    let ts = mr.data.remove(&k).unwrap();
+
+    Ok(SegData {
+        label: segment.segment_type == SegmentType::Label,
+        data: ts,
+    })
+}
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
@@ -212,8 +237,9 @@ impl AnalyticService {
 
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
+        let has_segments_label = segments.iter().find(|s| s.segment_type == SegmentType::Label).is_some();
 
-        if segments.len() == 0 {
+        if !has_segments_label {
             match tx
                 .send(AnalyticServiceMessage::Response(
                     ResponseType::LearningFinishedEmpty,
@@ -223,18 +249,15 @@ impl AnalyticService {
                 Ok(_) => {}
                 Err(_e) => println!("Fail to send learning results"),
             }
-
             return;
         }
 
-        let fs = segments
-            .iter()
-            .map(|s| ms.query(s.from, s.to, DETECTION_STEP));
+        let fs = segments.iter().map(|s| segment_to_segdata(&ms, s));
         let rs = future::join_all(fs).await;
 
-        // TODO: run this on label adding
-        // TODO: save learning results in cache
         let mut learn_tss = Vec::new();
+        let mut learn_anti_tss = Vec::new();
+        
         for r in rs {
             if r.is_err() {
                 println!("Error extracting metrics from datasource");
@@ -249,18 +272,19 @@ impl AnalyticService {
                 }
                 return;
             }
-            let mr = r.unwrap();
-            if mr.data.keys().len() == 0 {
+
+            let sd = r.unwrap();
+            if sd.data.is_empty() { 
                 continue;
             }
-            let k = mr.data.keys().nth(0).unwrap();
-            let ts = &mr.data[k];
-            // TODO: maybe not clone
-            learn_tss.push(ts.clone());
+            if sd.label {
+                learn_tss.push(sd.data);
+            } else {
+                learn_anti_tss.push(sd.data);
+            }
         }
 
-        let lr = PatternDetector::learn(&learn_tss).await;
-
+        let lr = PatternDetector::learn(&learn_tss, &learn_anti_tss).await;
         match tx
             .send(AnalyticServiceMessage::Response(
                 ResponseType::LearningFinished(lr),
@@ -270,6 +294,7 @@ impl AnalyticService {
             Ok(_) => {}
             Err(_e) => println!("Fail to send learning results"),
         }
+
     }
 
     async fn get_pattern_detection(
