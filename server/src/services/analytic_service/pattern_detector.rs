@@ -132,13 +132,21 @@ impl PatternDetector {
         let numerator: f64 = n * s_xsys - s_xs * s_ys;
         let denominator: f64 = ((n * s_xs_2 - s_xs * s_xs) * (n * s_ys_2 - s_ys * s_ys)).sqrt();
 
+        // IT"s a hack
+        if denominator < 0.01 {
+            return 0.;
+        }
+
         // TODO: case when denominator = 0
 
         let result: f64 = numerator / denominator;
 
         // assert!(result.abs() <= 1.01);
 
-        if result.abs() > 1.0 {
+        if result.abs() > 1.1 {
+            println!("{:?}", xs);
+            println!("------------");
+            println!("{:?}", ys);
             println!("WARNING: corr result > 1: {}", result);
         }
 
