@@ -46,7 +46,7 @@ impl fmt::Debug for LearningResults {
     }
 }
 
-pub const FEATURES_SIZE: usize = 2;
+pub const FEATURES_SIZE: usize = 4;
 
 pub type Features = [f64; FEATURES_SIZE];
 
@@ -287,8 +287,8 @@ impl PatternDetector {
         return [
             min,
             max,
-            // mean,
-            // sd,
+            mean,
+            sd,
             // 0f64,0f64,
             // 0f64,0f64,0f64, 0f64
         ];
