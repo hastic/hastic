@@ -3,8 +3,10 @@ use tokio::sync::oneshot;
 
 use crate::services::segments_service::Segment;
 
+use super::pattern_detector::LearningResults;
 use super::types::DetectionTask;
 use super::types::LearningStatus;
+use super::types::LearningTrain;
 use super::types::{AnalyticServiceMessage, RequestType};
 
 /// Client to be used multithreaded
@@ -28,6 +30,14 @@ impl AnalyticClient {
     pub async fn get_status(&self) -> anyhow::Result<LearningStatus> {
         let (tx, rx) = oneshot::channel();
         let req = AnalyticServiceMessage::Request(RequestType::GetStatus(tx));
+        self.tx.send(req).await?;
+        let r = rx.await?;
+        Ok(r)
+    }
+
+    pub async fn get_train(&self) -> anyhow::Result<LearningTrain> {
+        let (tx, rx) = oneshot::channel();
+        let req = AnalyticServiceMessage::Request(RequestType::GetLearningTrain(tx));
         self.tx.send(req).await?;
         let r = rx.await?;
         Ok(r)

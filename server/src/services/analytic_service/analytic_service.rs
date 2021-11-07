@@ -1,4 +1,4 @@
-use super::types::{self, DetectionRunnerConfig};
+use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
     analytic_client::AnalyticClient,
     pattern_detector::{self, LearningResults, PatternDetector},
@@ -13,7 +13,6 @@ use crate::utils::{self, get_random_str};
 
 use anyhow;
 
-use subbeat::metric::MetricResult;
 use tokio::sync::{mpsc, oneshot};
 
 use futures::future;
@@ -167,6 +166,20 @@ impl AnalyticService {
             RequestType::GetStatus(tx) => {
                 tx.send(self.learning_status.clone()).unwrap();
             }
+            RequestType::GetLearningTrain(tx) => {
+                if self.learning_results.is_none() {
+                    tx.send(LearningTrain::default()).unwrap();
+                } else {
+                    tx.send(
+                        self.learning_results
+                            .as_ref()
+                            .unwrap()
+                            .learning_train
+                            .clone(),
+                    )
+                    .unwrap();
+                }
+            }
         };
     }
 
@@ -237,7 +250,10 @@ impl AnalyticService {
 
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
-        let has_segments_label = segments.iter().find(|s| s.segment_type == SegmentType::Label).is_some();
+        let has_segments_label = segments
+            .iter()
+            .find(|s| s.segment_type == SegmentType::Label)
+            .is_some();
 
         if !has_segments_label {
             match tx
@@ -257,7 +273,7 @@ impl AnalyticService {
 
         let mut learn_tss = Vec::new();
         let mut learn_anti_tss = Vec::new();
-        
+
         for r in rs {
             if r.is_err() {
                 println!("Error extracting metrics from datasource");
@@ -274,7 +290,7 @@ impl AnalyticService {
             }
 
             let sd = r.unwrap();
-            if sd.data.is_empty() { 
+            if sd.data.is_empty() {
                 continue;
             }
             if sd.label {
@@ -294,7 +310,6 @@ impl AnalyticService {
             Ok(_) => {}
             Err(_e) => println!("Fail to send learning results"),
         }
-
     }
 
     async fn get_pattern_detection(

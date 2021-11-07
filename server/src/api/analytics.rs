@@ -7,7 +7,9 @@ pub mod filters {
     pub fn filters(
         client: Client,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        list(client.clone()).or(status(client.clone()))
+        list(client.clone())
+            .or(status(client.clone()))
+            .or(list_train(client.clone()))
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
         // .or(delete(db.clone()))
@@ -32,6 +34,16 @@ pub mod filters {
             .and(warp::get())
             .and(with_client(client))
             .and_then(handlers::status)
+    }
+
+    /// GET /analytics/model
+    pub fn list_train(
+        client: Client,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("analytics" / "model")
+            .and(warp::get())
+            .and(with_client(client))
+            .and_then(handlers::list_train)
     }
 
     fn with_client(
@@ -63,6 +75,16 @@ mod handlers {
     pub async fn status(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
         match client.get_status().await {
             Ok(ls) => Ok(API::json(&Status { status: ls })),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
+        }
+    }
+
+    pub async fn list_train(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
+        match client.get_train().await {
+            Ok(lt) => Ok(API::json(&lt)),
             Err(e) => {
                 println!("{:?}", e);
                 Err(warp::reject::custom(BadQuery))

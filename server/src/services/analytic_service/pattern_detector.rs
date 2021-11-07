@@ -1,10 +1,8 @@
-
 use std::{fmt, sync::Arc};
 
-
 use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
 use serde_json;
-use serde::{Serialize, Deserialize};
 
 use linfa::prelude::*;
 
@@ -13,11 +11,14 @@ use linfa_svm::{error::Result, Svm};
 
 use ndarray::{Array, ArrayView, Axis};
 
-
+use super::types::LearningTrain;
 
 #[derive(Clone)]
 pub struct LearningResults {
     model: Arc<Mutex<Svm<f64, bool>>>,
+
+    pub learning_train: LearningTrain,
+
     patterns: Vec<Vec<f64>>,
     anti_patterns: Vec<Vec<f64>>,
 }
@@ -39,18 +40,17 @@ pub struct LearningResults {
 impl fmt::Debug for LearningResults {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Point")
-         .field("{:?}", &self.patterns)
-         .field("{:?}", &self.anti_patterns)
-         .finish()
+            .field("{:?}", &self.patterns)
+            .field("{:?}", &self.anti_patterns)
+            .finish()
     }
 }
 
+pub const FEATURES_SIZE: usize = 2;
 
-const FEATURES_SIZE: usize = 6;
+pub type Features = [f64; FEATURES_SIZE];
 
-type Features = [f64; FEATURES_SIZE];
-
-const SCORE_THRESHOLD: f64 = 0.95;
+pub const SCORE_THRESHOLD: f64 = 0.95;
 
 #[derive(Clone)]
 pub struct PatternDetector {
@@ -79,16 +79,14 @@ impl PatternDetector {
         let mut patterns = Vec::<Vec<f64>>::new();
         let mut anti_patterns = Vec::<Vec<f64>>::new();
 
-        
-        let mut records = Array::zeros((0, FEATURES_SIZE));
+        let mut records_raw = Vec::<Features>::new();
         let mut targets_raw = Vec::<bool>::new();
 
         for r in reads {
             let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
             let fs = PatternDetector::get_features(&xs);
-            
-            records.push_row(ArrayView::from(&fs)).unwrap();
-            
+
+            records_raw.push(fs);
             targets_raw.push(true);
             patterns.push(xs);
         }
@@ -96,19 +94,21 @@ impl PatternDetector {
         for r in anti_reads {
             let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
             let fs = PatternDetector::get_features(&xs);
-            records.push_row(ArrayView::from(&fs)).unwrap();
+            records_raw.push(fs);
             targets_raw.push(false);
             anti_patterns.push(xs);
         }
 
-        let targets = Array::from_vec(targets_raw);
+        let records = Array::from_shape_fn((records_raw.len(), FEATURES_SIZE), |(i, j)| {
+            records_raw[i][j]
+        });
+
+        let targets = Array::from_vec(targets_raw.clone());
 
         // println!("{:?}", records);
         // println!("{:?}", targets);
 
         let train = linfa::Dataset::new(records, targets);
-
-
 
         // The 'view' describes what set of data is drawn
         // let v = ContinuousView::new()
@@ -118,18 +118,17 @@ impl PatternDetector {
         //     .y_range(-200., 600.)
         //     .x_label("Some varying variable")
         //     .y_label("The response of something");
-        
-        // Page::single(&v).save("scatter.svg").unwrap();
 
+        // Page::single(&v).save("scatter.svg").unwrap();
 
         // let model = stat.iter().map(|(c, v)| v / *c as f64).collect();
 
         let model = Svm::<_, bool>::params()
             .pos_neg_weights(50000., 5000.)
             .gaussian_kernel(80.0)
-            .fit(&train).unwrap();
-        
-        
+            .fit(&train)
+            .unwrap();
+
         // let prediction = model.predict(Array::from_vec(vec![
         //     715.3122807017543, 761.1228070175438, 745.0, 56.135764727158595, 0.0, 0.0
         // ]));
@@ -138,6 +137,12 @@ impl PatternDetector {
 
         LearningResults {
             model: Arc::new(Mutex::new(model)),
+
+            learning_train: LearningTrain {
+                features: records_raw,
+                target: targets_raw,
+            },
+
             patterns,
             anti_patterns,
         }
@@ -149,9 +154,8 @@ impl PatternDetector {
 
         let pt = &self.learning_results.patterns;
         let apt = &self.learning_results.anti_patterns;
-        
-        for i in 0..ts.len() {
 
+        for i in 0..ts.len() {
             let mut pattern_match_score = 0f64;
             let mut pattern_match_len = 0usize;
             let mut anti_pattern_match_score = 0f64;
@@ -183,13 +187,17 @@ impl PatternDetector {
                 }
             }
 
-            {   
+            {
                 let mut backet = Vec::<f64>::new();
                 for j in 0..pattern_match_len {
                     backet.push(nan_to_zero(ts[i + j].1));
                 }
                 let fs = PatternDetector::get_features(&backet);
-                let detected = self.learning_results.model.lock().predict(Array::from_vec(fs.to_vec()));
+                let detected = self
+                    .learning_results
+                    .model
+                    .lock()
+                    .predict(Array::from_vec(fs.to_vec()));
                 if detected {
                     pattern_match_score += 0.1;
                 } else {
@@ -197,7 +205,9 @@ impl PatternDetector {
                 }
             }
 
-            if pattern_match_score > anti_pattern_match_score && pattern_match_score >= SCORE_THRESHOLD {
+            if pattern_match_score > anti_pattern_match_score
+                && pattern_match_score >= SCORE_THRESHOLD
+            {
                 results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
             }
         }
@@ -253,7 +263,7 @@ impl PatternDetector {
         let mut min = f64::MAX;
         let mut max = f64::MIN;
         let mut sum = 0f64;
-        
+
         for x in xs {
             min = min.min(*x);
             max = max.max(*x);
@@ -272,15 +282,15 @@ impl PatternDetector {
 
         // TODO: add autocorrelation
         // TODO: add FFT
+        // TODO: add DWT
 
         return [
             min,
-            max, 
-            mean,
-            sd,
-            0f64,0f64,
-            //0f64,0f64,0f64, 0f64
+            max,
+            // mean,
+            // sd,
+            // 0f64,0f64,
+            // 0f64,0f64,0f64, 0f64
         ];
     }
-
 }

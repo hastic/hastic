@@ -1,10 +1,10 @@
 use crate::services::segments_service::Segment;
 
-use super::pattern_detector::LearningResults;
+use super::pattern_detector::{self, LearningResults, PatternDetector};
 
 use anyhow::Result;
 use serde::Serialize;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::oneshot;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum LearningStatus {
@@ -13,6 +13,21 @@ pub enum LearningStatus {
     Learning,
     Error,
     Ready,
+}
+
+#[derive(Clone, Serialize, Debug)]
+pub struct LearningTrain {
+    pub features: Vec<pattern_detector::Features>,
+    pub target: Vec<bool>,
+}
+
+impl Default for LearningTrain {
+    fn default() -> Self {
+        return LearningTrain {
+            features: Vec::new(),
+            target: Vec::new(),
+        };
+    }
 }
 
 #[derive(Debug)]
@@ -43,6 +58,7 @@ pub enum RequestType {
     RunLearning,
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
+    GetLearningTrain(oneshot::Sender<LearningTrain>),
 }
 
 #[derive(Debug)]

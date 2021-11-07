@@ -5,7 +5,8 @@
     
     <div id="controls">
       <div>
-        Hold <pre>ctrl</pre> to label patterns <br/>
+        Hold <pre>S</pre> to label patterns <br/>
+        Hold <pre>A</pre> to label anti patterns <br/>
         Holde key <pre>D</pre> to delete patterns
       </div>
       <analytic-status />
