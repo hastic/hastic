@@ -285,10 +285,7 @@ impl PatternDetector {
         // TODO: add DWT
 
         return [
-            min,
-            max,
-            mean,
-            sd,
+            min, max, mean, sd,
             // 0f64,0f64,
             // 0f64,0f64,0f64, 0f64
         ];

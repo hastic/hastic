@@ -4,7 +4,7 @@ mod metric;
 mod segments;
 
 use hastic::config::Config;
-use hastic::services::analytic_service::{analytic_client, AnalyticService};
+use hastic::services::analytic_service::analytic_client;
 use hastic::services::{metric_service, segments_service, user_service};
 
 use warp::http::HeaderValue;

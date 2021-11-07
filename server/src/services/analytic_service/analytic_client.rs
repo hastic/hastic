@@ -3,7 +3,6 @@ use tokio::sync::oneshot;
 
 use crate::services::segments_service::Segment;
 
-use super::pattern_detector::LearningResults;
 use super::types::DetectionTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;

@@ -3,7 +3,7 @@ use crate::api::API;
 
 use hastic::services::metric_service;
 
-use subbeat::metric::{Metric, MetricResult};
+use subbeat::metric::MetricResult;
 
 use warp::filters::method::get;
 use warp::Filter;
