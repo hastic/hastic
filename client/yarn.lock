@@ -228,12 +228,23 @@
   resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.3.2.tgz#40187a4d1dda5045effc04c01559ff16c236bca7"
   integrity sha512-E4Bb2rDBDTNXRM7koSXDwM6IYYNdLnqxJel1y2BmH4p9R0Z+3L0C4B+jYurkiwcnIWdGlHXVFL0E0khPeLypfA==
 
+"@chartwerk/core@github:chartwerk/core#532eddbc8ad938091b1d9ec1693cec5eddfdbfc2":
+  version "0.1.0"
+  resolved "https://codeload.github.com/chartwerk/core/tar.gz/532eddbc8ad938091b1d9ec1693cec5eddfdbfc2"
+
 "@chartwerk/line-pod@0.4.4":
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.4.tgz#724152e886c529df97019ba3dfed335ef42b2f57"
   integrity sha512-L7RmTzy+TVMueV91E3upVCK/V7t9ZYLwC0tIYhFJxSJjrLOhRMAOLxZdkp7CqxXFj+u+FuFDhY0Dch2nYDvLpg==
   dependencies:
     "@chartwerk/core" "^0.3.2"
+
+"@chartwerk/scatter-pod@^0.2.4":
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@chartwerk/scatter-pod/-/scatter-pod-0.2.4.tgz#a10d50f4bcf544f1496de88ebae6359a9f4052b0"
+  integrity sha512-e0FUGEO22J0O5Jp73xjnPImFU/SC8qWkiC2fgYxX0MsA5gE1iAs9kdqGCFk/hFvSBonOAxubg9SfVyUJsKV9tQ==
+  dependencies:
+    "@chartwerk/core" "github:chartwerk/core#532eddbc8ad938091b1d9ec1693cec5eddfdbfc2"
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
