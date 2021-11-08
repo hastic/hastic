@@ -55,7 +55,7 @@ pub type Features = [f64; FEATURES_SIZE];
 pub const SCORE_THRESHOLD: f64 = 0.95;
 
 #[derive(Clone)]
-pub struct PatternDetector {
+pub struct PatternAnalyticUnit {
     learning_results: LearningResults,
 }
 
@@ -67,9 +67,9 @@ fn nan_to_zero(n: f64) -> f64 {
 }
 
 // TODO: move this to loginc of analytic unit
-impl PatternDetector {
-    pub fn new(learning_results: LearningResults) -> PatternDetector {
-        PatternDetector { learning_results }
+impl PatternAnalyticUnit {
+    pub fn new(learning_results: LearningResults) -> PatternAnalyticUnit {
+        PatternAnalyticUnit { learning_results }
     }
 
     pub async fn learn(
@@ -86,7 +86,7 @@ impl PatternDetector {
 
         for r in reads {
             let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
-            let fs = PatternDetector::get_features(&xs);
+            let fs = PatternAnalyticUnit::get_features(&xs);
 
             records_raw.push(fs);
             targets_raw.push(true);
@@ -95,7 +95,7 @@ impl PatternDetector {
 
         for r in anti_reads {
             let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
-            let fs = PatternDetector::get_features(&xs);
+            let fs = PatternAnalyticUnit::get_features(&xs);
             records_raw.push(fs);
             targets_raw.push(false);
             anti_patterns.push(xs);
@@ -168,7 +168,7 @@ impl PatternDetector {
                     for j in 0..p.len() {
                         backet.push(nan_to_zero(ts[i + j].1));
                     }
-                    let score = PatternDetector::corr_aligned(p, &backet);
+                    let score = PatternAnalyticUnit::corr_aligned(p, &backet);
                     if score > pattern_match_score {
                         pattern_match_score = score;
                         pattern_match_len = p.len();
@@ -182,7 +182,7 @@ impl PatternDetector {
                     for j in 0..p.len() {
                         backet.push(nan_to_zero(ts[i + j].1));
                     }
-                    let score = PatternDetector::corr_aligned(p, &backet);
+                    let score = PatternAnalyticUnit::corr_aligned(p, &backet);
                     if score > anti_pattern_match_score {
                         anti_pattern_match_score = score;
                     }
@@ -194,7 +194,7 @@ impl PatternDetector {
                 for j in 0..pattern_match_len {
                     backet.push(nan_to_zero(ts[i + j].1));
                 }
-                let fs = PatternDetector::get_features(&backet);
+                let fs = PatternAnalyticUnit::get_features(&backet);
                 let detected = self
                     .learning_results
                     .model
@@ -244,8 +244,6 @@ impl PatternDetector {
         if denominator < 0.01 {
             return 0.;
         }
-
-        // TODO: case when denominator = 0
 
         let result: f64 = numerator / denominator;
 

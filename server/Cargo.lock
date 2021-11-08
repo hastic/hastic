@@ -482,6 +482,7 @@ name = "hastic"
 version = "0.0.1"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bincode",
  "chrono",
  "config",

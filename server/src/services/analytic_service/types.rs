@@ -1,6 +1,6 @@
 use crate::services::segments_service::Segment;
 
-use super::analytic_unit::{pattern_detector::{self, LearningResults}, types::AnalyticUnitConfig};
+use super::analytic_unit::{pattern_analytic_unit::{self, LearningResults}, types::AnalyticUnitConfig};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -18,7 +18,7 @@ pub enum LearningStatus {
 // TODO: move to analytic_unit config of pattern detector
 #[derive(Clone, Serialize, Debug)]
 pub struct LearningTrain {
-    pub features: Vec<pattern_detector::Features>,
+    pub features: Vec<pattern_analytic_unit::Features>,
     pub target: Vec<bool>,
 }
 

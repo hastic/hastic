@@ -1,8 +1,8 @@
-use super::analytic_unit::types::{AnalyticUnitConfig, PatternDetectorConfig};
+use super::analytic_unit::types::{AnalyticUnitConfig, PatternConfig};
 use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
     analytic_client::AnalyticClient,
-    analytic_unit::pattern_detector::{self, LearningResults, PatternDetector},
+    analytic_unit::pattern_analytic_unit::{self, LearningResults, PatternAnalyticUnit},
     types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
 };
 
@@ -51,9 +51,11 @@ async fn segment_to_segdata(ms: &MetricService, segment: &Segment) -> anyhow::Re
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
-    learning_results: Option<LearningResults>,
+
+    analytic_unit_learning_results: Option<LearningResults>,
     analytic_unit_config: AnalyticUnitConfig,
-    learning_status: LearningStatus,
+    analytic_unit_learning_status: LearningStatus,
+
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
 
@@ -82,13 +84,13 @@ impl AnalyticService {
             segments_service,
 
             // TODO: get it from persistance
-            learning_results: None,
-            analytic_unit_config: AnalyticUnitConfig::PatternDetector(PatternDetectorConfig {
+            analytic_unit_learning_results: None,
+            analytic_unit_config: AnalyticUnitConfig::Pattern(PatternConfig {
                 correlation_score: 0.95,
                 model_score: 0.95
             }),
 
-            learning_status: LearningStatus::Initialization,
+            analytic_unit_learning_status: LearningStatus::Initialization,
             tx,
             rx,
 
@@ -111,10 +113,10 @@ impl AnalyticService {
     fn run_detection_task(&self, task: DetectionTask) {
         // TODO: save handler of the task
         tokio::spawn({
-            let lr = self.learning_results.as_ref().unwrap().clone();
+            let lr = self.analytic_unit_learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
             async move {
-                AnalyticService::get_pattern_detection(task.sender, lr, ms, task.from, task.to)
+                AnalyticService::get_detections(task.sender, lr, ms, task.from, task.to)
                     .await;
             }
         });
@@ -126,7 +128,7 @@ impl AnalyticService {
         }
         // TODO: save handler of the task
         self.runner_handler = Some(tokio::spawn({
-            let lr = self.learning_results.as_ref().unwrap().clone();
+            let lr = self.analytic_unit_learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
             async move {
                 // TODO: implement
@@ -142,7 +144,7 @@ impl AnalyticService {
                     self.learning_handler = None;
                 }
                 self.learning_handler = Some(tokio::spawn({
-                    self.learning_status = LearningStatus::Starting;
+                    self.analytic_unit_learning_status = LearningStatus::Starting;
                     let tx = self.tx.clone();
                     let ms = self.metric_service.clone();
                     let ss = self.segments_service.clone();
@@ -152,7 +154,7 @@ impl AnalyticService {
                 }));
             }
             RequestType::RunDetection(task) => {
-                if self.learning_status == LearningStatus::Initialization {
+                if self.analytic_unit_learning_status == LearningStatus::Initialization {
                     match task
                         .sender
                         .send(Err(anyhow::format_err!("Analytics in initialization")))
@@ -165,21 +167,21 @@ impl AnalyticService {
                     }
                     return;
                 }
-                if self.learning_status == LearningStatus::Ready {
+                if self.analytic_unit_learning_status == LearningStatus::Ready {
                     self.run_detection_task(task);
                 } else {
                     self.learning_waiters.push(task);
                 }
             }
             RequestType::GetStatus(tx) => {
-                tx.send(self.learning_status.clone()).unwrap();
+                tx.send(self.analytic_unit_learning_status.clone()).unwrap();
             }
             RequestType::GetLearningTrain(tx) => {
-                if self.learning_results.is_none() {
+                if self.analytic_unit_learning_results.is_none() {
                     tx.send(LearningTrain::default()).unwrap();
                 } else {
                     tx.send(
-                        self.learning_results
+                        self.analytic_unit_learning_results
                             .as_ref()
                             .unwrap()
                             .learning_train
@@ -197,11 +199,11 @@ impl AnalyticService {
     fn consume_response(&mut self, res: types::ResponseType) {
         match res {
             // TODO: handle when learning panic
-            ResponseType::LearningStarted => self.learning_status = LearningStatus::Learning,
+            ResponseType::LearningStarted => self.analytic_unit_learning_status = LearningStatus::Learning,
             ResponseType::LearningFinished(results) => {
                 self.learning_handler = None;
-                self.learning_results = Some(results);
-                self.learning_status = LearningStatus::Ready;
+                self.analytic_unit_learning_results = Some(results);
+                self.analytic_unit_learning_status = LearningStatus::Ready;
 
                 // TODO: run tasks from self.learning_waiter
                 while self.learning_waiters.len() > 0 {
@@ -219,13 +221,13 @@ impl AnalyticService {
             }
             ResponseType::LearningFinishedEmpty => {
                 // TODO: drop all learning_waiters with empty results
-                self.learning_results = None;
-                self.learning_status = LearningStatus::Initialization;
+                self.analytic_unit_learning_results = None;
+                self.analytic_unit_learning_status = LearningStatus::Initialization;
             }
             ResponseType::LearningDatasourceError => {
                 // TODO: drop all learning_waiters with error
-                self.learning_results = None;
-                self.learning_status = LearningStatus::Error;
+                self.analytic_unit_learning_results = None;
+                self.analytic_unit_learning_status = LearningStatus::Error;
             }
         }
     }
@@ -311,7 +313,7 @@ impl AnalyticService {
             }
         }
 
-        let lr = PatternDetector::learn(&learn_tss, &learn_anti_tss).await;
+        let lr = PatternAnalyticUnit::learn(&learn_tss, &learn_anti_tss).await;
         match tx
             .send(AnalyticServiceMessage::Response(
                 ResponseType::LearningFinished(lr),
@@ -323,14 +325,14 @@ impl AnalyticService {
         }
     }
 
-    async fn get_pattern_detection(
+    async fn get_detections(
         tx: oneshot::Sender<anyhow::Result<Vec<Segment>>>,
         lr: LearningResults,
         ms: MetricService,
         from: u64,
         to: u64,
     ) {
-        let pt = pattern_detector::PatternDetector::new(lr);
+        let pt = pattern_analytic_unit::PatternAnalyticUnit::new(lr);
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
@@ -367,58 +369,5 @@ impl AnalyticService {
         return;
     }
 
-    // TODO: move this to another analytic unit
-    async fn get_threshold_detections(
-        &self,
-        from: u64,
-        to: u64,
-        step: u64,
-        threashold: f64,
-    ) -> anyhow::Result<Vec<Segment>> {
-        let mr = self.metric_service.query(from, to, step).await?;
 
-        if mr.data.keys().len() == 0 {
-            return Ok(Vec::new());
-        }
-
-        let key = mr.data.keys().nth(0).unwrap();
-        let ts = &mr.data[key];
-
-        let mut result = Vec::<Segment>::new();
-        let mut from: Option<u64> = None;
-        for (t, v) in ts {
-            if *v > threashold {
-                if from.is_some() {
-                    continue;
-                } else {
-                    from = Some(*t);
-                }
-            } else {
-                if from.is_some() {
-                    result.push(Segment {
-                        // TODO: persist detections together with id
-                        id: Some(get_random_str(ID_LENGTH)),
-                        from: from.unwrap(),
-                        to: *t,
-                        segment_type: SegmentType::Detection,
-                    });
-                    from = None;
-                }
-            }
-        }
-
-        // TODO: don't repeat myself
-        if from.is_some() {
-            result.push(Segment {
-                id: Some(get_random_str(ID_LENGTH)),
-                from: from.unwrap(),
-                to,
-                segment_type: SegmentType::Detection,
-            });
-        }
-
-        // TODO: decide what to do it from is Some() in the end
-
-        Ok(result)
-    }
 }
