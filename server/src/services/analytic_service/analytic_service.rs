@@ -1,7 +1,8 @@
+use super::analytic_unit::types::{AnalyticUnitConfig, PatternDetectorConfig};
 use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
     analytic_client::AnalyticClient,
-    pattern_detector::{self, LearningResults, PatternDetector},
+    analytic_unit::pattern_detector::{self, LearningResults, PatternDetector},
     types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
 };
 
@@ -51,6 +52,7 @@ pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
     learning_results: Option<LearningResults>,
+    analytic_unit_config: AnalyticUnitConfig,
     learning_status: LearningStatus,
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
@@ -78,8 +80,14 @@ impl AnalyticService {
         AnalyticService {
             metric_service,
             segments_service,
+
             // TODO: get it from persistance
             learning_results: None,
+            analytic_unit_config: AnalyticUnitConfig::PatternDetector(PatternDetectorConfig {
+                correlation_score: 0.95,
+                model_score: 0.95
+            }),
+
             learning_status: LearningStatus::Initialization,
             tx,
             rx,
@@ -179,6 +187,9 @@ impl AnalyticService {
                     )
                     .unwrap();
                 }
+            }
+            RequestType::GetConfig(tx) => {
+                tx.send(self.analytic_unit_config.clone()).unwrap();
             }
         };
     }

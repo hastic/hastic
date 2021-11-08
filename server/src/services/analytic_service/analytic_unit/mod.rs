@@ -1,3 +1,6 @@
-trait AnalyticUnit<C> where C: AnalyticUnitConfig {
+pub mod pattern_detector;
+pub mod types;
+
+trait AnalyticUnit<C> {
     
 }
