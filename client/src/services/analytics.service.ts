@@ -16,6 +16,12 @@ export async function getStatus(): Promise<string> {
   return data.status;
 }
 
+export async function getConfig(): Promise<string> {
+  const uri = ANALYTICS_API_URL + `config`;
+  const res = await axios.get(uri);
+  return res['data'] as any;
+}
+
 export function getStatusGenerator(): AsyncIterableIterator<string> {
   return getGenerator<string>(100, getStatus);
 }

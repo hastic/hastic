@@ -13,14 +13,18 @@ export enum DetectorType {
   PATTERN = 'pattern',
   THRESHOLD = 'threshold',
   ANOMALY = 'anomaly'
-};
+}
+
+export type DetectorConfig = {
+  correlation_score: number, model_score: number
+}
 
 export enum LabelingMode {
   LABELING = 'LABELING',
   UNLABELING = 'UNLABELING',
   DELETING = 'DELETING',
   NOT_IN_LABELING_MODE = 'NOT_IN_LABELING_MODE'
-};
+}
 
 export type AnalyticSegmentPair = { analyticUnit: AnalyticUnit, segment: AnalyticSegment };
 export type AnalyticSegmentsSearcher = (point: number, rangeDist: number) => AnalyticSegmentPair[];
@@ -56,8 +60,8 @@ const LABELING_MODES = [];
 export class AnalyticUnit {
 
   private _labelingMode: LabelingMode = LabelingMode.LABELING;
-  private _selected: boolean = false;
-  private _saving: boolean = false;
+  private _selected = false;
+  private _saving = false;
   private _segmentSet = new SegmentArray<AnalyticSegment>();
   private _detectionSpans: DetectionSpan[];
   private _inspect = false;
@@ -143,7 +147,7 @@ export class AnalyticUnit {
   }
 
   removeSegmentsInRange(from: number, to: number): AnalyticSegment[] {
-    let deletedSegments = this._segmentSet.removeInRange(from, to);
+    const deletedSegments = this._segmentSet.removeInRange(from, to);
     return deletedSegments;
   }
 

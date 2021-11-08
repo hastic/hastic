@@ -21,7 +21,7 @@
 import { defineComponent } from 'vue';
 import Graph from '@/components/Graph.vue';
 import AnalyticStatus from '@/components/AnlyticsStatus.vue';
-import { AnalyticType } from '@/store/types';
+import { DetectorType } from '@/types/analytic_units';
 
 
 export default defineComponent({
@@ -37,12 +37,12 @@ export default defineComponent({
   },
   data: function () {
     return {
-      analyticTypes: [AnalyticType.PATTERN_DETECTOR, AnalyticType.ANOMALY_DETECTOR],
+      analyticTypes: [DetectorType.PATTERN, DetectorType.ANOMALY],
     }
   },
   computed: {
     analyticType() {
-      return this.$store.state.analyticType;
+      return this.$store.state.detectorType;
     }
   }
 });
