@@ -1,6 +1,6 @@
 use crate::services::segments_service::Segment;
 
-use super::pattern_detector::{self, LearningResults, PatternDetector};
+use super::pattern_detector::{self, LearningResults};
 
 use anyhow::Result;
 use serde::Serialize;
