@@ -1,6 +1,6 @@
 use crate::services::segments_service::Segment;
 
-use super::pattern_detector::{self, LearningResults, PatternDetector};
+use super::analytic_unit::{pattern_detector::{self, LearningResults}, types::AnalyticUnitConfig};
 
 use anyhow::Result;
 use serde::Serialize;
@@ -15,6 +15,7 @@ pub enum LearningStatus {
     Ready,
 }
 
+// TODO: move to analytic_unit config of pattern detector
 #[derive(Clone, Serialize, Debug)]
 pub struct LearningTrain {
     pub features: Vec<pattern_detector::Features>,
@@ -58,6 +59,7 @@ pub enum RequestType {
     RunLearning,
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
+    GetConfig(oneshot::Sender<AnalyticUnitConfig>),
     GetLearningTrain(oneshot::Sender<LearningTrain>),
 }
 

@@ -9,6 +9,7 @@ pub mod filters {
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         list(client.clone())
             .or(status(client.clone()))
+            .or(get_config(client.clone()))
             .or(list_train(client.clone()))
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
@@ -34,6 +35,16 @@ pub mod filters {
             .and(warp::get())
             .and(with_client(client))
             .and_then(handlers::status)
+    }
+
+    /// GET /analytics/config
+    pub fn get_config(
+        client: Client,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("analytics" / "config")
+            .and(warp::get())
+            .and(with_client(client))
+            .and_then(handlers::config)
     }
 
     /// GET /analytics/model
@@ -75,6 +86,16 @@ mod handlers {
     pub async fn status(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
         match client.get_status().await {
             Ok(ls) => Ok(API::json(&Status { status: ls })),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
+        }
+    }
+
+    pub async fn config(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
+        match client.get_config().await {
+            Ok(cf) => Ok(API::json(&cf)),
             Err(e) => {
                 println!("{:?}", e);
                 Err(warp::reject::custom(BadQuery))

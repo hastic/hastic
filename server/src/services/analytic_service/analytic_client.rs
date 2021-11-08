@@ -3,6 +3,7 @@ use tokio::sync::oneshot;
 
 use crate::services::segments_service::Segment;
 
+use super::analytic_unit::types::AnalyticUnitConfig;
 use super::types::DetectionTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;
@@ -29,6 +30,14 @@ impl AnalyticClient {
     pub async fn get_status(&self) -> anyhow::Result<LearningStatus> {
         let (tx, rx) = oneshot::channel();
         let req = AnalyticServiceMessage::Request(RequestType::GetStatus(tx));
+        self.tx.send(req).await?;
+        let r = rx.await?;
+        Ok(r)
+    }
+
+    pub async fn get_config(&self) -> anyhow::Result<AnalyticUnitConfig> {
+        let (tx, rx) = oneshot::channel();
+        let req = AnalyticServiceMessage::Request(RequestType::GetConfig(tx));
         self.tx.send(req).await?;
         let r = rx.await?;
         Ok(r)

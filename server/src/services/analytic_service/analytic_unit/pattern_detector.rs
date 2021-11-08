@@ -11,7 +11,9 @@ use linfa_svm::{error::Result, Svm};
 
 use ndarray::{Array, ArrayView, Axis};
 
-use super::types::LearningTrain;
+use crate::services::analytic_service::types::LearningTrain;
+
+
 
 #[derive(Clone)]
 pub struct LearningResults {
