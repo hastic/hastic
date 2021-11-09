@@ -63,7 +63,7 @@ impl API<'_> {
         hs.insert("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
         hs.insert(
             "Access-Control-Allow-Methods",
-            HeaderValue::from_static("POST, GET, OPTIONS, DELETE"),
+            HeaderValue::from_static("POST, GET, OPTIONS, DELETE, PATCH"),
         );
         hs.insert(
             "Access-Control-Allow-Headers",

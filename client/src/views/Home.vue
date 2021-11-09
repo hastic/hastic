@@ -5,7 +5,7 @@
     
     <analytic-status />
     <div>
-      Analytic unit type: <select :value="analyticUnitType" @input="changeAnalyticUnitType">
+      Analytic unit type: <select :value="analyticUnitType" @change="changeAnalyticUnitType">
         <option disabled value="">Please Select</option>
         <option v-bind:key="option" v-for="option in analyticUnitTypes" :value="option">{{option}}</option>
       </select> <br/><br/>
@@ -18,9 +18,9 @@
         <br/>
         <hr/>
         Correlation score: 
-        <input :value="analyticUnitConfig.correlation_score" @input="correlationScoreChange" /> <br/>
+        <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
         Model score: 
-        <input :value="analyticUnitConfig.model_score" @input="modelScoreChange" /> <br/><br/>
+        <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/><br/>
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
     </div>
@@ -45,15 +45,13 @@ export default defineComponent({
       this.$refs.graph.deleteAllSegments();
     },
     changeAnalyticUnitType(e) {
-      console.log(e);
+      this.$store.dispatch('patchConfig', { [e.target.value]: true } );
     },
     correlationScoreChange(e) {
-      // TODO: store value
-      console.log(e);
+      this.$store.dispatch('patchConfig', { Pattern: { correlation_score: e.target.value } });
     },
     modelScoreChange(e) {
-      // TODO: store value
-      console.log(e);
+      this.$store.dispatch('patchConfig', { Pattern: { model_score: e.target.value } });
     }
   },
   data: function () {

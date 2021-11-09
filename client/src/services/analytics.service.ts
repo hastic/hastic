@@ -48,6 +48,11 @@ export async function getConfig(): Promise<[AnalyticUnitType, AnlyticUnitConfig]
   return [analyticUnitType, analyticUnitConfig];
 }
 
+export async function patchConfig(patchObj: any) {
+  const uri = ANALYTICS_API_URL + `config`;
+  await axios.patch(uri, patchObj);
+}
+
 export function getStatusGenerator(): AsyncIterableIterator<string> {
   return getGenerator<string>(100, getStatus);
 }

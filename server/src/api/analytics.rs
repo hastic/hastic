@@ -10,6 +10,7 @@ pub mod filters {
         list(client.clone())
             .or(status(client.clone()))
             .or(get_config(client.clone()))
+            .or(put_config(client.clone()))
         // .or(list_train(client.clone()))
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
@@ -44,7 +45,18 @@ pub mod filters {
         warp::path!("analytics" / "config")
             .and(warp::get())
             .and(with_client(client))
-            .and_then(handlers::config)
+            .and_then(handlers::get_config)
+    }
+
+    /// PATCH /analytics/config
+    pub fn put_config(
+        client: Client,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("analytics" / "config")
+            .and(warp::patch())
+            .and(with_client(client))
+            .and(warp::body::json())
+            .and_then(handlers::patch_config)
     }
 
     /// GET /analytics/model
@@ -65,6 +77,8 @@ pub mod filters {
 }
 
 mod handlers {
+
+    use serde_json::Value;
 
     use super::models::{Client, ListOptions, Status};
     use crate::api::{BadQuery, API};
@@ -93,7 +107,19 @@ mod handlers {
         }
     }
 
-    pub async fn config(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
+    pub async fn get_config(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
+        match client.get_config().await {
+            Ok(cf) => Ok(API::json(&cf)),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
+        }
+    }
+
+    pub async fn patch_config(client: Client, obj: Value) -> Result<impl warp::Reply, warp::Rejection> {
+
+        println!("{:?}", obj);
         match client.get_config().await {
             Ok(cf) => Ok(API::json(&cf)),
             Err(e) => {

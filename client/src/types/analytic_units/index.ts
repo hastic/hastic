@@ -10,9 +10,9 @@ import _ from 'lodash';
 
 // TODO: move types to ./types
 export enum AnalyticUnitType {
-  PATTERN = 'pattern',
-  THRESHOLD = 'threshold',
-  ANOMALY = 'anomaly'
+  PATTERN = 'Pattern',
+  THRESHOLD = 'Threshold',
+  ANOMALY = 'Anomaly'
 }
 
 export type PatternConfig = {

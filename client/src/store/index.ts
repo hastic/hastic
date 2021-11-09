@@ -1,13 +1,16 @@
 import { auth } from "./auth.module";
 import { createStore } from 'vuex'
-import { getConfig, getStatusGenerator } from "@/services/analytics.service";
+import { getConfig, getStatusGenerator, patchConfig } from "@/services/analytics.service";
 import { AnlyticUnitConfig, AnalyticUnitType } from '@/types/analytic_units'
 // import { notify } from "@kyvg/vue3-notification";
 
 
 const SET_ANALYTICS_STATUS = 'SET_ANALYTICS_STATUS';
 const SET_DETECTOR_CONFIG = 'SET_DETECTOR_CONFIG';
+// const PATCH_CONFIG = 'PATCH_CONFIG';
 const _SET_STATUS_GENERATOR = '_SET_STATUS_GENERATOR';
+
+// TODO: consts for actions
 
 
 type State = {
@@ -32,6 +35,9 @@ const store = createStore<State>({
       state.analyticUnitType = analyticUnitType;
       state.analyticUnitConfig = analyticUnitConfig;
     },
+    // [PATCH_CONFIG](state, patchObj) {
+    //   patchConfig(patchConfig)
+    // }
     [_SET_STATUS_GENERATOR](state, generator: AsyncIterableIterator<string>) {
       state._statusGenerator = generator;
     }
@@ -65,6 +71,10 @@ const store = createStore<State>({
     async fetchConfig({commit}) {
       const [analyticUnitType, analyticUnitConfig] = await getConfig();
       commit(SET_DETECTOR_CONFIG, { analyticUnitType, analyticUnitConfig });
+    },
+    async patchConfig({commit}, payload) {
+      patchConfig(payload);
+      this.dispatch('fetchConfig');
     }
   },
   modules: {
