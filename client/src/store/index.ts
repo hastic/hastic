@@ -73,7 +73,7 @@ const store = createStore<State>({
       commit(SET_DETECTOR_CONFIG, { analyticUnitType, analyticUnitConfig });
     },
     async patchConfig({commit}, payload) {
-      patchConfig(payload);
+      await patchConfig(payload);
       this.dispatch('fetchConfig');
     }
   },
