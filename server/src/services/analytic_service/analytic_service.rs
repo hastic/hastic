@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::analytic_unit::types::{AnalyticUnitConfig, PatternConfig};
 use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
@@ -6,53 +8,27 @@ use super::{
     types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
 };
 
+use crate::services::analytic_service::analytic_unit::resolve;
 use crate::services::{
     metric_service::MetricService,
     segments_service::{self, Segment, SegmentType, SegmentsService, ID_LENGTH},
 };
 use crate::utils::{self, get_random_str};
 
+use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, LearningResult};
+
 use anyhow;
 
-use tokio::sync::{mpsc, oneshot};
-
-use futures::future;
+use tokio::sync::{mpsc, oneshot, RwLock};
 
 use chrono::Utc;
-
-// TODO: get this from pattern detector
-const DETECTION_STEP: u64 = 10;
-
-struct SegData {
-    label: bool,
-    data: Vec<(u64, f64)>,
-}
-
-async fn segment_to_segdata(ms: &MetricService, segment: &Segment) -> anyhow::Result<SegData> {
-    let mut mr = ms.query(segment.from, segment.to, DETECTION_STEP).await?;
-
-    if mr.data.keys().len() == 0 {
-        return Ok(SegData {
-            label: segment.segment_type == SegmentType::Label,
-            data: Default::default(),
-        });
-    }
-
-    let k = mr.data.keys().nth(0).unwrap().clone();
-    let ts = mr.data.remove(&k).unwrap();
-
-    Ok(SegData {
-        label: segment.segment_type == SegmentType::Label,
-        data: ts,
-    })
-}
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
 
-    analytic_unit_learning_results: Option<LearningResults>,
+    analytic_unit: Option<Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>>,
     analytic_unit_config: AnalyticUnitConfig,
     analytic_unit_learning_status: LearningStatus,
 
@@ -84,10 +60,10 @@ impl AnalyticService {
             segments_service,
 
             // TODO: get it from persistance
-            analytic_unit_learning_results: None,
+            analytic_unit: None,
             analytic_unit_config: AnalyticUnitConfig::Pattern(PatternConfig {
                 correlation_score: 0.95,
-                model_score: 0.95
+                model_score: 0.95,
             }),
 
             analytic_unit_learning_status: LearningStatus::Initialization,
@@ -113,28 +89,27 @@ impl AnalyticService {
     fn run_detection_task(&self, task: DetectionTask) {
         // TODO: save handler of the task
         tokio::spawn({
-            let lr = self.analytic_unit_learning_results.as_ref().unwrap().clone();
             let ms = self.metric_service.clone();
+            let au = self.analytic_unit.as_ref().unwrap().clone();
             async move {
-                AnalyticService::get_detections(task.sender, lr, ms, task.from, task.to)
-                    .await;
+                AnalyticService::get_detections(task.sender, au, ms, task.from, task.to).await;
             }
         });
     }
 
-    fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
-        if self.runner_handler.is_some() {
-            self.runner_handler.as_mut().unwrap().abort();
-        }
-        // TODO: save handler of the task
-        self.runner_handler = Some(tokio::spawn({
-            let lr = self.analytic_unit_learning_results.as_ref().unwrap().clone();
-            let ms = self.metric_service.clone();
-            async move {
-                // TODO: implement
-            }
-        }));
-    }
+    // fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
+    //     if self.runner_handler.is_some() {
+    //         self.runner_handler.as_mut().unwrap().abort();
+    //     }
+    //     // TODO: save handler of the task
+    //     self.runner_handler = Some(tokio::spawn({
+    //         let au = self.analytic_unit.unwrap();
+    //         let ms = self.metric_service.clone();
+    //         async move {
+    //             // TODO: implement
+    //         }
+    //     }));
+    // }
 
     fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
@@ -148,8 +123,9 @@ impl AnalyticService {
                     let tx = self.tx.clone();
                     let ms = self.metric_service.clone();
                     let ss = self.segments_service.clone();
+                    let cfg = self.analytic_unit_config.clone();
                     async move {
-                        AnalyticService::run_learning(tx, ms, ss).await;
+                        AnalyticService::run_learning(tx, cfg, ms, ss).await;
                     }
                 }));
             }
@@ -176,20 +152,20 @@ impl AnalyticService {
             RequestType::GetStatus(tx) => {
                 tx.send(self.analytic_unit_learning_status.clone()).unwrap();
             }
-            RequestType::GetLearningTrain(tx) => {
-                if self.analytic_unit_learning_results.is_none() {
-                    tx.send(LearningTrain::default()).unwrap();
-                } else {
-                    tx.send(
-                        self.analytic_unit_learning_results
-                            .as_ref()
-                            .unwrap()
-                            .learning_train
-                            .clone(),
-                    )
-                    .unwrap();
-                }
-            }
+            // RequestType::GetLearningTrain(tx) => {
+            //     if self.analytic_unit_learning_results.is_none() {
+            //         tx.send(LearningTrain::default()).unwrap();
+            //     } else {
+            //         tx.send(
+            //             self.analytic_unit_learning_results
+            //                 .as_ref()
+            //                 .unwrap()
+            //                 .learning_train
+            //                 .clone(),
+            //         )
+            //         .unwrap();
+            //     }
+            // }
             RequestType::GetConfig(tx) => {
                 tx.send(self.analytic_unit_config.clone()).unwrap();
             }
@@ -199,10 +175,12 @@ impl AnalyticService {
     fn consume_response(&mut self, res: types::ResponseType) {
         match res {
             // TODO: handle when learning panic
-            ResponseType::LearningStarted => self.analytic_unit_learning_status = LearningStatus::Learning,
+            ResponseType::LearningStarted => {
+                self.analytic_unit_learning_status = LearningStatus::Learning
+            }
             ResponseType::LearningFinished(results) => {
                 self.learning_handler = None;
-                self.analytic_unit_learning_results = Some(results);
+                self.analytic_unit = Some(Arc::new(tokio::sync::RwLock::new(results)));
                 self.analytic_unit_learning_status = LearningStatus::Ready;
 
                 // TODO: run tasks from self.learning_waiter
@@ -212,21 +190,21 @@ impl AnalyticService {
                 }
 
                 // TODO: fix this
-                if self.endpoint.is_some() {
-                    self.run_detection_runner(DetectionRunnerConfig {
-                        endpoint: self.endpoint.as_ref().unwrap().clone(),
-                        from: Utc::now().timestamp() as u64,
-                    });
-                }
+                // if self.endpoint.is_some() {
+                //     self.run_detection_runner(DetectionRunnerConfig {
+                //         endpoint: self.endpoint.as_ref().unwrap().clone(),
+                //         from: Utc::now().timestamp() as u64,
+                //     });
+                // }
             }
             ResponseType::LearningFinishedEmpty => {
                 // TODO: drop all learning_waiters with empty results
-                self.analytic_unit_learning_results = None;
+                self.analytic_unit = None;
                 self.analytic_unit_learning_status = LearningStatus::Initialization;
             }
             ResponseType::LearningDatasourceError => {
                 // TODO: drop all learning_waiters with error
-                self.analytic_unit_learning_results = None;
+                self.analytic_unit = None;
                 self.analytic_unit_learning_status = LearningStatus::Error;
             }
         }
@@ -246,9 +224,12 @@ impl AnalyticService {
 
     async fn run_learning(
         tx: mpsc::Sender<AnalyticServiceMessage>,
+        aucfg: AnalyticUnitConfig,
         ms: MetricService,
         ss: SegmentsService,
     ) {
+        let mut au = resolve(aucfg);
+
         match tx
             .send(AnalyticServiceMessage::Response(
                 ResponseType::LearningStarted,
@@ -256,70 +237,17 @@ impl AnalyticService {
             .await
         {
             Ok(_) => {}
-            Err(_e) => println!("Fail to send notification about learning start"),
+            Err(_e) => println!("Fail to send learning started notification"),
         }
 
-        // TODO: logic for returning error
+        // TODO: maybe to spawn_blocking here
+        let lr = match au.learn(ms, ss).await {
+            LearningResult::Finished => ResponseType::LearningFinished(au),
+            LearningResult::DatasourceError => ResponseType::LearningDatasourceError,
+            LearningResult::FinishedEmpty => ResponseType::LearningFinishedEmpty,
+        };
 
-        // be careful if decide to store detections in db
-        let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
-        let has_segments_label = segments
-            .iter()
-            .find(|s| s.segment_type == SegmentType::Label)
-            .is_some();
-
-        if !has_segments_label {
-            match tx
-                .send(AnalyticServiceMessage::Response(
-                    ResponseType::LearningFinishedEmpty,
-                ))
-                .await
-            {
-                Ok(_) => {}
-                Err(_e) => println!("Fail to send learning results"),
-            }
-            return;
-        }
-
-        let fs = segments.iter().map(|s| segment_to_segdata(&ms, s));
-        let rs = future::join_all(fs).await;
-
-        let mut learn_tss = Vec::new();
-        let mut learn_anti_tss = Vec::new();
-
-        for r in rs {
-            if r.is_err() {
-                println!("Error extracting metrics from datasource");
-                match tx
-                    .send(AnalyticServiceMessage::Response(
-                        ResponseType::LearningDatasourceError,
-                    ))
-                    .await
-                {
-                    Ok(_) => {}
-                    Err(_e) => println!("Fail send error abour extracting error"),
-                }
-                return;
-            }
-
-            let sd = r.unwrap();
-            if sd.data.is_empty() {
-                continue;
-            }
-            if sd.label {
-                learn_tss.push(sd.data);
-            } else {
-                learn_anti_tss.push(sd.data);
-            }
-        }
-
-        let lr = PatternAnalyticUnit::learn(&learn_tss, &learn_anti_tss).await;
-        match tx
-            .send(AnalyticServiceMessage::Response(
-                ResponseType::LearningFinished(lr),
-            ))
-            .await
-        {
+        match tx.send(AnalyticServiceMessage::Response(lr)).await {
             Ok(_) => {}
             Err(_e) => println!("Fail to send learning results"),
         }
@@ -327,28 +255,17 @@ impl AnalyticService {
 
     async fn get_detections(
         tx: oneshot::Sender<anyhow::Result<Vec<Segment>>>,
-        lr: LearningResults,
+        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
         ms: MetricService,
         from: u64,
         to: u64,
     ) {
-        let pt = pattern_analytic_unit::PatternAnalyticUnit::new(lr);
-        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
-
-        if mr.data.keys().len() == 0 {
-            match tx.send(Ok(Vec::new())) {
-                Ok(_) => {}
-                Err(_e) => {
-                    println!("failed to send empty results");
-                }
-            }
-            return;
-        }
-
-        let k = mr.data.keys().nth(0).unwrap();
-        let ts = &mr.data[k];
-
-        let result = pt.detect(ts);
+        let result = analytic_unit
+            .read()
+            .await
+            .detect(ms, from, to)
+            .await
+            .unwrap();
 
         let result_segments: Vec<Segment> = result
             .iter()
@@ -368,6 +285,4 @@ impl AnalyticService {
         }
         return;
     }
-
-
 }

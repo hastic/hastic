@@ -1,19 +1,27 @@
 use std::{fmt, sync::Arc};
 
+use futures::future;
 use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use serde_json;
 
 use linfa::prelude::*;
 
 use linfa;
-use linfa_svm::{error::Result, Svm};
+use linfa_svm::Svm;
 
-use ndarray::{Array, ArrayView, Axis};
+use ndarray::Array;
 
-use crate::services::analytic_service::types::LearningTrain;
+use crate::services::{
+    analytic_service::types::{self, LearningTrain},
+    metric_service::MetricService,
+    segments_service::{Segment, SegmentType, SegmentsService},
+};
 
+use super::types::{AnalyticUnit, LearningResult, PatternConfig};
 
+use async_trait::async_trait;
+
+// TODO: move to config
+const DETECTION_STEP: u64 = 10;
 
 #[derive(Clone)]
 pub struct LearningResults {
@@ -54,11 +62,6 @@ pub type Features = [f64; FEATURES_SIZE];
 
 pub const SCORE_THRESHOLD: f64 = 0.95;
 
-#[derive(Clone)]
-pub struct PatternAnalyticUnit {
-    learning_results: LearningResults,
-}
-
 fn nan_to_zero(n: f64) -> f64 {
     if n.is_nan() {
         return 0.;
@@ -66,155 +69,42 @@ fn nan_to_zero(n: f64) -> f64 {
     return n;
 }
 
+struct SegData {
+    label: bool,
+    data: Vec<(u64, f64)>,
+}
+
+async fn segment_to_segdata(ms: &MetricService, segment: &Segment) -> anyhow::Result<SegData> {
+    let mut mr = ms.query(segment.from, segment.to, DETECTION_STEP).await?;
+
+    if mr.data.keys().len() == 0 {
+        return Ok(SegData {
+            label: segment.segment_type == SegmentType::Label,
+            data: Default::default(),
+        });
+    }
+
+    let k = mr.data.keys().nth(0).unwrap().clone();
+    let ts = mr.data.remove(&k).unwrap();
+
+    Ok(SegData {
+        label: segment.segment_type == SegmentType::Label,
+        data: ts,
+    })
+}
+
+pub struct PatternAnalyticUnit {
+    config: PatternConfig,
+    learning_results: Option<LearningResults>,
+}
+
 // TODO: move this to loginc of analytic unit
 impl PatternAnalyticUnit {
-    pub fn new(learning_results: LearningResults) -> PatternAnalyticUnit {
-        PatternAnalyticUnit { learning_results }
-    }
-
-    pub async fn learn(
-        reads: &Vec<Vec<(u64, f64)>>,
-        anti_reads: &Vec<Vec<(u64, f64)>>,
-    ) -> LearningResults {
-        // let size_avg = reads.iter().map(|r| r.len()).sum::<usize>() / reads.len();
-
-        let mut patterns = Vec::<Vec<f64>>::new();
-        let mut anti_patterns = Vec::<Vec<f64>>::new();
-
-        let mut records_raw = Vec::<Features>::new();
-        let mut targets_raw = Vec::<bool>::new();
-
-        for r in reads {
-            let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
-            let fs = PatternAnalyticUnit::get_features(&xs);
-
-            records_raw.push(fs);
-            targets_raw.push(true);
-            patterns.push(xs);
+    pub fn new(cfg: PatternConfig) -> PatternAnalyticUnit {
+        PatternAnalyticUnit {
+            config: cfg,
+            learning_results: None,
         }
-
-        for r in anti_reads {
-            let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
-            let fs = PatternAnalyticUnit::get_features(&xs);
-            records_raw.push(fs);
-            targets_raw.push(false);
-            anti_patterns.push(xs);
-        }
-
-        let records = Array::from_shape_fn((records_raw.len(), FEATURES_SIZE), |(i, j)| {
-            records_raw[i][j]
-        });
-
-        let targets = Array::from_vec(targets_raw.clone());
-
-        // println!("{:?}", records);
-        // println!("{:?}", targets);
-
-        let train = linfa::Dataset::new(records, targets);
-
-        // The 'view' describes what set of data is drawn
-        // let v = ContinuousView::new()
-        //     .add(s1)
-        //     // .add(s2)
-        //     .x_range(-500., 100.)
-        //     .y_range(-200., 600.)
-        //     .x_label("Some varying variable")
-        //     .y_label("The response of something");
-
-        // Page::single(&v).save("scatter.svg").unwrap();
-
-        // let model = stat.iter().map(|(c, v)| v / *c as f64).collect();
-
-        let model = Svm::<_, bool>::params()
-            .pos_neg_weights(50000., 5000.)
-            .gaussian_kernel(80.0)
-            .fit(&train)
-            .unwrap();
-
-        // let prediction = model.predict(Array::from_vec(vec![
-        //     715.3122807017543, 761.1228070175438, 745.0, 56.135764727158595, 0.0, 0.0
-        // ]));
-
-        // println!("pridiction: {}", prediction );
-
-        LearningResults {
-            model: Arc::new(Mutex::new(model)),
-
-            learning_train: LearningTrain {
-                features: records_raw,
-                target: targets_raw,
-            },
-
-            patterns,
-            anti_patterns,
-        }
-    }
-
-    // TODO: get iterator instead of vector
-    pub fn detect(&self, ts: &Vec<(u64, f64)>) -> Vec<(u64, u64)> {
-        let mut results = Vec::new();
-
-        let pt = &self.learning_results.patterns;
-        let apt = &self.learning_results.anti_patterns;
-
-        for i in 0..ts.len() {
-            let mut pattern_match_score = 0f64;
-            let mut pattern_match_len = 0usize;
-            let mut anti_pattern_match_score = 0f64;
-
-            for p in pt {
-                if i + p.len() < ts.len() {
-                    let mut backet = Vec::<f64>::new();
-                    for j in 0..p.len() {
-                        backet.push(nan_to_zero(ts[i + j].1));
-                    }
-                    let score = PatternAnalyticUnit::corr_aligned(p, &backet);
-                    if score > pattern_match_score {
-                        pattern_match_score = score;
-                        pattern_match_len = p.len();
-                    }
-                }
-            }
-
-            for p in apt {
-                if i + p.len() < ts.len() {
-                    let mut backet = Vec::<f64>::new();
-                    for j in 0..p.len() {
-                        backet.push(nan_to_zero(ts[i + j].1));
-                    }
-                    let score = PatternAnalyticUnit::corr_aligned(p, &backet);
-                    if score > anti_pattern_match_score {
-                        anti_pattern_match_score = score;
-                    }
-                }
-            }
-
-            {
-                let mut backet = Vec::<f64>::new();
-                for j in 0..pattern_match_len {
-                    backet.push(nan_to_zero(ts[i + j].1));
-                }
-                let fs = PatternAnalyticUnit::get_features(&backet);
-                let detected = self
-                    .learning_results
-                    .model
-                    .lock()
-                    .predict(Array::from_vec(fs.to_vec()));
-                if detected {
-                    pattern_match_score += 0.1;
-                } else {
-                    anti_pattern_match_score += 0.1;
-                }
-            }
-
-            if pattern_match_score > anti_pattern_match_score
-                && pattern_match_score >= SCORE_THRESHOLD
-            {
-                results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
-            }
-        }
-
-        return results;
     }
 
     fn corr_aligned(xs: &Vec<f64>, ys: &Vec<f64>) -> f64 {
@@ -289,5 +179,204 @@ impl PatternAnalyticUnit {
             // 0f64,0f64,
             // 0f64,0f64,0f64, 0f64
         ];
+    }
+}
+
+#[async_trait]
+impl AnalyticUnit for PatternAnalyticUnit {
+    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult {
+        // be careful if decide to store detections in db
+        let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
+        let has_segments_label = segments
+            .iter()
+            .find(|s| s.segment_type == SegmentType::Label)
+            .is_some();
+
+        if !has_segments_label {
+            return LearningResult::FinishedEmpty;
+        }
+
+        let fs = segments.iter().map(|s| segment_to_segdata(&ms, s));
+        let rs = future::join_all(fs).await;
+
+        let mut learn_tss = Vec::new();
+        let mut learn_anti_tss = Vec::new();
+
+        for r in rs {
+            if r.is_err() {
+                println!("Error extracting metrics from datasource");
+                return LearningResult::DatasourceError;
+            }
+
+            let sd = r.unwrap();
+            if sd.data.is_empty() {
+                continue;
+            }
+            if sd.label {
+                learn_tss.push(sd.data);
+            } else {
+                learn_anti_tss.push(sd.data);
+            }
+        }
+
+        // let reads: &Vec<Vec<(u64, f64)>> = // TODO
+        // let anti_reads: &Vec<Vec<(u64, f64)>> // TODO
+
+        // let size_avg = reads.iter().map(|r| r.len()).sum::<usize>() / reads.len();
+
+        let mut patterns = Vec::<Vec<f64>>::new();
+        let mut anti_patterns = Vec::<Vec<f64>>::new();
+
+        let mut records_raw = Vec::<Features>::new();
+        let mut targets_raw = Vec::<bool>::new();
+
+        for r in learn_tss {
+            let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
+            let fs = PatternAnalyticUnit::get_features(&xs);
+
+            records_raw.push(fs);
+            targets_raw.push(true);
+            patterns.push(xs);
+        }
+
+        for r in learn_anti_tss {
+            let xs: Vec<f64> = r.iter().map(|e| e.1).map(nan_to_zero).collect();
+            let fs = PatternAnalyticUnit::get_features(&xs);
+            records_raw.push(fs);
+            targets_raw.push(false);
+            anti_patterns.push(xs);
+        }
+
+        let records = Array::from_shape_fn((records_raw.len(), FEATURES_SIZE), |(i, j)| {
+            records_raw[i][j]
+        });
+
+        let targets = Array::from_vec(targets_raw.clone());
+
+        // println!("{:?}", records);
+        // println!("{:?}", targets);
+
+        let train = linfa::Dataset::new(records, targets);
+
+        // The 'view' describes what set of data is drawn
+        // let v = ContinuousView::new()
+        //     .add(s1)
+        //     // .add(s2)
+        //     .x_range(-500., 100.)
+        //     .y_range(-200., 600.)
+        //     .x_label("Some varying variable")
+        //     .y_label("The response of something");
+
+        // Page::single(&v).save("scatter.svg").unwrap();
+
+        // let model = stat.iter().map(|(c, v)| v / *c as f64).collect();
+
+        let model = Svm::<_, bool>::params()
+            .pos_neg_weights(50000., 5000.)
+            .gaussian_kernel(80.0)
+            .fit(&train)
+            .unwrap();
+
+        // let prediction = model.predict(Array::from_vec(vec![
+        //     715.3122807017543, 761.1228070175438, 745.0, 56.135764727158595, 0.0, 0.0
+        // ]));
+
+        // println!("pridiction: {}", prediction );
+
+        self.learning_results = Some(LearningResults {
+            model: Arc::new(Mutex::new(model)),
+
+            learning_train: LearningTrain {
+                features: records_raw,
+                target: targets_raw,
+            },
+
+            patterns,
+            anti_patterns,
+        });
+
+        return LearningResult::Finished;
+    }
+
+    // TODO: get iterator instead of vector
+    async fn detect(
+        &self,
+        ms: MetricService,
+        from: u64,
+        to: u64,
+    ) -> anyhow::Result<Vec<(u64, u64)>> {
+        if self.learning_results.is_none() {
+            return Err(anyhow::format_err!("Learning results are not ready"));
+        }
+
+        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+
+        if mr.data.keys().len() == 0 {
+            return Ok(Vec::new());
+        }
+
+        let k = mr.data.keys().nth(0).unwrap();
+        let ts = &mr.data[k];
+
+        let lr = self.learning_results.as_ref().unwrap();
+        let mut results = Vec::new();
+
+        let pt = &lr.patterns;
+        let apt = &lr.anti_patterns;
+
+        for i in 0..ts.len() {
+            let mut pattern_match_score = 0f64;
+            let mut pattern_match_len = 0usize;
+            let mut anti_pattern_match_score = 0f64;
+
+            for p in pt {
+                if i + p.len() < ts.len() {
+                    let mut backet = Vec::<f64>::new();
+                    for j in 0..p.len() {
+                        backet.push(nan_to_zero(ts[i + j].1));
+                    }
+                    let score = PatternAnalyticUnit::corr_aligned(&p, &backet);
+                    if score > pattern_match_score {
+                        pattern_match_score = score;
+                        pattern_match_len = p.len();
+                    }
+                }
+            }
+
+            for p in apt {
+                if i + p.len() < ts.len() {
+                    let mut backet = Vec::<f64>::new();
+                    for j in 0..p.len() {
+                        backet.push(nan_to_zero(ts[i + j].1));
+                    }
+                    let score = PatternAnalyticUnit::corr_aligned(&p, &backet);
+                    if score > anti_pattern_match_score {
+                        anti_pattern_match_score = score;
+                    }
+                }
+            }
+
+            {
+                let mut backet = Vec::<f64>::new();
+                for j in 0..pattern_match_len {
+                    backet.push(nan_to_zero(ts[i + j].1));
+                }
+                let fs = PatternAnalyticUnit::get_features(&backet);
+                let detected = lr.model.lock().predict(Array::from_vec(fs.to_vec()));
+                if detected {
+                    pattern_match_score += 0.1;
+                } else {
+                    anti_pattern_match_score += 0.1;
+                }
+            }
+
+            if pattern_match_score > anti_pattern_match_score
+                && pattern_match_score >= SCORE_THRESHOLD
+            {
+                results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
+            }
+        }
+
+        Ok(results)
     }
 }

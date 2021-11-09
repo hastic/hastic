@@ -2,11 +2,14 @@ pub mod pattern_analytic_unit;
 pub mod threshold_analytic_unit;
 pub mod types;
 
-use async_trait::async_trait;
+use self::{
+    pattern_analytic_unit::PatternAnalyticUnit, threshold_analytic_unit::ThresholdAnalyticUnit,
+    types::AnalyticUnitConfig,
+};
 
-#[async_trait]
-trait AnalyticUnit<C> {
-    async fn learn(reads: &Vec<Vec<(u64, f64)>>, anti_reads: &Vec<Vec<(u64, f64)>>);
-    fn detect(&self, ts: &Vec<(u64, f64)>) -> Vec<(u64, u64)>;
+pub fn resolve(cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
+    match cfg {
+        AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new(c.clone())),
+        AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new(c.clone())),
+    }
 }
-

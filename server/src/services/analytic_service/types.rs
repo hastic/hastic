@@ -1,10 +1,17 @@
+use std::fmt;
+
 use crate::services::segments_service::Segment;
 
-use super::analytic_unit::{pattern_analytic_unit::{self, LearningResults}, types::AnalyticUnitConfig};
+use super::analytic_unit::{
+    pattern_analytic_unit::{self, LearningResults},
+    types::AnalyticUnitConfig,
+};
 
 use anyhow::Result;
 use serde::Serialize;
 use tokio::sync::oneshot;
+
+use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum LearningStatus {
@@ -31,12 +38,18 @@ impl Default for LearningTrain {
     }
 }
 
-#[derive(Debug)]
 pub enum ResponseType {
     LearningStarted,
-    LearningFinished(LearningResults),
+    LearningFinished(Box<dyn AnalyticUnit + Send + Sync>),
     LearningFinishedEmpty,
     LearningDatasourceError,
+}
+
+impl fmt::Debug for ResponseType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO: implement
+        f.debug_tuple("foo").finish()
+    }
 }
 
 #[derive(Debug)]
@@ -60,7 +73,7 @@ pub enum RequestType {
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
     GetConfig(oneshot::Sender<AnalyticUnitConfig>),
-    GetLearningTrain(oneshot::Sender<LearningTrain>),
+    // GetLearningTrain(oneshot::Sender<LearningTrain>),
 }
 
 #[derive(Debug)]

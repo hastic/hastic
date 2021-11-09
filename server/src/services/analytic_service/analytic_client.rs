@@ -43,13 +43,13 @@ impl AnalyticClient {
         Ok(r)
     }
 
-    pub async fn get_train(&self) -> anyhow::Result<LearningTrain> {
-        let (tx, rx) = oneshot::channel();
-        let req = AnalyticServiceMessage::Request(RequestType::GetLearningTrain(tx));
-        self.tx.send(req).await?;
-        let r = rx.await?;
-        Ok(r)
-    }
+    // pub async fn get_train(&self) -> anyhow::Result<LearningTrain> {
+    //     let (tx, rx) = oneshot::channel();
+    //     let req = AnalyticServiceMessage::Request(RequestType::GetLearningTrain(tx));
+    //     self.tx.send(req).await?;
+    //     let r = rx.await?;
+    //     Ok(r)
+    // }
 
     pub async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let (tx, rx) = oneshot::channel();

@@ -1,5 +1,5 @@
 mod analytic_service;
-mod analytic_unit;
+pub mod analytic_unit;
 pub mod types;
 
 pub mod analytic_client;
