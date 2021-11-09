@@ -17,7 +17,7 @@ impl Default for PatternConfig {
     fn default() -> Self {
         PatternConfig {
             correlation_score: 0.7,
-            anti_correlation_score: 0.7,
+            anti_correlation_score: 0.1,
             model_score: 0.5,
             threshold_score: 1.0,
         }

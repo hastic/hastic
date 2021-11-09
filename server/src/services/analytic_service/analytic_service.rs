@@ -109,6 +109,7 @@ impl AnalyticService {
     //     }));
     // }
 
+    // TODO: maybe make `consume_request` async
     fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
             RequestType::RunLearning => {
@@ -168,14 +169,13 @@ impl AnalyticService {
                 tx.send(self.analytic_unit_config.clone()).unwrap();
             }
             RequestType::PatchConfig(patch_obj, tx) => {
-                // TODO: path config
-                // TODO: run learning if config type changed
-                self.patch_config(patch_obj);
-                tx.send(()).unwrap();
+                self.patch_config(patch_obj, tx);
+                // tx.send(()).unwrap();
             }
         };
     }
-
+    
+    // TODO: maybe make `consume_response` async
     fn consume_response(&mut self, res: types::ResponseType) {
         match res {
             // TODO: handle when learning panic
@@ -214,11 +214,18 @@ impl AnalyticService {
         }
     }
 
-    fn patch_config(&mut self, patch: PatchConfig) {
+    fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
         let (new_conf, need_learning) = self.analytic_unit_config.patch(patch);
         self.analytic_unit_config = new_conf;
         if need_learning {
             self.consume_request(RequestType::RunLearning);
+            // TODO: it's not fullu correct: we need to wait when the learning starts 
+            match tx.send(()) {
+                Ok(_) => {},
+                Err(_e) => {
+                    println!("Can`t send patch config notification");
+                }
+            }
         } else {
             if self.analytic_unit.is_some() {
                 tokio::spawn({
@@ -226,8 +233,21 @@ impl AnalyticService {
                     let cfg = self.analytic_unit_config.clone();
                     async move {
                         au.unwrap().write().await.set_config(cfg);
+                        match tx.send(()) {
+                            Ok(_) => {},
+                            Err(_e) => {
+                                println!("Can`t send patch config notification");
+                            }
+                        }
                     }
                 });
+            } else {
+                match tx.send(()) {
+                    Ok(_) => {},
+                    Err(_e) => {
+                        println!("Can`t send patch config notification");
+                    }
+                }
             }
         }
     }

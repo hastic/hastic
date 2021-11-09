@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, watch } from 'vue';
 import { HasticPod, TimeRange } from "./hastic_pod";
 import { getMetrics } from '../services/metrics.service';
 import { getSegments, postSegment, deleteSegment } from '../services/segments.service';
@@ -88,13 +88,32 @@ export default defineComponent({
     );
     this.pod.render();
   },
+  // TODO: it's a hack: listen real events about analytics update and use store
+  watch: {
+    analyticUnitConfig(newConfig, prevConfig) {
+      console.log("CONFIG CHANGED");
+      if(prevConfig == null) {
+        return;
+      }
+      console.log(prevConfig);
+      console.log(newConfig);
+      
+      this.rerender();
+    }
+  },
   methods: {
+    // @watch('analyticUnitConfig')
     rerender() {
       this.pod.fetchData();
     },
     async deleteAllSegments() {
       await _deleteSegment.bind(this)(0, Date.now());
       this.rerender();
+    }
+  },
+  computed: {
+    analyticUnitConfig() {
+      return this.$store.state.analyticUnitConfig;
     }
   }
 });
