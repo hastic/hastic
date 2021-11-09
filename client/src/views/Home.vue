@@ -33,6 +33,8 @@ import Graph from '@/components/Graph.vue';
 import AnalyticStatus from '@/components/AnlyticsStatus.vue';
 import { AnalyticUnitType } from '@/types/analytic_units';
 
+import * as _ from 'lodash';
+
 
 export default defineComponent({
   name: 'Home',
@@ -45,13 +47,17 @@ export default defineComponent({
       this.$refs.graph.deleteAllSegments();
     },
     changeAnalyticUnitType(e) {
-      this.$store.dispatch('patchConfig', { [e.target.value]: true } );
+      this.$store.dispatch('patchConfig', { [e.target.value]: null } );
     },
     correlationScoreChange(e) {
-      this.$store.dispatch('patchConfig', { Pattern: { correlation_score: e.target.value } });
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.correlation_score = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Pattern: cfg });
     },
     modelScoreChange(e) {
-      this.$store.dispatch('patchConfig', { Pattern: { model_score: e.target.value } });
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.model_score = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig', { Pattern: cfg });
     }
   },
   data: function () {
@@ -59,7 +65,7 @@ export default defineComponent({
       analyticUnitTypes: [
         AnalyticUnitType.THRESHOLD,
         AnalyticUnitType.PATTERN,
-        AnalyticUnitType.ANOMALY, 
+        AnalyticUnitType.ANOMALY,
       ]
     }
   },

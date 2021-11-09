@@ -219,9 +219,12 @@ impl AnalyticService {
         }
     }
 
-    fn patch_config(&mut self, mut patch: PatchConfig) {
-        // let r = patch.take();
-        println!("{:?}", patch);
+    fn patch_config(&mut self, patch: PatchConfig) {
+        let (new_conf, need_learning) = self.analytic_unit_config.patch(patch);
+        self.analytic_unit_config = new_conf;
+        if need_learning {
+            self.consume_request(RequestType::RunLearning);
+        }
     }
 
     pub async fn serve(&mut self) {
