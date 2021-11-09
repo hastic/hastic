@@ -168,6 +168,11 @@ impl AnalyticService {
             // }
             RequestType::GetConfig(tx) => {
                 tx.send(self.analytic_unit_config.clone()).unwrap();
+            },
+            RequestType::PatchConfig(patch_obj, tx) => {
+                // TODO: path config
+                // TODO: run learning if config type changed
+                tx.send(()).unwrap();
             }
         };
     }

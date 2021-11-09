@@ -1,3 +1,4 @@
+use serde_json::Value;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 
@@ -41,6 +42,14 @@ impl AnalyticClient {
         self.tx.send(req).await?;
         let r = rx.await?;
         Ok(r)
+    }
+
+    pub async fn patch_config(&self, patch_obj: Value) -> anyhow::Result<()> {
+        let (tx, rx) = oneshot::channel();
+        let req = AnalyticServiceMessage::Request(RequestType::PatchConfig(patch_obj, tx));
+        self.tx.send(req).await?;
+        rx.await?;
+        Ok(())
     }
 
     // pub async fn get_train(&self) -> anyhow::Result<LearningTrain> {

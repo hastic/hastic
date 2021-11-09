@@ -119,7 +119,7 @@ mod handlers {
 
     pub async fn patch_config(client: Client, obj: Value) -> Result<impl warp::Reply, warp::Rejection> {
 
-        println!("{:?}", obj);
+        // println!("{:?}", obj);
         match client.get_config().await {
             Ok(cf) => Ok(API::json(&cf)),
             Err(e) => {

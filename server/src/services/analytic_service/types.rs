@@ -9,6 +9,7 @@ use super::analytic_unit::{
 
 use anyhow::Result;
 use serde::Serialize;
+use serde_json::Value;
 use tokio::sync::oneshot;
 
 use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
@@ -72,6 +73,8 @@ pub enum RequestType {
     RunLearning,
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
+    // TODO: make type of Value
+    PatchConfig(Value, oneshot::Sender<()>),
     GetConfig(oneshot::Sender<AnalyticUnitConfig>),
     // GetLearningTrain(oneshot::Sender<LearningTrain>),
 }
