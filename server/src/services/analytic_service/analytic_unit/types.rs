@@ -6,6 +6,8 @@ use crate::services::{
     analytic_service::types, metric_service::MetricService, segments_service::SegmentsService,
 };
 
+use super::threshold_analytic_unit::ThresholdAnalyticUnit;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PatternConfig {
     pub correlation_score: f32,
@@ -43,4 +45,11 @@ pub trait AnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, u64)>>;
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum PatchConfig {
+    Pattern(bool),
+    Threshold(bool),
+    Anomaly(bool)
 }

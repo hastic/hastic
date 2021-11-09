@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::analytic_unit::types::{AnalyticUnitConfig, PatternConfig};
+use super::analytic_unit::types::{AnalyticUnitConfig, PatternConfig, PatchConfig};
 use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
     analytic_client::AnalyticClient,
@@ -19,9 +19,12 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
+use serde_json::Value;
 use tokio::sync::{mpsc, oneshot, RwLock};
 
 use chrono::Utc;
+
+
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
@@ -172,6 +175,7 @@ impl AnalyticService {
             RequestType::PatchConfig(patch_obj, tx) => {
                 // TODO: path config
                 // TODO: run learning if config type changed
+                self.patch_config(patch_obj);
                 tx.send(()).unwrap();
             }
         };
@@ -213,6 +217,11 @@ impl AnalyticService {
                 self.analytic_unit_learning_status = LearningStatus::Error;
             }
         }
+    }
+
+    fn patch_config(&mut self, mut patch: PatchConfig) {
+        // let r = patch.take();
+        println!("{:?}", patch);
     }
 
     pub async fn serve(&mut self) {

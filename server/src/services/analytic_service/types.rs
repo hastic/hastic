@@ -7,6 +7,8 @@ use super::analytic_unit::{
     types::AnalyticUnitConfig,
 };
 
+use super::analytic_unit::types::{PatchConfig};
+
 use anyhow::Result;
 use serde::Serialize;
 use serde_json::Value;
@@ -74,7 +76,7 @@ pub enum RequestType {
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
     // TODO: make type of Value
-    PatchConfig(Value, oneshot::Sender<()>),
+    PatchConfig(PatchConfig, oneshot::Sender<()>),
     GetConfig(oneshot::Sender<AnalyticUnitConfig>),
     // GetLearningTrain(oneshot::Sender<LearningTrain>),
 }

@@ -5,6 +5,7 @@ use tokio::sync::oneshot;
 use crate::services::segments_service::Segment;
 
 use super::analytic_unit::types::AnalyticUnitConfig;
+use super::analytic_unit::types::PatchConfig;
 use super::types::DetectionTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;
@@ -44,9 +45,9 @@ impl AnalyticClient {
         Ok(r)
     }
 
-    pub async fn patch_config(&self, patch_obj: Value) -> anyhow::Result<()> {
+    pub async fn patch_config(&self, patch: PatchConfig) -> anyhow::Result<()> {
         let (tx, rx) = oneshot::channel();
-        let req = AnalyticServiceMessage::Request(RequestType::PatchConfig(patch_obj, tx));
+        let req = AnalyticServiceMessage::Request(RequestType::PatchConfig(patch, tx));
         self.tx.send(req).await?;
         rx.await?;
         Ok(())

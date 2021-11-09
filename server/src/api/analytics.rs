@@ -78,6 +78,7 @@ pub mod filters {
 
 mod handlers {
 
+    use hastic::services::analytic_service::analytic_unit::types::PatchConfig;
     use serde_json::Value;
 
     use super::models::{Client, ListOptions, Status};
@@ -117,10 +118,10 @@ mod handlers {
         }
     }
 
-    pub async fn patch_config(client: Client, obj: Value) -> Result<impl warp::Reply, warp::Rejection> {
+    pub async fn patch_config(client: Client, patch: PatchConfig) -> Result<impl warp::Reply, warp::Rejection> {
 
-        // println!("{:?}", obj);
-        match client.get_config().await {
+        println!("{:?}", patch);
+        match client.patch_config(patch).await {
             Ok(cf) => Ok(API::json(&cf)),
             Err(e) => {
                 println!("{:?}", e);
