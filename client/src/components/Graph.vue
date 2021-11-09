@@ -7,7 +7,7 @@
 <script lang="ts">
 import { defineComponent, watch } from 'vue';
 import { TimeRange } from "@/types";
-import { HasticPod } from "./pods/hastic_pod";
+import { PatternPod } from "./pods/pattern_pod";
 import { getMetrics } from '../services/metrics.service';
 import { getSegments, postSegment, deleteSegment } from '../services/segments.service';
 import { LineTimeSerie } from "@chartwerk/line-pod";
@@ -16,6 +16,7 @@ import { SegmentArray } from '@/types/segment_array';
 import { Segment, SegmentId } from '@/types/segment';
 
 import _ from "lodash";
+
 
 // TODO: move to store
 async function resolveData(range: TimeRange): Promise<{
@@ -80,7 +81,7 @@ export default defineComponent({
   props: {},
   mounted() {
     var s = new SegmentArray();
-    this.pod = new HasticPod(
+    this.pod = new PatternPod(
       document.getElementById('chart'),
       resolveData.bind(this),
       addSegment.bind(this),
@@ -91,6 +92,7 @@ export default defineComponent({
   },
   // TODO: it's a hack: listen real events about analytics update and use store
   watch: {
+    // TODO: choose pog based on config type
     analyticUnitConfig(newConfig, prevConfig) {
       console.log("CONFIG CHANGED");
       if(prevConfig == null) {
