@@ -37,6 +37,11 @@ const store = createStore<State>({
     }
   },
   actions: {
+    async initData() {
+      this.dispatch('fetchConfig');
+      this.dispatch('_runStatusGenerator');
+    },
+
     async _runStatusGenerator({commit, state}) {
       // notify({
       //   title: "Authorization",
@@ -49,11 +54,10 @@ const store = createStore<State>({
       const g = getStatusGenerator();
       commit(_SET_STATUS_GENERATOR, g);
       for await (const data of state._statusGenerator) {
-        const st = data.toLocaleLowerCase();
-        if(state.analyticStatus.toLocaleLowerCase() != 'ready' && st == 'ready') {
-          this.dispatch('fetchConfig');
+        // const st = data.toLocaleLowerCase();
+        // if(state.analyticStatus.toLocaleLowerCase() != 'ready' && st == 'ready') {
           // TODO: update segments from here
-        }
+        // }
         // this.status = data.toLowerCase();
         commit(SET_ANALYTICS_STATUS, data);
       }
@@ -68,6 +72,6 @@ const store = createStore<State>({
   }
 })
 
-store.dispatch('_runStatusGenerator');
+store.dispatch('initData');
 
 export default store;

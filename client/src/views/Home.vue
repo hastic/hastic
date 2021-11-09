@@ -4,6 +4,9 @@
     <graph ref="graph" />
     
     <analytic-status />
+    <div>
+      <v-select :options="analyticUnitTypes"></v-select>
+    </div>
     <div id="controls">
       <div v-if="analyticUnitType == analyticUnitTypes[1]">
         Hold <pre>S</pre> to label patterns <br/>
@@ -13,7 +16,6 @@
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -33,17 +35,25 @@ export default defineComponent({
   methods: {
     clearAllLabeling() {
       this.$refs.graph.deleteAllSegments();
+    },
+    changeAnalyticUnitType(e) {
+      console.log(e);
     }
   },
   data: function () {
     return {
-      analyticUnitTypes: [AnalyticUnitType.THRESHOLD, AnalyticUnitType.PATTERN, AnalyticUnitType.ANOMALY],
+      analyticUnitTypes: [
+        AnalyticUnitType.THRESHOLD,
+        AnalyticUnitType.PATTERN,
+        AnalyticUnitType.ANOMALY, 
+      ],
+      analyticUnitType: AnalyticUnitType.PATTERN
     }
   },
   computed: {
-    analyticUnitType() {
-      return this.$store.state.analyticUnitType;
-    }
+    // analyticUnitType() {
+    //   return { id: 1, name: this.$store.state.analyticUnitType }
+    // }
   }
 });
 </script>
