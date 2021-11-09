@@ -6,7 +6,8 @@
 
 <script lang="ts">
 import { defineComponent, watch } from 'vue';
-import { HasticPod, TimeRange } from "./hastic_pod";
+import { TimeRange } from "@/types";
+import { HasticPod } from "./pods/hastic_pod";
 import { getMetrics } from '../services/metrics.service';
 import { getSegments, postSegment, deleteSegment } from '../services/segments.service';
 import { LineTimeSerie } from "@chartwerk/line-pod";

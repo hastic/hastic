@@ -4,8 +4,8 @@ import { BrushOrientation } from "@chartwerk/core";
 import { SegmentsSet } from "@/types/segment_set";
 import { ANALYTIC_UNIT_COLORS } from "@/types/colors"
 import { Segment, SegmentId, SegmentType } from "@/types/segment";
+import { TimeRange  } from '@/types';
 
-export type TimeRange = { from: number, to: number };
 export type UpdateDataCallback = (range: TimeRange) => Promise<{
   timeserie: LineTimeSerie[],
   segments: Segment[]
