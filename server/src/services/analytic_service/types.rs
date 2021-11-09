@@ -7,7 +7,7 @@ use super::analytic_unit::{
     types::AnalyticUnitConfig,
 };
 
-use super::analytic_unit::types::{PatchConfig};
+use super::analytic_unit::types::PatchConfig;
 
 use anyhow::Result;
 use serde::Serialize;

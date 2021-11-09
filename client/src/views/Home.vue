@@ -19,8 +19,12 @@
         <hr/>
         Correlation score: 
         <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
+        Anti correlation score: 
+        <input :value="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>
         Model score: 
-        <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/><br/>
+        <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/>
+        Threshold score: 
+        <input :value="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
     </div>
@@ -54,9 +58,19 @@ export default defineComponent({
       cfg.correlation_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig',  { Pattern: cfg });
     },
+    antiCorrelationScoreChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.anti_correlation_score = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Pattern: cfg });
+    },
     modelScoreChange(e) {
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.model_score = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig', { Pattern: cfg });
+    },
+    thresholdScoreChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.threshold_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig', { Pattern: cfg });
     }
   },

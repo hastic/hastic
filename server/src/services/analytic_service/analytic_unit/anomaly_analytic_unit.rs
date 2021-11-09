@@ -2,7 +2,7 @@ use crate::services::{
     analytic_service::types, metric_service::MetricService, segments_service::SegmentsService,
 };
 
-use super::types::{AnalyticUnit, AnomalyConfig, LearningResult};
+use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResult};
 
 use async_trait::async_trait;
 
@@ -21,6 +21,13 @@ impl AnomalyAnalyticUnit {
 
 #[async_trait]
 impl AnalyticUnit for AnomalyAnalyticUnit {
+    fn set_config(&mut self, config: AnalyticUnitConfig) {
+        if let AnalyticUnitConfig::Anomaly(cfg) = config {
+            self.config = cfg;
+        } else {
+            panic!("Bad config!");
+        }
+    }
     async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
         return LearningResult::Finished;
     }

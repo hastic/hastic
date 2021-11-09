@@ -16,7 +16,7 @@ use crate::services::{
     segments_service::{Segment, SegmentType, SegmentsService},
 };
 
-use super::types::{AnalyticUnit, LearningResult, PatternConfig};
+use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, PatternConfig};
 
 use async_trait::async_trait;
 
@@ -59,8 +59,6 @@ impl fmt::Debug for LearningResults {
 pub const FEATURES_SIZE: usize = 4;
 
 pub type Features = [f64; FEATURES_SIZE];
-
-pub const SCORE_THRESHOLD: f64 = 0.95;
 
 fn nan_to_zero(n: f64) -> f64 {
     if n.is_nan() {
@@ -107,7 +105,7 @@ impl PatternAnalyticUnit {
         }
     }
 
-    fn corr_aligned(xs: &Vec<f64>, ys: &Vec<f64>) -> f64 {
+    fn corr_aligned(xs: &Vec<f64>, ys: &Vec<f64>) -> f32 {
         let n = xs.len() as f64;
         let mut s_xs: f64 = 0f64;
         let mut s_ys: f64 = 0f64;
@@ -146,7 +144,7 @@ impl PatternAnalyticUnit {
             println!("WARNING: corr result > 1: {}", result);
         }
 
-        return result;
+        return result as f32; // we know that it's in -1..1
     }
 
     fn get_features(xs: &Vec<f64>) -> Features {
@@ -184,6 +182,15 @@ impl PatternAnalyticUnit {
 
 #[async_trait]
 impl AnalyticUnit for PatternAnalyticUnit {
+
+    fn set_config(&mut self, config: AnalyticUnitConfig) {
+        if let AnalyticUnitConfig::Pattern(cfg) = config {
+            self.config = cfg;
+        } else {
+            panic!("Bad config!");
+        }
+    }
+
     async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult {
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
@@ -325,9 +332,9 @@ impl AnalyticUnit for PatternAnalyticUnit {
         let apt = &lr.anti_patterns;
 
         for i in 0..ts.len() {
-            let mut pattern_match_score = 0f64;
+            let mut pattern_match_score = 0f32;
             let mut pattern_match_len = 0usize;
-            let mut anti_pattern_match_score = 0f64;
+            let mut anti_pattern_match_score = 0f32;
 
             for p in pt {
                 if i + p.len() < ts.len() {
@@ -364,14 +371,12 @@ impl AnalyticUnit for PatternAnalyticUnit {
                 let fs = PatternAnalyticUnit::get_features(&backet);
                 let detected = lr.model.lock().predict(Array::from_vec(fs.to_vec()));
                 if detected {
-                    pattern_match_score += 0.1;
-                } else {
-                    anti_pattern_match_score += 0.1;
+                    pattern_match_score += self.config.model_score;
                 }
             }
 
-            if pattern_match_score > anti_pattern_match_score
-                && pattern_match_score >= SCORE_THRESHOLD
+            if pattern_match_score - anti_pattern_match_score * self.config.anti_correlation_score
+                >= self.config.threshold_score
             {
                 results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
             }

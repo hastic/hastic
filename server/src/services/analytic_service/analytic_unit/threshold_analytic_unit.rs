@@ -2,7 +2,7 @@ use crate::services::{
     analytic_service::types, metric_service::MetricService, segments_service::SegmentsService,
 };
 
-use super::types::{AnalyticUnit, LearningResult, ThresholdConfig};
+use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, ThresholdConfig};
 
 use async_trait::async_trait;
 
@@ -17,6 +17,7 @@ impl ThresholdAnalyticUnit {
     pub fn new(config: ThresholdConfig) -> ThresholdAnalyticUnit {
         ThresholdAnalyticUnit { config }
     }
+    
 }
 
 #[async_trait]
@@ -24,6 +25,15 @@ impl AnalyticUnit for ThresholdAnalyticUnit {
     async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
         return LearningResult::Finished;
     }
+
+    fn set_config(&mut self, config: AnalyticUnitConfig) {
+        if let AnalyticUnitConfig::Threshold(cfg) = config {
+            self.config = cfg;
+        } else {
+            panic!("Bad config!");
+        }
+    }
+
     async fn detect(
         &self,
         ms: MetricService,

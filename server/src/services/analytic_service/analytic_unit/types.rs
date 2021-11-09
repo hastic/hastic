@@ -3,22 +3,23 @@ use serde::{Deserialize, Serialize};
 
 use async_trait::async_trait;
 
-use crate::services::{
-    metric_service::MetricService, segments_service::SegmentsService,
-};
-
+use crate::services::{metric_service::MetricService, segments_service::SegmentsService};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PatternConfig {
     pub correlation_score: f32,
+    pub anti_correlation_score: f32,
     pub model_score: f32,
+    pub threshold_score: f32,
 }
 
 impl Default for PatternConfig {
     fn default() -> Self {
         PatternConfig {
-            correlation_score: 0.95,
-            model_score: 0.95,
+            correlation_score: 0.7,
+            anti_correlation_score: 0.7,
+            model_score: 0.5,
+            threshold_score: 1.0,
         }
     }
 }
@@ -30,9 +31,7 @@ pub struct AnomalyConfig {
 
 impl Default for AnomalyConfig {
     fn default() -> Self {
-        AnomalyConfig {
-            sesonality: false
-        }
+        AnomalyConfig { sesonality: false }
     }
 }
 
@@ -43,81 +42,71 @@ pub struct ThresholdConfig {
 
 impl Default for ThresholdConfig {
     fn default() -> Self {
-        ThresholdConfig {
-            threashold: 0.5
-        }
+        ThresholdConfig { threashold: 0.5 }
     }
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AnalyticUnitConfig {
     Pattern(PatternConfig),
     Threshold(ThresholdConfig),
-    Anomaly(AnomalyConfig)
+    Anomaly(AnomalyConfig),
 }
 
 impl AnalyticUnitConfig {
     // return tru if patch is different type
     pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
         match patch {
-            PatchConfig::Pattern(tcfg) => {
-                match self.clone() {
-                    AnalyticUnitConfig::Pattern(_) => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false)
-                        } else {
-                            return (AnalyticUnitConfig::Pattern(Default::default()), false)
-                        }
-                    },
-                    _ => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true)
-                        } else {
-                            return (AnalyticUnitConfig::Pattern(Default::default()), true)
-                        }
-                    },
+            PatchConfig::Pattern(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Pattern(_) => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false);
+                    } else {
+                        return (AnalyticUnitConfig::Pattern(Default::default()), false);
+                    }
                 }
-            }
+                _ => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true);
+                    } else {
+                        return (AnalyticUnitConfig::Pattern(Default::default()), true);
+                    }
+                }
+            },
 
-            PatchConfig::Anomaly(tcfg) => {
-                match self.clone() {
-                    AnalyticUnitConfig::Anomaly(_) => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), false)
-                        } else {
-                            return (AnalyticUnitConfig::Anomaly(Default::default()), false)
-                        }
-                    },
-                    _ => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true)
-                        } else {
-                            return (AnalyticUnitConfig::Anomaly(Default::default()), true)
-                        }
-                    },
+            PatchConfig::Anomaly(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Anomaly(_) => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), false);
+                    } else {
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), false);
+                    }
                 }
-            }
+                _ => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true);
+                    } else {
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), true);
+                    }
+                }
+            },
 
-            PatchConfig::Threshold(tcfg) => {
-                match self.clone() {
-                    AnalyticUnitConfig::Threshold(_) => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false)
-                        } else {
-                            return (AnalyticUnitConfig::Threshold(Default::default()), false)
-                        }
-                    },
-                    _ => {
-                        if tcfg.is_some() {
-                            return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true)
-                        } else {
-                            return (AnalyticUnitConfig::Threshold(Default::default()), true)
-                        }
-                    },
+            PatchConfig::Threshold(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Threshold(_) => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false);
+                    } else {
+                        return (AnalyticUnitConfig::Threshold(Default::default()), false);
+                    }
                 }
-            }
+                _ => {
+                    if tcfg.is_some() {
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true);
+                    } else {
+                        return (AnalyticUnitConfig::Threshold(Default::default()), true);
+                    }
+                }
+            },
         }
     }
 }
@@ -137,11 +126,13 @@ pub trait AnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, u64)>>;
+
+    fn set_config(&mut self, c: AnalyticUnitConfig);
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum PatchConfig {
     Pattern(Option<PatternConfig>),
     Threshold(Option<ThresholdConfig>),
-    Anomaly(Option<AnomalyConfig>)
+    Anomaly(Option<AnomalyConfig>),
 }

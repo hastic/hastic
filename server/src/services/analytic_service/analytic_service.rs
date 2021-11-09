@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::analytic_unit::types::{AnalyticUnitConfig, PatternConfig, PatchConfig};
+use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig, PatternConfig};
 use super::types::{self, DetectionRunnerConfig, LearningTrain};
 use super::{
     analytic_client::AnalyticClient,
@@ -23,8 +23,6 @@ use serde_json::Value;
 use tokio::sync::{mpsc, oneshot, RwLock};
 
 use chrono::Utc;
-
-
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
@@ -64,10 +62,7 @@ impl AnalyticService {
 
             // TODO: get it from persistance
             analytic_unit: None,
-            analytic_unit_config: AnalyticUnitConfig::Pattern(PatternConfig {
-                correlation_score: 0.95,
-                model_score: 0.95,
-            }),
+            analytic_unit_config: AnalyticUnitConfig::Pattern(Default::default()),
 
             analytic_unit_learning_status: LearningStatus::Initialization,
             tx,
@@ -171,7 +166,7 @@ impl AnalyticService {
             // }
             RequestType::GetConfig(tx) => {
                 tx.send(self.analytic_unit_config.clone()).unwrap();
-            },
+            }
             RequestType::PatchConfig(patch_obj, tx) => {
                 // TODO: path config
                 // TODO: run learning if config type changed
@@ -224,6 +219,16 @@ impl AnalyticService {
         self.analytic_unit_config = new_conf;
         if need_learning {
             self.consume_request(RequestType::RunLearning);
+        } else {
+            if self.analytic_unit.is_some() {
+                tokio::spawn({
+                    let au = self.analytic_unit.clone();
+                    let cfg = self.analytic_unit_config.clone();
+                    async move {
+                        au.unwrap().write().await.set_config(cfg);
+                    }
+                });
+            }
         }
     }
 
@@ -277,6 +282,8 @@ impl AnalyticService {
         from: u64,
         to: u64,
     ) {
+        // It's important that we don't drop read() lock until end
+        // because there mght be attempt to make .write() with setting new config
         let result = analytic_unit
             .read()
             .await
