@@ -362,20 +362,20 @@ impl AnalyticUnit for PatternAnalyticUnit {
                 }
             }
 
-            let model_positive = {
+            let model_weight = {
                 let mut backet = Vec::<f64>::new();
                 for j in 0..pattern_match_len {
                     backet.push(nan_to_zero(ts[i + j].1));
                 }
                 let fs = PatternAnalyticUnit::get_features(&backet);
-                lr.model.lock().predict(Array::from_vec(fs.to_vec()))
+                let lk = lr.model.lock();
+                lk.weighted_sum(&Array::from_vec(fs.to_vec())) - lk.rho
             };
 
             let mut score = pattern_match_score * self.config.correlation_score;
             score -= anti_pattern_match_score * self.config.anti_correlation_score;
-            if model_positive {
-                score += self.config.model_score;
-            }
+            score += (model_weight as f32) * self.config.model_score;
+            
             if score >= self.config.threshold_score {
                 results.push((ts[i].0, ts[i + pattern_match_len - 1].0));
             }
