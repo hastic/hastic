@@ -9,15 +9,26 @@ import _ from 'lodash';
 
 
 // TODO: move types to ./types
-export enum DetectorType {
+export enum AnalyticUnitType {
   PATTERN = 'pattern',
   THRESHOLD = 'threshold',
   ANOMALY = 'anomaly'
 }
 
-export type DetectorConfig = {
-  correlation_score: number, model_score: number
+export type PatternConfig = {
+  correlation_score: number, 
+  model_score: number
 }
+
+export type ThresholdConfig = {
+  threashold: number
+}
+
+export type AnomalyConfig = {
+  threashold: number
+}
+
+export type AnlyticUnitConfig = PatternConfig | ThresholdConfig;
 
 export enum LabelingMode {
   LABELING = 'LABELING',
@@ -47,7 +58,7 @@ const DEFAULTS = {
   id: null,
   name: 'AnalyticUnitName',
   type: 'GENERAL',
-  detectorType: DetectorType.PATTERN,
+  detectorType: AnalyticUnitType.PATTERN,
   labeledColor: ANALYTIC_UNIT_COLORS[0],
   deletedColor: DEFAULT_DELETED_SEGMENT_COLOR,
   alert: false,
@@ -100,8 +111,8 @@ export class AnalyticUnit {
   set name(value: string) { this._serverObject.name = value; }
   get name(): string { return this._serverObject.name; }
 
-  set detectorType(value: DetectorType) { this._serverObject.detectorType = value; }
-  get detectorType(): DetectorType { return this._serverObject.detectorType; }
+  set detectorType(value: AnalyticUnitType) { this._serverObject.detectorType = value; }
+  get detectorType(): AnalyticUnitType { return this._serverObject.detectorType; }
 
   set type(value: string) { this._serverObject.type = value; }
   get type(): string { return this._serverObject.type; }

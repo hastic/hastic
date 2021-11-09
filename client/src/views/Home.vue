@@ -5,7 +5,7 @@
     
     <analytic-status />
     <div id="controls">
-      <div v-if="analyticType == analyticTypes[0]">
+      <div v-if="analyticUnitType == analyticUnitTypes[1]">
         Hold <pre>S</pre> to label patterns <br/>
         Hold <pre>A</pre> to label anti patterns <br/>
         Holde key <pre>D</pre> to delete patterns
@@ -21,7 +21,7 @@
 import { defineComponent } from 'vue';
 import Graph from '@/components/Graph.vue';
 import AnalyticStatus from '@/components/AnlyticsStatus.vue';
-import { DetectorType } from '@/types/analytic_units';
+import { AnalyticUnitType } from '@/types/analytic_units';
 
 
 export default defineComponent({
@@ -37,12 +37,12 @@ export default defineComponent({
   },
   data: function () {
     return {
-      analyticTypes: [DetectorType.PATTERN, DetectorType.ANOMALY],
+      analyticUnitTypes: [AnalyticUnitType.THRESHOLD, AnalyticUnitType.PATTERN, AnalyticUnitType.ANOMALY],
     }
   },
   computed: {
-    analyticType() {
-      return this.$store.state.detectorType;
+    analyticUnitType() {
+      return this.$store.state.analyticUnitType;
     }
   }
 });

@@ -1,7 +1,7 @@
 import { auth } from "./auth.module";
 import { createStore } from 'vuex'
 import { getConfig, getStatusGenerator } from "@/services/analytics.service";
-import { DetectorConfig, DetectorType } from '@/types/analytic_units'
+import { AnlyticUnitConfig, AnalyticUnitType } from '@/types/analytic_units'
 // import { notify } from "@kyvg/vue3-notification";
 
 
@@ -12,16 +12,15 @@ const _SET_STATUS_GENERATOR = '_SET_STATUS_GENERATOR';
 
 type State = {
   analyticStatus: string,
-  detectorType?: DetectorType,
-  // TODO: maybe rename it
-  analyticUnitConfig?: DetectorConfig,
+  analyticUnitType?: AnalyticUnitType,
+  analyticUnitConfig?: AnlyticUnitConfig,
   _statusGenerator: AsyncIterableIterator<string>
 }
 
 const store = createStore<State>({
   state: {
     analyticStatus: 'loading...',
-    detectorType: null,
+    analyticUnitType: null,
     analyticUnitConfig: null,
     _statusGenerator: null
   },
@@ -29,12 +28,9 @@ const store = createStore<State>({
     [SET_ANALYTICS_STATUS](state, status: string) {
       state.analyticStatus = status;
     },
-    [SET_DETECTOR_CONFIG](state, { detectorType, detectorConfig }) {
-      console.log(detectorType);
-      console.log(detectorConfig);
-      
-      state.detectorType = detectorType;
-      state.analyticUnitConfig = detectorConfig;
+    [SET_DETECTOR_CONFIG](state, { analyticUnitType, analyticUnitConfig }) {      
+      state.analyticUnitType = analyticUnitType;
+      state.analyticUnitConfig = analyticUnitConfig;
     },
     [_SET_STATUS_GENERATOR](state, generator: AsyncIterableIterator<string>) {
       state._statusGenerator = generator;
@@ -63,11 +59,8 @@ const store = createStore<State>({
       }
     },
     async fetchConfig({commit}) {
-      const c = await getConfig();
-      // TODO: move this logic to service getConfig()
-      const detectorType = c['PatternDetector'] !== undefined ? DetectorType.PATTERN : DetectorType.ANOMALY;
-      const detectorConfig = c['PatternDetector'] as DetectorConfig;
-      commit(SET_DETECTOR_CONFIG, { detectorType, detectorConfig });
+      const [analyticUnitType, analyticUnitConfig] = await getConfig();
+      commit(SET_DETECTOR_CONFIG, { analyticUnitType, analyticUnitConfig });
     }
   },
   modules: {

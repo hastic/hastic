@@ -6,6 +6,10 @@ import axios from 'axios';
 import { getGenerator } from '@/utils';
 
 import _ from 'lodash';
+import { 
+  AnalyticUnitType, AnlyticUnitConfig,
+  PatternConfig, ThresholdConfig, AnomalyConfig 
+} from "@/types/analytic_units";
 
 const ANALYTICS_API_URL = API_URL + "analytics/";
 
@@ -16,10 +20,32 @@ export async function getStatus(): Promise<string> {
   return data.status;
 }
 
-export async function getConfig(): Promise<string> {
+export async function getConfig(): Promise<[AnalyticUnitType, AnlyticUnitConfig]> {
   const uri = ANALYTICS_API_URL + `config`;
   const res = await axios.get(uri);
-  return res['data'] as any;
+
+  const data = res['data'];
+
+  let analyticUnitType = AnalyticUnitType.ANOMALY;
+  let analyticUnitConfig = undefined;
+  if(data['Pattern'] !== undefined) {
+    analyticUnitType = AnalyticUnitType.PATTERN;
+    analyticUnitConfig = data['Pattern'] as PatternConfig
+  }
+  if(data['Threshold'] !== undefined) {
+    analyticUnitType = AnalyticUnitType.THRESHOLD;
+    analyticUnitConfig = data['Threshold'] as ThresholdConfig
+  }
+  if(data['Anomaly'] !== undefined) {
+    analyticUnitType = AnalyticUnitType.ANOMALY;
+    analyticUnitConfig = data['Anomaly'] as AnomalyConfig
+  }
+
+  if(analyticUnitConfig === undefined) {
+    throw new Error("unknows config type" + _.keys(data));
+  }
+
+  return [analyticUnitType, analyticUnitConfig];
 }
 
 export function getStatusGenerator(): AsyncIterableIterator<string> {

@@ -13,7 +13,7 @@ use crate::services::{
     metric_service::MetricService,
     segments_service::{self, Segment, SegmentType, SegmentsService, ID_LENGTH},
 };
-use crate::utils::{self, get_random_str};
+use crate::utils::{self};
 
 use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, LearningResult};
 
