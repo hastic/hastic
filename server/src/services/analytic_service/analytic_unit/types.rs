@@ -13,6 +13,11 @@ pub struct PatternConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AnomalyConfig {
+    pub sesonality: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ThresholdConfig {
     pub threashold: f64,
 }
