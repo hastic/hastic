@@ -11,7 +11,6 @@ use super::analytic_unit::types::PatchConfig;
 
 use anyhow::Result;
 use serde::Serialize;
-use serde_json::Value;
 use tokio::sync::oneshot;
 
 use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
