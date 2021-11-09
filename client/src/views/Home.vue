@@ -5,12 +5,17 @@
     
     <analytic-status />
     <div>
-      Analytic unit type: <select :value="analyticUnitType" @change="changeAnalyticUnitType">
+      Analytic unit type:
+      <select :value="analyticUnitType" @change="changeAnalyticUnitType">
         <option disabled value="">Please Select</option>
         <option v-bind:key="option" v-for="option in analyticUnitTypes" :value="option">{{option}}</option>
       </select> <br/><br/>
     </div>
     <div id="controls">
+      <div v-if="analyticUnitType == analyticUnitTypes[0]">
+        Threshold: 
+        <input :value="analyticUnitConfig.threshold" @change="thresholdChange" /> <br/><br/>
+      </div>
       <div v-if="analyticUnitType == analyticUnitTypes[1]">
         Hold <pre>S</pre> to label patterns; 
         Hold <pre>A</pre> to label anti patterns <br/>
@@ -53,6 +58,15 @@ export default defineComponent({
     changeAnalyticUnitType(e) {
       this.$store.dispatch('patchConfig', { [e.target.value]: null } );
     },
+
+    // Threshold
+    thresholdChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.threshold = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Threshold: cfg });
+    },
+
+    // Pattern
     correlationScoreChange(e) {
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.correlation_score = parseFloat(e.target.value);
@@ -73,6 +87,7 @@ export default defineComponent({
       cfg.threshold_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig', { Pattern: cfg });
     }
+
   },
   data: function () {
     return {

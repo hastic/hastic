@@ -52,7 +52,7 @@ impl AnalyticUnit for ThresholdAnalyticUnit {
         let mut result = Vec::<(u64, u64)>::new();
         let mut from: Option<u64> = None;
         for (t, v) in ts {
-            if *v > self.config.threashold {
+            if *v > self.config.threshold {
                 if from.is_some() {
                     continue;
                 } else {

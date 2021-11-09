@@ -1,4 +1,3 @@
-use fastrand::bool;
 use serde::{Deserialize, Serialize};
 
 use async_trait::async_trait;
@@ -37,12 +36,12 @@ impl Default for AnomalyConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ThresholdConfig {
-    pub threashold: f64,
+    pub threshold: f64,
 }
 
 impl Default for ThresholdConfig {
     fn default() -> Self {
-        ThresholdConfig { threashold: 0.5 }
+        ThresholdConfig { threshold: 0.5 }
     }
 }
 
