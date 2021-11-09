@@ -5,14 +5,22 @@
     
     <analytic-status />
     <div>
-      <v-select :options="analyticUnitTypes"></v-select>
+      Analytic unit type: <select :value="analyticUnitType" @input="changeAnalyticUnitType">
+        <option disabled value="">Please Select</option>
+        <option v-bind:key="option" v-for="option in analyticUnitTypes" :value="option">{{option}}</option>
+      </select> <br/><br/>
     </div>
     <div id="controls">
       <div v-if="analyticUnitType == analyticUnitTypes[1]">
-        Hold <pre>S</pre> to label patterns <br/>
+        Hold <pre>S</pre> to label patterns; 
         Hold <pre>A</pre> to label anti patterns <br/>
         Holde key <pre>D</pre> to delete patterns
         <br/>
+        <hr/>
+        Correlation score: 
+        <input :value="analyticUnitConfig.correlation_score" @input="correlationScoreChange" /> <br/>
+        Model score: 
+        <input :value="analyticUnitConfig.model_score" @input="modelScoreChange" /> <br/><br/>
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
     </div>
@@ -38,6 +46,14 @@ export default defineComponent({
     },
     changeAnalyticUnitType(e) {
       console.log(e);
+    },
+    correlationScoreChange(e) {
+      // TODO: store value
+      console.log(e);
+    },
+    modelScoreChange(e) {
+      // TODO: store value
+      console.log(e);
     }
   },
   data: function () {
@@ -46,14 +62,16 @@ export default defineComponent({
         AnalyticUnitType.THRESHOLD,
         AnalyticUnitType.PATTERN,
         AnalyticUnitType.ANOMALY, 
-      ],
-      analyticUnitType: AnalyticUnitType.PATTERN
+      ]
     }
   },
   computed: {
-    // analyticUnitType() {
-    //   return { id: 1, name: this.$store.state.analyticUnitType }
-    // }
+    analyticUnitType() {
+      return this.$store.state.analyticUnitType;
+    },
+    analyticUnitConfig() {
+      return this.$store.state.analyticUnitConfig;
+    }
   }
 });
 </script>
@@ -61,5 +79,10 @@ export default defineComponent({
 <style scoped>
 pre {
   display: inline;
+}
+
+#controls {
+  width: 50%;
+  margin: auto;
 }
 </style>
