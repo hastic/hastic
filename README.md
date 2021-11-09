@@ -11,4 +11,4 @@ cd release
 ./hastic
 ```
 
-open `http://localhost:8000` in browser
+open `http://localhost:4347` in browser
