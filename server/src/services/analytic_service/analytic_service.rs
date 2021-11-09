@@ -174,7 +174,7 @@ impl AnalyticService {
             }
         };
     }
-    
+
     // TODO: maybe make `consume_response` async
     fn consume_response(&mut self, res: types::ResponseType) {
         match res {
@@ -219,9 +219,9 @@ impl AnalyticService {
         self.analytic_unit_config = new_conf;
         if need_learning {
             self.consume_request(RequestType::RunLearning);
-            // TODO: it's not fullu correct: we need to wait when the learning starts 
+            // TODO: it's not fullu correct: we need to wait when the learning starts
             match tx.send(()) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_e) => {
                     println!("Can`t send patch config notification");
                 }
@@ -234,7 +234,7 @@ impl AnalyticService {
                     async move {
                         au.unwrap().write().await.set_config(cfg);
                         match tx.send(()) {
-                            Ok(_) => {},
+                            Ok(_) => {}
                             Err(_e) => {
                                 println!("Can`t send patch config notification");
                             }
@@ -243,7 +243,7 @@ impl AnalyticService {
                 });
             } else {
                 match tx.send(()) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_e) => {
                         println!("Can`t send patch config notification");
                     }

@@ -17,7 +17,6 @@ impl ThresholdAnalyticUnit {
     pub fn new(config: ThresholdConfig) -> ThresholdAnalyticUnit {
         ThresholdAnalyticUnit { config }
     }
-    
 }
 
 #[async_trait]
