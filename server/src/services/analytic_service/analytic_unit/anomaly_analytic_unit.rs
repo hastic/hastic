@@ -72,6 +72,19 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         let k = mr.data.keys().nth(0).unwrap();
         let ts = mr.data[k].clone();
 
-        Ok(HSR::TimeSerie(ts))
+        if ts.len() == 0 {
+            return Ok(HSR::TimeSerie(Vec::new()));
+        }
+
+        let mut sts = Vec::new();
+        sts.push(ts[0]);
+
+        for t in 1..ts.len() {
+            let alpha = self.config.alpha;
+            let stv = alpha * ts[t].1 + (1.9 - alpha) * sts[t - 1].1;
+            sts.push((ts[t].0, stv));
+        }
+
+        Ok(HSR::TimeSerie(sts))
     }
 }
