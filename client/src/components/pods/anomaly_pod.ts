@@ -8,7 +8,6 @@ import { SegmentsSet } from '@/types/segment_set';
 
 export type UpdateDataCallback = (range: TimeRange) => Promise<{
   timeserie: LineTimeSerie[],
-  hsr: LineTimeSerie[],
   segments: Segment[]
 }>;
 
@@ -21,7 +20,6 @@ export class AnomalyPod extends HasticPod<UpdateDataCallback> {
     segmentSet: SegmentsSet<Segment>
   ) {
     super(el, udc, segmentSet)
-
     this.fetchData();
   }
 
@@ -39,7 +37,6 @@ export class AnomalyPod extends HasticPod<UpdateDataCallback> {
       .then(resp => {
         this.updateSegments(resp.segments);
         this.updateData(resp.timeserie, undefined, true);
-        console.log(resp.hsr);
       })
       .catch(() => { /* set "error" message */ })
   }

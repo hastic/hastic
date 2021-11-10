@@ -81,7 +81,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         for t in 1..ts.len() {
             let alpha = self.config.alpha;
-            let stv = alpha * ts[t].1 + (1.9 - alpha) * sts[t - 1].1;
+            let stv = alpha * ts[t].1 + (1.0 - alpha) * sts[t - 1].1;
             sts.push((ts[t].0, stv));
         }
 
