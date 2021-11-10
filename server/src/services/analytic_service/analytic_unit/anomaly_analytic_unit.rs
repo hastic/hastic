@@ -52,7 +52,6 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         let ct = ts[0];
 
-
         // TODO: implement
         // TODO: decide what to do it from is Some() in the end
 
@@ -65,7 +64,6 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, f64)>> {
-
         // TODO: implement
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 

@@ -6,56 +6,56 @@ pub mod filters {
 
     /// The 4 REST API filters combined.
     pub fn filters(
-        db: Srv,
+        srv: Srv,
         ac: AnalyticClient,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-        list(db.clone())
-            .or(create(db.clone(), ac.clone()))
+        list(srv.clone())
+            .or(create(srv.clone(), ac.clone()))
             // .or(update(db.clone()))
-            .or(delete(db.clone(), ac.clone()))
+            .or(delete(srv.clone(), ac.clone()))
     }
 
     /// GET /segments?from=3&to=5
     pub fn list(
-        db: Srv,
+        srv: Srv,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("segments")
             .and(warp::get())
             .and(warp::query::<ListOptions>())
-            .and(with_srv(db))
+            .and(with_srv(srv))
             .and_then(handlers::list)
     }
 
     /// POST /segments with JSON body
     pub fn create(
-        db: Srv,
+        srv: Srv,
         ac: AnalyticClient,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("segments")
             .and(warp::post())
             .and(warp::body::json())
-            .and(with_srv(db))
+            .and(with_srv(srv))
             .and(warp::any().map(move || ac.clone()))
             .and_then(handlers::create)
     }
 
     /// POST /segments with JSON body
     pub fn delete(
-        db: Srv,
+        srv: Srv,
         ac: AnalyticClient,
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         warp::path!("segments")
             .and(warp::delete())
             .and(warp::query::<ListOptions>())
-            .and(with_srv(db))
+            .and(with_srv(srv))
             .and(warp::any().map(move || ac.clone()))
             .and_then(handlers::delete)
     }
 
     fn with_srv(
-        db: Srv,
+        srv: Srv,
     ) -> impl Filter<Extract = (Srv,), Error = std::convert::Infallible> + Clone {
-        warp::any().map(move || db.clone())
+        warp::any().map(move || srv.clone())
     }
 }
 
@@ -78,10 +78,10 @@ mod handlers {
 
     pub async fn create(
         segment: segments_service::Segment,
-        src: Srv,
+        srv: Srv,
         ac: AnalyticClient,
     ) -> Result<impl warp::Reply, warp::Rejection> {
-        match src.insert_segment(&segment) {
+        match srv.insert_segment(&segment) {
             Ok(segment) => {
                 ac.run_learning().await.unwrap();
                 Ok(API::json(&segment))
@@ -96,10 +96,10 @@ mod handlers {
 
     pub async fn delete(
         opts: ListOptions,
-        db: Srv,
+        srv: Srv,
         ac: AnalyticClient,
     ) -> Result<impl warp::Reply, warp::Rejection> {
-        match db.delete_segments_in_range(opts.from, opts.to) {
+        match srv.delete_segments_in_range(opts.from, opts.to) {
             Ok(count) => {
                 ac.run_learning().await.unwrap();
                 Ok(API::json(&api::Message {
@@ -118,7 +118,6 @@ mod models {
 
     pub type Srv = segments_service::SegmentsService;
 
-    // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]
     pub struct ListOptions {
         pub from: u64,

@@ -72,7 +72,7 @@ pub struct HSRTask {
 #[derive(Debug)]
 pub enum LearningWaiter {
     Detection(DetectionTask),
-    HSR(HSRTask)
+    HSR(HSRTask),
 }
 
 #[derive(Debug)]

@@ -11,6 +11,7 @@ pub mod filters {
             .or(status(client.clone()))
             .or(get_config(client.clone()))
             .or(put_config(client.clone()))
+            .or(get_hsr(client.clone()))
         // .or(list_train(client.clone()))
         // .or(create(db.clone()))
         // // .or(update(db.clone()))
@@ -69,6 +70,17 @@ pub mod filters {
     //         .and_then(handlers::list_train)
     // }
 
+    /// GET /analytics/hsr
+    pub fn get_hsr(
+        client: Client,
+    ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+        warp::path!("analytics" / "hsr")
+            .and(warp::get())
+            .and(warp::query::<ListOptions>())
+            .and(with_client(client))
+            .and_then(handlers::get_hsr)
+    }
+
     fn with_client(
         client: Client,
     ) -> impl Filter<Extract = (Client,), Error = std::convert::Infallible> + Clone {
@@ -79,7 +91,6 @@ pub mod filters {
 mod handlers {
 
     use hastic::services::analytic_service::analytic_unit::types::PatchConfig;
-    use serde_json::Value;
 
     use super::models::{Client, ListOptions, Status};
     use crate::api::{BadQuery, API};
@@ -132,6 +143,20 @@ mod handlers {
         }
     }
 
+    pub async fn get_hsr(
+        lo: ListOptions,
+        client: Client,
+    ) -> Result<impl warp::Reply, warp::Rejection> {
+        // println!("{:?}", patch);
+        match client.get_hsr(lo.from, lo.to).await {
+            Ok(hsr) => Ok(API::json(&hsr)),
+            Err(e) => {
+                println!("{:?}", e);
+                Err(warp::reject::custom(BadQuery))
+            }
+        }
+    }
+
     // pub async fn list_train(client: Client) -> Result<impl warp::Reply, warp::Rejection> {
     //     match client.get_train().await {
     //         Ok(lt) => Ok(API::json(&lt)),
@@ -149,7 +174,6 @@ mod models {
 
     pub type Client = analytic_service::analytic_client::AnalyticClient;
 
-    // The query parameters for list_todos.
     #[derive(Debug, Deserialize)]
     pub struct ListOptions {
         pub from: u64,

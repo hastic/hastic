@@ -19,7 +19,6 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
-use serde_json::Value;
 use tokio::sync::{mpsc, oneshot, RwLock};
 
 use chrono::Utc;
@@ -91,10 +90,14 @@ impl AnalyticService {
             let au = self.analytic_unit.as_ref().unwrap().clone();
             async move {
                 match learning_waiter {
-                    LearningWaiter::Detection(task) => AnalyticService::get_detections(task.sender, au, ms, task.from, task.to).await,
-                    LearningWaiter::HSR(task) => AnalyticService::get_hsr(task.sender, au, ms, task.from, task.to).await,
+                    LearningWaiter::Detection(task) => {
+                        AnalyticService::get_detections(task.sender, au, ms, task.from, task.to)
+                            .await
+                    }
+                    LearningWaiter::HSR(task) => {
+                        AnalyticService::get_hsr(task.sender, au, ms, task.from, task.to).await
+                    }
                 }
-                
             }
         });
     }
@@ -178,8 +181,11 @@ impl AnalyticService {
                 // tx.send(()).unwrap();
             }
             RequestType::GetHSR(task) => {
-                // self.analytic_unit.
-                // TODO: implement
+                if self.analytic_unit.is_some() {
+                    self.run_learning_waiter(LearningWaiter::HSR(task));
+                } else {
+                    self.learning_waiters.push(LearningWaiter::HSR(task));
+                }
             }
         };
     }
@@ -346,7 +352,12 @@ impl AnalyticService {
         from: u64,
         to: u64,
     ) {
-        let hsr = analytic_unit.read().await.get_hsr(ms, from, to).await.unwrap();
+        let hsr = analytic_unit
+            .read()
+            .await
+            .get_hsr(ms, from, to)
+            .await
+            .unwrap();
 
         match tx.send(Ok(hsr)) {
             Ok(_) => {}
@@ -354,6 +365,5 @@ impl AnalyticService {
                 println!("failed to send results");
             }
         }
-
     }
 }

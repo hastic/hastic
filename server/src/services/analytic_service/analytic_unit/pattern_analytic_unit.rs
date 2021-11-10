@@ -353,7 +353,11 @@ impl AnalyticUnit for PatternAnalyticUnit {
                 let fs = get_features(&vs);
                 let lk = lr.model.lock();
                 let p = lk.predict(Array::from_vec(fs.to_vec()));
-                if p { 1 } else { -1 }
+                if p {
+                    1
+                } else {
+                    -1
+                }
             };
 
             let score = positive_corr * self.config.correlation_score
