@@ -32,6 +32,12 @@
         <input :value="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
+      <div v-if="analyticUnitType == analyticUnitTypes[2]">
+        Alpha: 
+        <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/>
+        Confidence: 
+        <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/><br/>
+      </div>
     </div>
   </div>
 </template>
@@ -45,6 +51,7 @@ import { AnalyticUnitType } from '@/types/analytic_units';
 import * as _ from 'lodash';
 
 
+// TODO: move config editig to component
 export default defineComponent({
   name: 'Home',
   components: {
@@ -86,7 +93,19 @@ export default defineComponent({
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.threshold_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig', { Pattern: cfg });
-    }
+    },
+
+    // Anomaly
+    alphaChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.alpha = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Anomaly: cfg });
+    },
+    confidenceChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.confidence = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Anomaly: cfg });
+    },
 
   },
   data: function () {

@@ -25,12 +25,13 @@ impl Default for PatternConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AnomalyConfig {
-    pub sesonality: bool,
+    pub alpha: f64,
+    pub confidence: f64,
 }
 
 impl Default for AnomalyConfig {
     fn default() -> Self {
-        AnomalyConfig { sesonality: false }
+        AnomalyConfig { alpha: 0.5, confidence: 10.0 }
     }
 }
 

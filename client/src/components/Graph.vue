@@ -5,9 +5,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, watch } from 'vue';
+
 import { TimeRange } from "@/types";
 import { PatternPod } from "./pods/pattern_pod";
+import { ThresholdPod } from './pods/threshold_pod';
+import { AnomalyPod } from './pods/anomaly_pod';
 import { getMetrics } from '../services/metrics.service';
 import { getSegments, postSegment, deleteSegment } from '../services/segments.service';
 import { LineTimeSerie } from "@chartwerk/line-pod";
@@ -17,8 +19,8 @@ import { Segment, SegmentId } from '@/types/segment';
 
 import _ from "lodash";
 import { AnalyticUnitType } from '@/types/analytic_units';
-import { ThresholdPod } from './pods/threshold_pod';
 
+import { defineComponent, watch } from 'vue';
 
 // TODO: move to store
 async function resolveDataPatterns(range: TimeRange): Promise<{
@@ -52,6 +54,36 @@ async function resolveDataPatterns(range: TimeRange): Promise<{
 // TODO: move to store
 // TODO: remove code repetition
 async function resolveDataThreshold(range: TimeRange): Promise<{
+  timeserie: LineTimeSerie[],
+  segments: Segment[]
+}> {
+
+  const endTime = Math.floor(range.to);
+  const startTime = Math.floor(range.from);
+
+  const step = Math.max(Math.round((endTime - startTime) / 5000), 1);
+
+  try {
+    // TODO: request in parallel
+    let [target, values] = await getMetrics(startTime, endTime, step);
+    let segments = await getSegments(startTime, endTime, false);
+    return {
+      timeserie: [{ target: target, datapoints: values, color: 'green' }],
+      segments: segments
+    }
+  } catch (e) {
+    this.$notify({
+      title: "Error during extracting data",
+      text: e,
+      type: 'error'
+    });
+    console.error(e);
+  }
+}
+
+// TODO: move to store
+// TODO: remove code repetition
+async function resolveDataAnomaly(range: TimeRange): Promise<{
   timeserie: LineTimeSerie[],
   segments: Segment[]
 }> {
@@ -166,6 +198,13 @@ export default defineComponent({
         this.pod = new ThresholdPod(
           document.getElementById('chart'),
           resolveDataThreshold.bind(this),
+          sa
+        );
+      }
+      if(aut === AnalyticUnitType.ANOMALY) {
+        this.pod = new AnomalyPod(
+          document.getElementById('chart'),
+          resolveDataAnomaly.bind(this),
           sa
         );
       }
