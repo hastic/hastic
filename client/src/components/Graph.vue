@@ -118,7 +118,6 @@ export default defineComponent({
   },
   // TODO: it's a hack: listen real events about analytics update and use store
   watch: {
-    // TODO: choose pog based on config type
     analyticUnitConfig(newConfig, prevConfig) {
       if(prevConfig == null) {
         return;
@@ -135,7 +134,6 @@ export default defineComponent({
     }
   },
   methods: {
-    // @watch('analyticUnitConfig')
     rerender() {
       this.pod.fetchData();
     },
@@ -154,7 +152,7 @@ export default defineComponent({
       if(aut == null) {
         return;
       }
-      
+
       if(aut === AnalyticUnitType.PATTERN) {
         this.pod = new PatternPod(
           document.getElementById('chart'),

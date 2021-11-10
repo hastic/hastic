@@ -12,7 +12,7 @@ export type UpdateDataCallback = (range: TimeRange) => Promise<{
 }>;
 
 
-export class ThresholdPod extends HasticPod<UpdateDataCallback> {
+export class AnomalyPod extends HasticPod<UpdateDataCallback> {
 
   constructor(
     el: HTMLElement,
@@ -24,6 +24,7 @@ export class ThresholdPod extends HasticPod<UpdateDataCallback> {
     this.fetchData();
   }
 
+  // TODO: implement renderMetrics
 
   public fetchData(): void {
     let to = Math.floor(Date.now() / 1000);
@@ -41,7 +42,7 @@ export class ThresholdPod extends HasticPod<UpdateDataCallback> {
       .catch(() => { /* set "error" message */ })
   }
 
-  // TODO: maybe not override this
+
   protected updateSegments(segments: Segment[]): void {
     this.segmentSet.clear();
     this.segmentSet.setSegments(segments);

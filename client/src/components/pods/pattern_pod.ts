@@ -157,13 +157,10 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
     }
 
     const segment = new Segment(id, from, to, type);
-    //const storedId =
+    
     await this._csc(segment);
     this.fetchData();
-    // segment.id = storedId;
 
-    // this._segmentSet.addSegment(segment);
-    // this.renderSegment(segment);
   }
 
   protected async deleteSegment(from: number, to: number): Promise<void> {
@@ -181,7 +178,7 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
 
   }
 
-
+  // TODO: maybe not override this
   protected updateSegments(segments: Segment[]): void {
     this.segmentSet.clear();
     this.segmentSet.setSegments(segments);
