@@ -62,6 +62,20 @@ pub struct DetectionTask {
 }
 
 #[derive(Debug)]
+pub struct HSRTask {
+    // TODO: make enum for HSR which is different for different Analytic Types
+    pub sender: oneshot::Sender<Result<Vec<(u64, f64)>>>,
+    pub from: u64,
+    pub to: u64,
+}
+
+#[derive(Debug)]
+pub enum LearningWaiter {
+    Detection(DetectionTask),
+    HSR(HSRTask)
+}
+
+#[derive(Debug)]
 pub struct DetectionRunnerConfig {
     // pub sender: mpsc::Sender<Result<Vec<Segment>>>,
     pub endpoint: String,
@@ -72,6 +86,7 @@ pub struct DetectionRunnerConfig {
 pub enum RequestType {
     // TODO: convert to result RunLearning(anyhow::Result<()>)
     RunLearning,
+    GetHSR(HSRTask),
     RunDetection(DetectionTask),
     GetStatus(oneshot::Sender<LearningStatus>),
     // TODO: make type of Value

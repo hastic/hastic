@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig, PatternConfig};
-use super::types::{self, DetectionRunnerConfig, LearningTrain};
+use super::types::{self, DetectionRunnerConfig, LearningTrain, LearningWaiter};
 use super::{
     analytic_client::AnalyticClient,
     analytic_unit::pattern_analytic_unit::{self, LearningResults, PatternAnalyticUnit},
@@ -42,7 +42,7 @@ pub struct AnalyticService {
     learning_handler: Option<tokio::task::JoinHandle<()>>,
 
     // awaiters
-    learning_waiters: Vec<DetectionTask>,
+    learning_waiters: Vec<LearningWaiter>,
 
     // runner
     runner_handler: Option<tokio::task::JoinHandle<()>>,
@@ -84,13 +84,17 @@ impl AnalyticService {
         AnalyticClient::new(self.tx.clone())
     }
 
-    fn run_detection_task(&self, task: DetectionTask) {
+    fn run_learning_waiter(&self, learning_waiter: LearningWaiter) {
         // TODO: save handler of the task
         tokio::spawn({
             let ms = self.metric_service.clone();
             let au = self.analytic_unit.as_ref().unwrap().clone();
             async move {
-                AnalyticService::get_detections(task.sender, au, ms, task.from, task.to).await;
+                match learning_waiter {
+                    LearningWaiter::Detection(task) => AnalyticService::get_detections(task.sender, au, ms, task.from, task.to).await,
+                    LearningWaiter::HSR(task) => AnalyticService::get_hsr(task.sender, au, ms, task.from, task.to).await,
+                }
+                
             }
         });
     }
@@ -129,6 +133,7 @@ impl AnalyticService {
                 }));
             }
             RequestType::RunDetection(task) => {
+                // TODO: signle source of truth: Option<AnalyticUnit> vs LearningStatus
                 if self.analytic_unit_learning_status == LearningStatus::Initialization {
                     match task
                         .sender
@@ -143,9 +148,9 @@ impl AnalyticService {
                     return;
                 }
                 if self.analytic_unit_learning_status == LearningStatus::Ready {
-                    self.run_detection_task(task);
+                    self.run_learning_waiter(LearningWaiter::Detection(task));
                 } else {
-                    self.learning_waiters.push(task);
+                    self.learning_waiters.push(LearningWaiter::Detection(task));
                 }
             }
             RequestType::GetStatus(tx) => {
@@ -172,6 +177,10 @@ impl AnalyticService {
                 self.patch_config(patch_obj, tx);
                 // tx.send(()).unwrap();
             }
+            RequestType::GetHSR(task) => {
+                // self.analytic_unit.
+                // TODO: implement
+            }
         };
     }
 
@@ -190,7 +199,7 @@ impl AnalyticService {
                 // TODO: run tasks from self.learning_waiter
                 while self.learning_waiters.len() > 0 {
                     let task = self.learning_waiters.pop().unwrap();
-                    self.run_detection_task(task);
+                    self.run_learning_waiter(task);
                 }
 
                 // TODO: fix this
@@ -328,5 +337,23 @@ impl AnalyticService {
             }
         }
         return;
+    }
+
+    async fn get_hsr(
+        tx: oneshot::Sender<anyhow::Result<Vec<(u64, f64)>>>,
+        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
+        ms: MetricService,
+        from: u64,
+        to: u64,
+    ) {
+        let hsr = analytic_unit.read().await.get_hsr(ms, from, to).await.unwrap();
+
+        match tx.send(Ok(hsr)) {
+            Ok(_) => {}
+            Err(_e) => {
+                println!("failed to send results");
+            }
+        }
+
     }
 }

@@ -128,6 +128,7 @@ pub trait AnalyticUnit {
     ) -> anyhow::Result<Vec<(u64, u64)>>;
 
     fn set_config(&mut self, c: AnalyticUnitConfig);
+    async fn get_hsr(&self, ms: MetricService, from: u64, to: u64) -> anyhow::Result<Vec<(u64, f64)>> ;
 }
 
 #[derive(Deserialize, Serialize, Debug)]

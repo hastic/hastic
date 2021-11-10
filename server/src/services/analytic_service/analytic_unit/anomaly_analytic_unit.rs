@@ -46,9 +46,36 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
 
+        if ts.len() == 0 {
+            return Ok(Vec::new());
+        }
+
+        let ct = ts[0];
+
+
         // TODO: implement
         // TODO: decide what to do it from is Some() in the end
 
         Ok(Default::default())
+    }
+
+    async fn get_hsr(
+        &self,
+        ms: MetricService,
+        from: u64,
+        to: u64,
+    ) -> anyhow::Result<Vec<(u64, f64)>> {
+
+        // TODO: implement
+        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+
+        if mr.data.keys().len() == 0 {
+            return Ok(Vec::new());
+        }
+
+        let k = mr.data.keys().nth(0).unwrap();
+        let ts = mr.data[k].clone();
+
+        Ok(ts)
     }
 }

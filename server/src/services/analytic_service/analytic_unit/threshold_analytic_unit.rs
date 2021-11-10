@@ -74,4 +74,22 @@ impl AnalyticUnit for ThresholdAnalyticUnit {
 
         Ok(result)
     }
+
+    async fn get_hsr(
+        &self,
+        ms: MetricService,
+        from: u64,
+        to: u64,
+    ) -> anyhow::Result<Vec<(u64, f64)>> {
+        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+
+        if mr.data.keys().len() == 0 {
+            return Ok(Vec::new());
+        }
+
+        let k = mr.data.keys().nth(0).unwrap();
+        let ts = mr.data[k].clone();
+
+        Ok(ts)
+    }
 }

@@ -7,6 +7,7 @@ use crate::services::segments_service::Segment;
 use super::analytic_unit::types::AnalyticUnitConfig;
 use super::analytic_unit::types::PatchConfig;
 use super::types::DetectionTask;
+use super::types::HSRTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;
 use super::types::{AnalyticServiceMessage, RequestType};
@@ -64,6 +65,21 @@ impl AnalyticClient {
     pub async fn get_pattern_detection(&self, from: u64, to: u64) -> anyhow::Result<Vec<Segment>> {
         let (tx, rx) = oneshot::channel();
         let req = AnalyticServiceMessage::Request(RequestType::RunDetection(DetectionTask {
+            sender: tx,
+            from,
+            to,
+        }));
+        self.tx.send(req).await?;
+        // TODO: handle second error
+        match rx.await? {
+            Ok(r) => Ok(r),
+            Err(e) => Ok(Vec::new()),
+        }
+    }
+
+    pub async fn get_hsr(&self, from: u64, to: u64) -> anyhow::Result<Vec<(u64, f64)>> {
+        let (tx, rx) = oneshot::channel();
+        let req = AnalyticServiceMessage::Request(RequestType::GetHSR(HSRTask {
             sender: tx,
             from,
             to,
