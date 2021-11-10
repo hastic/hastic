@@ -66,7 +66,6 @@ export async function getHSRAnomaly(from: number, to: number): Promise<[number, 
   const res = await axios.get(uri);
 
   const values = res["data"]["ConfidenceTimeSerie"];
-  console.log(values);
   
   return values as [number, number, [number, number]][];
 }

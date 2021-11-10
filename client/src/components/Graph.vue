@@ -108,7 +108,7 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
           datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
           color: 'red'
         },
-        { 
+        {
           target: "HSR_Upper_bound",
           datapoints: hsr.map(([t, v, [u, l]]) => [t, u]),
           color: 'red'
