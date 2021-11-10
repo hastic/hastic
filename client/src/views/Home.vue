@@ -98,7 +98,7 @@ export default defineComponent({
     // Anomaly
     alphaChange(e) {
       let cfg = _.clone(this.analyticUnitConfig);
-      cfg.alpha = parseFloat(e.target.value);
+      cfg.alpha = _.clamp(parseFloat(e.target.value), 0, 1);
       this.$store.dispatch('patchConfig',  { Anomaly: cfg });
     },
     confidenceChange(e) {

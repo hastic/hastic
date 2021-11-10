@@ -102,7 +102,7 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
     return {
       timeserie: [
         { target: target, datapoints: values, color: 'green' },
-        { target: "HSR", datapoints: hsr, color: 'red' }
+        { target: "HSR", datapoints: hsr, color: 'red', confidence: 100 }
       ],
       segments: segments,
     }
