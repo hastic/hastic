@@ -21,6 +21,7 @@ import _ from "lodash";
 import { AnalyticUnitType } from '@/types/analytic_units';
 
 import { defineComponent, watch } from 'vue';
+import { getHSR } from "@/services/analytics.service";
 
 // TODO: move to store
 async function resolveDataPatterns(range: TimeRange): Promise<{
@@ -97,9 +98,13 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
     // TODO: request in parallel
     let [target, values] = await getMetrics(startTime, endTime, step);
     let segments = await getSegments(startTime, endTime, false);
+    let hsr = await getHSR(startTime, endTime);
     return {
-      timeserie: [{ target: target, datapoints: values, color: 'green' }],
-      segments: segments
+      timeserie: [
+        { target: target, datapoints: values, color: 'green' },
+        { target: "HSR", datapoints: hsr, color: 'red' }
+      ],
+      segments: segments,
     }
   } catch (e) {
     this.$notify({

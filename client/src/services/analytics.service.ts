@@ -56,3 +56,17 @@ export async function patchConfig(patchObj: any) {
 export function getStatusGenerator(): AsyncIterableIterator<string> {
   return getGenerator<string>(100, getStatus);
 }
+
+export async function getHSR(from: number, to: number): Promise<[number, number][]> {
+  if(from >= to) {
+    throw new Error("`from` can`t be less than `to`");
+  }
+
+  const uri = ANALYTICS_API_URL + `hsr/?from=${from}&to=${to}`;
+  const res = await axios.get(uri);
+
+  const values = res["data"]["TimeSerie"];
+  console.log(values);
+  
+  return values as [number, number][];
+}
