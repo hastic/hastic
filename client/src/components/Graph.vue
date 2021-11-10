@@ -21,7 +21,7 @@ import _ from "lodash";
 import { AnalyticUnitType } from '@/types/analytic_units';
 
 import { defineComponent, watch } from 'vue';
-import { getHSR } from "@/services/analytics.service";
+import { getHSRAnomaly } from "@/services/analytics.service";
 
 // TODO: move to store
 async function resolveDataPatterns(range: TimeRange): Promise<{
@@ -86,6 +86,7 @@ async function resolveDataThreshold(range: TimeRange): Promise<{
 // TODO: remove code repetition
 async function resolveDataAnomaly(range: TimeRange): Promise<{
   timeserie: LineTimeSerie[],
+
   segments: Segment[]
 }> {
 
@@ -98,11 +99,25 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
     // TODO: request in parallel
     let [target, values] = await getMetrics(startTime, endTime, step);
     let segments = await getSegments(startTime, endTime, false);
-    let hsr = await getHSR(startTime, endTime);
+    let hsr = await getHSRAnomaly(startTime, endTime);
     return {
       timeserie: [
         { target: target, datapoints: values, color: 'green' },
-        { target: "HSR", datapoints: hsr, color: 'red', confidence: 100 }
+        { 
+          target: "HSR",
+          datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
+          color: 'red'
+        },
+        { 
+          target: "HSR_Upper_bound",
+          datapoints: hsr.map(([t, v, [u, l]]) => [t, u]),
+          color: 'red'
+        },
+        { 
+          target: "HSR_Lower_bound",
+          datapoints: hsr.map(([t, v, [u, l]]) => [t, l]),
+          color: 'red'
+        }
       ],
       segments: segments,
     }

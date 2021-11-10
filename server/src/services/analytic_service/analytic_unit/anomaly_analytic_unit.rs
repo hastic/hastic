@@ -77,14 +77,14 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
 
         let mut sts = Vec::new();
-        sts.push(ts[0]);
+        sts.push((ts[0].0, ts[0].1, ((ts[0].1 + self.config.confidence, ts[0].1 - self.config.confidence))));
 
         for t in 1..ts.len() {
             let alpha = self.config.alpha;
             let stv = alpha * ts[t].1 + (1.0 - alpha) * sts[t - 1].1;
-            sts.push((ts[t].0, stv));
+            sts.push((ts[t].0, stv, (stv + self.config.confidence, stv - self.config.confidence)));
         }
 
-        Ok(HSR::TimeSerie(sts))
+        Ok(HSR::ConfidenceTimeSerie(sts))
     }
 }

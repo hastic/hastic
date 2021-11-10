@@ -35,7 +35,7 @@
       <div v-if="analyticUnitType == analyticUnitTypes[2]">
         Alpha: 
         <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/>
-        Confidence: 
+        Confidence:
         <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/><br/>
       </div>
     </div>

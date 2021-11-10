@@ -16,7 +16,7 @@ export abstract class HasticPod<T> extends LinePod {
     protected segmentSet: SegmentsSet<Segment>
   ) {
     super(el, undefined, {
-      renderLegend: false,
+      renderLegend: true,
       zoomEvents: {
         mouse: {
           zoom: {

@@ -66,7 +66,8 @@ pub struct DetectionTask {
 // varies for different analytic units
 #[derive(Debug, Serialize)]
 pub enum HSR {
-    TimeSerie(Vec<(u64, f64)>)
+    TimeSerie(Vec<(u64, f64)>),
+    ConfidenceTimeSerie(Vec<(u64, f64, (f64, f64))>)
 }
 
 #[derive(Debug)]

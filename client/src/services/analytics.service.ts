@@ -57,7 +57,7 @@ export function getStatusGenerator(): AsyncIterableIterator<string> {
   return getGenerator<string>(100, getStatus);
 }
 
-export async function getHSR(from: number, to: number): Promise<[number, number][]> {
+export async function getHSRAnomaly(from: number, to: number): Promise<[number, number, [number, number]][]> {
   if(from >= to) {
     throw new Error("`from` can`t be less than `to`");
   }
@@ -65,8 +65,8 @@ export async function getHSR(from: number, to: number): Promise<[number, number]
   const uri = ANALYTICS_API_URL + `hsr/?from=${from}&to=${to}`;
   const res = await axios.get(uri);
 
-  const values = res["data"]["TimeSerie"];
+  const values = res["data"]["ConfidenceTimeSerie"];
   console.log(values);
   
-  return values as [number, number][];
+  return values as [number, number, [number, number]][];
 }
