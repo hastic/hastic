@@ -16,10 +16,12 @@ import { SegmentArray } from '@/types/segment_array';
 import { Segment, SegmentId } from '@/types/segment';
 
 import _ from "lodash";
+import { AnalyticUnitType } from '@/types/analytic_units';
+import { ThresholdPod } from './pods/threshold_pod';
 
 
 // TODO: move to store
-async function resolveData(range: TimeRange): Promise<{
+async function resolveDataPatterns(range: TimeRange): Promise<{
   timeserie: LineTimeSerie[],
   segments: Segment[]
 }> {
@@ -46,6 +48,37 @@ async function resolveData(range: TimeRange): Promise<{
     console.error(e);
   }
 }
+
+// TODO: move to store
+// TODO: remove code repetition
+async function resolveDataThreshold(range: TimeRange): Promise<{
+  timeserie: LineTimeSerie[],
+  segments: Segment[]
+}> {
+
+  const endTime = Math.floor(range.to);
+  const startTime = Math.floor(range.from);
+
+  const step = Math.max(Math.round((endTime - startTime) / 5000), 1);
+
+  try {
+    // TODO: request in parallel
+    let [target, values] = await getMetrics(startTime, endTime, step);
+    let segments = await getSegments(startTime, endTime, false);
+    return {
+      timeserie: [{ target: target, datapoints: values, color: 'green' }],
+      segments: segments
+    }
+  } catch (e) {
+    this.$notify({
+      title: "Error during extracting data",
+      text: e,
+      type: 'error'
+    });
+    console.error(e);
+  }
+}
+
 
 // TODO: move to store
 async function addSegment(segment: Segment): Promise<SegmentId> {
@@ -76,32 +109,29 @@ async function _deleteSegment(from: number, to: number): Promise<number> {
   }
 }
 
+// TODO: convert to class component
 export default defineComponent({
   name: 'Graph',
   props: {},
   mounted() {
-    var s = new SegmentArray();
-    this.pod = new PatternPod(
-      document.getElementById('chart'),
-      resolveData.bind(this),
-      addSegment.bind(this),
-      _deleteSegment.bind(this),
-      s
-    );
-    this.pod.render();
+    this.rebuildGraph();
   },
   // TODO: it's a hack: listen real events about analytics update and use store
   watch: {
     // TODO: choose pog based on config type
     analyticUnitConfig(newConfig, prevConfig) {
-      console.log("CONFIG CHANGED");
       if(prevConfig == null) {
         return;
       }
-      console.log(prevConfig);
-      console.log(newConfig);
-      
+      // TODO: remove this hack
+      if(!_.isEqual(_.keys(newConfig),_.keys(prevConfig))) {
+        return;
+      }
+
       this.rerender();
+    },
+    analyticUnitType(newType, prevType) {
+      this.rebuildGraph();
     }
   },
   methods: {
@@ -112,11 +142,44 @@ export default defineComponent({
     async deleteAllSegments() {
       await _deleteSegment.bind(this)(0, Date.now());
       this.rerender();
+    },
+    rebuildGraph() {
+      let child = document.getElementById('chart').children[0];
+      if(child != undefined) {
+        document.getElementById('chart').removeChild(child);
+      }
+      var sa = new SegmentArray();
+
+      const aut = this.analyticUnitType;
+      if(aut == null) {
+        return;
+      }
+      
+      if(aut === AnalyticUnitType.PATTERN) {
+        this.pod = new PatternPod(
+          document.getElementById('chart'),
+          resolveDataPatterns.bind(this),
+          addSegment.bind(this),
+          _deleteSegment.bind(this),
+          sa
+        );
+      }
+      if(aut === AnalyticUnitType.THRESHOLD) {
+        this.pod = new ThresholdPod(
+          document.getElementById('chart'),
+          resolveDataThreshold.bind(this),
+          sa
+        );
+      }
+      this.pod.render();
     }
   },
   computed: {
     analyticUnitConfig() {
       return this.$store.state.analyticUnitConfig;
+    },
+    analyticUnitType() {
+      return this.$store.state.analyticUnitType;
     }
   }
 });

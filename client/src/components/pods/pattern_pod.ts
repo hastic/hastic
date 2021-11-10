@@ -16,7 +16,6 @@ export type DeleteSegmentCallback = (from: number, to: number) => Promise<number
 
 export class PatternPod extends HasticPod<UpdateDataCallback> {
 
-  private _udc: UpdateDataCallback;
   private _csc: CreateSegmentCallback;
   private _dsc: DeleteSegmentCallback;
 
@@ -68,12 +67,7 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
         this._dKeyIsDown = false;
       }
     });
-
-
-    this.fetchData();
-
   }
-
 
   public fetchData(): void {
     let to = Math.floor(Date.now() / 1000);

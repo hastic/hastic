@@ -7,18 +7,21 @@ import _ from 'lodash';
 const SEGMENTS_API_URL = API_URL + "segments/";
 const ANALYTICS_API_URL = API_URL + "analytics/";
 
-export async function getSegments(from: number, to: number): Promise<Segment[]> {
+export async function getSegments(from: number, to: number, withLabeling = true): Promise<Segment[]> {
   if(from >= to) {
     throw new Error("`from` can`t be less than `to`");
   }
 
-  const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
-  const res = await axios.get(uri);
+  let result = [];
+  if (withLabeling) {
+    const uri = SEGMENTS_API_URL + `?from=${from}&to=${to}`;
+    const res = await axios.get(uri);
+    result = res["data"] as any[];
+  }
 
   const uriAnalytics = ANALYTICS_API_URL + `?from=${from}&to=${to}`;
   const resAnalytics = await axios.get(uriAnalytics);
 
-  const result = res["data"] as any[];
   const resultAnalytics = resAnalytics["data"] as any[];
 
   return result.concat(resultAnalytics).map(Segment.fromObject);
