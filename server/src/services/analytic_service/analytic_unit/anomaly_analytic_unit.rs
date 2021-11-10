@@ -1,6 +1,4 @@
-use crate::services::{
-    analytic_service::types, metric_service::MetricService, segments_service::SegmentsService,
-};
+use crate::services::{analytic_service::types::{self, HSR}, metric_service::MetricService, segments_service::SegmentsService};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResult};
 
@@ -58,22 +56,22 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         Ok(Default::default())
     }
 
+    // TODO: use hsr for learning and detections
     async fn get_hsr(
         &self,
         ms: MetricService,
         from: u64,
         to: u64,
-    ) -> anyhow::Result<Vec<(u64, f64)>> {
-        // TODO: implement
+    ) -> anyhow::Result<HSR> {
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
-            return Ok(Vec::new());
+            return Ok(HSR::TimeSerie(Vec::new()));
         }
 
         let k = mr.data.keys().nth(0).unwrap();
         let ts = mr.data[k].clone();
 
-        Ok(ts)
+        Ok(HSR::TimeSerie(ts))
     }
 }

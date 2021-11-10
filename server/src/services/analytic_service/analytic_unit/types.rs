@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use async_trait::async_trait;
 
-use crate::services::{metric_service::MetricService, segments_service::SegmentsService};
+use crate::services::{analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PatternConfig {
@@ -136,7 +136,7 @@ pub trait AnalyticUnit {
         ms: MetricService,
         from: u64,
         to: u64,
-    ) -> anyhow::Result<Vec<(u64, f64)>>;
+    ) -> anyhow::Result<HSR>;
 }
 
 #[derive(Deserialize, Serialize, Debug)]

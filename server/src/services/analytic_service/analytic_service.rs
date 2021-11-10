@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig, PatternConfig};
-use super::types::{self, DetectionRunnerConfig, LearningTrain, LearningWaiter};
+use super::types::{self, DetectionRunnerConfig, HSR, LearningTrain, LearningWaiter};
 use super::{
     analytic_client::AnalyticClient,
     analytic_unit::pattern_analytic_unit::{self, LearningResults, PatternAnalyticUnit},
@@ -178,7 +178,6 @@ impl AnalyticService {
             }
             RequestType::PatchConfig(patch_obj, tx) => {
                 self.patch_config(patch_obj, tx);
-                // tx.send(()).unwrap();
             }
             RequestType::GetHSR(task) => {
                 if self.analytic_unit.is_some() {
@@ -346,7 +345,7 @@ impl AnalyticService {
     }
 
     async fn get_hsr(
-        tx: oneshot::Sender<anyhow::Result<Vec<(u64, f64)>>>,
+        tx: oneshot::Sender<anyhow::Result<HSR>>,
         analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
         ms: MetricService,
         from: u64,

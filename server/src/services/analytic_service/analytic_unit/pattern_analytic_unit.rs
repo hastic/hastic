@@ -10,11 +10,7 @@ use linfa_svm::Svm;
 
 use ndarray::Array;
 
-use crate::services::{
-    analytic_service::types::{self, LearningTrain},
-    metric_service::MetricService,
-    segments_service::{Segment, SegmentType, SegmentsService},
-};
+use crate::services::{analytic_service::types::{self, HSR, LearningTrain}, metric_service::MetricService, segments_service::{Segment, SegmentType, SegmentsService}};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, PatternConfig};
 
@@ -403,21 +399,22 @@ impl AnalyticUnit for PatternAnalyticUnit {
         Ok(results)
     }
 
+    // TODO: use hsr for learning and detections
     async fn get_hsr(
         &self,
         ms: MetricService,
         from: u64,
         to: u64,
-    ) -> anyhow::Result<Vec<(u64, f64)>> {
+    ) -> anyhow::Result<HSR> {
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
-            return Ok(Vec::new());
+            return Ok(HSR::TimeSerie(Vec::new()));
         }
 
         let k = mr.data.keys().nth(0).unwrap();
         let ts = mr.data[k].clone();
 
-        Ok(ts)
+        Ok(HSR::TimeSerie(ts))
     }
 }

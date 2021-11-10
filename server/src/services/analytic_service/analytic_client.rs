@@ -7,6 +7,7 @@ use crate::services::segments_service::Segment;
 use super::analytic_unit::types::AnalyticUnitConfig;
 use super::analytic_unit::types::PatchConfig;
 use super::types::DetectionTask;
+use super::types::HSR;
 use super::types::HSRTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;
@@ -77,7 +78,7 @@ impl AnalyticClient {
         }
     }
 
-    pub async fn get_hsr(&self, from: u64, to: u64) -> anyhow::Result<Vec<(u64, f64)>> {
+    pub async fn get_hsr(&self, from: u64, to: u64) -> anyhow::Result<HSR> {
         let (tx, rx) = oneshot::channel();
         let req = AnalyticServiceMessage::Request(RequestType::GetHSR(HSRTask {
             sender: tx,
@@ -88,7 +89,7 @@ impl AnalyticClient {
         // TODO: handle second error
         match rx.await? {
             Ok(r) => Ok(r),
-            Err(e) => Ok(Vec::new()),
+            Err(e) => Ok(HSR::TimeSerie(Vec::new())),
         }
     }
 }

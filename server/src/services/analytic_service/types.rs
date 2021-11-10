@@ -61,10 +61,18 @@ pub struct DetectionTask {
     pub to: u64,
 }
 
+
+// HSR Stands for Hastic Signal Representation,
+// varies for different analytic units
+#[derive(Debug, Serialize)]
+pub enum HSR {
+    TimeSerie(Vec<(u64, f64)>)
+}
+
 #[derive(Debug)]
 pub struct HSRTask {
     // TODO: make enum for HSR which is different for different Analytic Types
-    pub sender: oneshot::Sender<Result<Vec<(u64, f64)>>>,
+    pub sender: oneshot::Sender<Result<HSR>>,
     pub from: u64,
     pub to: u64,
 }
