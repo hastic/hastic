@@ -86,7 +86,7 @@ async function resolveDataThreshold(range: TimeRange): Promise<{
 // TODO: remove code repetition
 async function resolveDataAnomaly(range: TimeRange): Promise<{
   timeserie: LineTimeSerie[],
-
+  bounds: [number, [number, number]][],
   segments: Segment[]
 }> {
 
@@ -107,18 +107,9 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
           target: "HSR",
           datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
           color: 'red'
-        },
-        {
-          target: "HSR_Upper_bound",
-          datapoints: hsr.map(([t, v, [u, l]]) => [t, u]),
-          color: 'red'
-        },
-        { 
-          target: "HSR_Lower_bound",
-          datapoints: hsr.map(([t, v, [u, l]]) => [t, l]),
-          color: 'red'
         }
       ],
+      bounds: hsr.map(([t, v, [u, l]]) => [t, [u, l]]),
       segments: segments,
     }
   } catch (e) {

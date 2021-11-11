@@ -22,7 +22,7 @@
         Holde key <pre>D</pre> to delete patterns
         <br/>
         <hr/>
-        Correlation score: 
+        Correlation score:
         <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
         Anti correlation score: 
         <input :value="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>

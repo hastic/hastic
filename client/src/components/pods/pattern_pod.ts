@@ -178,12 +178,6 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
 
   }
 
-  // TODO: maybe not override this
-  protected updateSegments(segments: Segment[]): void {
-    this.segmentSet.clear();
-    this.segmentSet.setSegments(segments);
-  }
-
   // TODO: move to "controller"
   private _tempIdCounted = -1;
   public getNewTempSegmentId(): SegmentId {

@@ -41,7 +41,6 @@ export abstract class HasticPod<T> extends LinePod {
     this.renderSegments();
   }
 
-
   protected addEvents(): void {
     this.initBrush();
     this.initPan();
@@ -101,6 +100,11 @@ export abstract class HasticPod<T> extends LinePod {
 
   protected _zoomOut({x, y}): void {
     this.fetchData();
+  }
+
+  protected updateSegments(segments: Segment[]): void {
+    this.segmentSet.clear();
+    this.segmentSet.setSegments(segments);
   }
 
   abstract fetchData();

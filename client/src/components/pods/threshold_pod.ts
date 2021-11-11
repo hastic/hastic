@@ -41,10 +41,4 @@ export class ThresholdPod extends HasticPod<UpdateDataCallback> {
       .catch(() => { /* set "error" message */ })
   }
 
-  // TODO: maybe not override this
-  protected updateSegments(segments: Segment[]): void {
-    this.segmentSet.clear();
-    this.segmentSet.setSegments(segments);
-  }
-
 }
