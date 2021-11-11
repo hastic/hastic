@@ -36,7 +36,10 @@
         Alpha: 
         <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/>
         Confidence:
-        <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/><br/>
+        <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
+        Seasonality:
+        <input :value="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
+        <br/>
       </div>
     </div>
   </div>
@@ -104,6 +107,11 @@ export default defineComponent({
     confidenceChange(e) {
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.confidence = parseFloat(e.target.value);
+      this.$store.dispatch('patchConfig',  { Anomaly: cfg });
+    },
+    seasonalityChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.seasonality = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig',  { Anomaly: cfg });
     },
 

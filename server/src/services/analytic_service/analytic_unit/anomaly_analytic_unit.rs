@@ -100,9 +100,6 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         } else {
             return Err(anyhow::format_err!("bad hsr"));
         }
-
-        
-
         
     }
 

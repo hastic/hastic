@@ -27,6 +27,7 @@ impl Default for PatternConfig {
 pub struct AnomalyConfig {
     pub alpha: f64,
     pub confidence: f64,
+    pub seasonality: u64 // step in seconds, can be zero
 }
 
 impl Default for AnomalyConfig {
@@ -34,6 +35,7 @@ impl Default for AnomalyConfig {
         AnomalyConfig {
             alpha: 0.5,
             confidence: 10.0,
+            seasonality: 60 * 60
         }
     }
 }
