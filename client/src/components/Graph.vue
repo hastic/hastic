@@ -103,11 +103,11 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
     return {
       timeserie: [
         { target: target, datapoints: values, color: 'green' },
-        { 
-          target: "HSR",
-          datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
-          color: 'red'
-        }
+        // { 
+        //   target: "HSR",
+        //   datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
+        //   color: 'red'
+        // }
       ],
       bounds: hsr.map(([t, v, [u, l]]) => [t, [u, l]]),
       segments: segments,
