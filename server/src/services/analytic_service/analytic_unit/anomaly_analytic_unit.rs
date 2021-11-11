@@ -60,7 +60,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, u64)>> {
-        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+        let mr = ms.query(from - self.config.seasonality, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
             return Ok(Vec::new());
@@ -75,15 +75,17 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         let mut result = Vec::new();
 
-        if let HSR::ConfidenceTimeSerie(hsr) = self.get_hsr_from_metric_result(&mr)? {
+        let confidence_time_serie = self.get_hsr_from_metric_result(&mr)?;
+
+        if let HSR::ConfidenceTimeSerie(hsr) = confidence_time_serie {
 
             let mut from = None;
 
-            for ((t, _, (u, l)), (t1, rv)) in hsr.iter().zip(ts) {
-                if *t != t1 {
+            for ((t, _, (u, l)), (t1, rv)) in hsr.iter().zip(ts.iter()) {
+                if *t != *t1 {
                     return Err(anyhow::format_err!("incompatible hsr/ts"))
                 }
-                if rv > *u || rv < *l {
+                if rv > u || rv < l {
                     if from.is_none() {
                         from = Some(*t);
                     }
@@ -93,6 +95,10 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
                         from = None;
                     }
                 }
+            }
+
+            if from.is_some() {
+                result.push((from.unwrap(), ts.last().unwrap().0));
             }
 
             return Ok(result);
