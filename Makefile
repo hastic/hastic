@@ -10,7 +10,7 @@ server:
 	cd server;cargo build --release --target x86_64-unknown-linux-musl
 
 client client/dist: 
-	cd client;yarn build
+	cd client;yarn install;yarn build
 
 clean:
 	rm -r release
