@@ -84,6 +84,8 @@ pub enum LearningWaiter {
     HSR(HSRTask),
 }
 
+
+// TODO: review if it's needed
 #[derive(Debug)]
 pub struct DetectionRunnerConfig {
     // pub sender: mpsc::Sender<Result<Vec<Segment>>>,

@@ -21,7 +21,6 @@ use anyhow;
 
 use tokio::sync::{mpsc, oneshot, RwLock};
 
-use chrono::Utc;
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
@@ -35,16 +34,14 @@ pub struct AnalyticService {
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
 
-    endpoint: Option<String>,
-
     // handlers
     learning_handler: Option<tokio::task::JoinHandle<()>>,
 
     // awaiters
     learning_waiters: Vec<LearningWaiter>,
 
-    // runner
-    runner_handler: Option<tokio::task::JoinHandle<()>>,
+
+    detection_runner: Option<DetectionRunnerConfig>
 }
 
 impl AnalyticService {
@@ -67,7 +64,6 @@ impl AnalyticService {
             tx,
             rx,
 
-            endpoint,
 
             // handlers
             learning_handler: None,
@@ -75,7 +71,7 @@ impl AnalyticService {
             // awaiters
             learning_waiters: Vec::new(),
 
-            runner_handler: None,
+            detection_runner: None
         }
     }
 
@@ -102,19 +98,19 @@ impl AnalyticService {
         });
     }
 
-    // fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
-    //     if self.runner_handler.is_some() {
-    //         self.runner_handler.as_mut().unwrap().abort();
-    //     }
-    //     // TODO: save handler of the task
-    //     self.runner_handler = Some(tokio::spawn({
-    //         let au = self.analytic_unit.unwrap();
-    //         let ms = self.metric_service.clone();
-    //         async move {
-    //             // TODO: implement
-    //         }
-    //     }));
-    // }
+    fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
+        // if self.runner_handler.is_some() {
+        //     self.runner_handler.as_mut().unwrap().abort();
+        // }
+        // // TODO: save handler of the task
+        // self.runner_handler = Some(tokio::spawn({
+        //     let au = self.analytic_unit.unwrap();
+        //     let ms = self.metric_service.clone();
+        //     async move {
+        //         // TODO: implement
+        //     }
+        // }));
+    }
 
     // TODO: maybe make `consume_request` async
     fn consume_request(&mut self, req: types::RequestType) -> () {

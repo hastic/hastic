@@ -8,6 +8,17 @@ use subbeat::metric::MetricResult;
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
 
+// offset from intex in timrange in seconds
+fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> anyhow::Result<f64> {
+    if index == 0 {
+        return Err(anyhow::format_err!("index should be > 0"));
+    }
+    return Ok(0.0);
+    // let step = 
+    // let index_candidate = 
+    // let intex_candidate = 
+}
+
 pub struct AnomalyAnalyticUnit {
     config: AnomalyConfig,
 }
@@ -60,7 +71,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, u64)>> {
-        let mr = ms.query(from - self.config.seasonality, to, DETECTION_STEP).await.unwrap();
+        let mr = ms.query(from - self.config.seasonality * 5, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {
             return Ok(Vec::new());
@@ -119,4 +130,6 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
         return self.get_hsr_from_metric_result(&mr);
     }
+
+    
 }
