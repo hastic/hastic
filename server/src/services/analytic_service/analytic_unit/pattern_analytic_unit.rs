@@ -3,10 +3,12 @@ use std::{collections::VecDeque, fmt, sync::Arc};
 use futures::future;
 use parking_lot::Mutex;
 
-use linfa::prelude::*;
 
-use linfa;
-use linfa_svm::Svm;
+use gbdt::config::Config;
+use gbdt::decision_tree::{Data, DataVec, PredVec};
+use gbdt::gradient_boost::GBDT;
+
+
 
 use ndarray::Array;
 
@@ -16,13 +18,20 @@ use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, PatternConf
 
 use async_trait::async_trait;
 
+use rustfft::{self, FftPlanner, num_complex::Complex};
+
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
+const FFT_LEN: usize = 64;
+
+// TODO: convert to vector
+pub const FEATURES_SIZE: usize = 4 + 16 * 2;
+pub type Features = Vec<f64>;
 
 #[derive(Clone)]
 pub struct LearningResults {
     // TODO: replace with RWLock
-    model: Arc<Mutex<Svm<f64, bool>>>,
+    model: Arc<Mutex<GBDT>>,
 
     pub learning_train: LearningTrain,
 
@@ -55,9 +64,7 @@ impl fmt::Debug for LearningResults {
     }
 }
 
-pub const FEATURES_SIZE: usize = 4;
 
-pub type Features = [f64; FEATURES_SIZE];
 
 fn nan_to_zero(n: f64) -> f64 {
     if n.is_nan() {
@@ -111,12 +118,44 @@ fn get_features(xs: &Vec<f64>) -> Features {
 
     let sd = sum.sqrt();
 
-    // TODO: add autocorrelation
-    // TODO: add FFT
     // TODO: add DWT
 
-    return [
+    let mut planner = FftPlanner::<f64>::new();
+
+    // TODO: move 128 to config
+    let fft = planner.plan_fft_forward(FFT_LEN);
+    let mut c_buffer = vec![Complex{ re: 0.0f64, im: 0.0f64 }; FFT_LEN];
+
+    for i in 0..FFT_LEN.min(xs.len()) {
+        c_buffer[i].re = xs[i];
+    }
+
+    fft.process(&mut c_buffer);
+
+    // https://docs.rs/rustfft/6.0.1/rustfft/index.html#normalization
+    let norm_factor = (FFT_LEN.min(xs.len()) as f64).sqrt();
+    for i in 0..FFT_LEN.min(xs.len()) {
+        c_buffer[i] /= norm_factor;
+    }
+
+    return vec![
         min, max, mean, sd,
+        c_buffer[0].re, c_buffer[0].im,
+        c_buffer[1].re, c_buffer[1].im,
+        c_buffer[2].re, c_buffer[2].im,
+        c_buffer[3].re, c_buffer[3].im,
+        c_buffer[4].re, c_buffer[4].im,
+        c_buffer[5].re, c_buffer[5].im,
+        c_buffer[6].re, c_buffer[6].im,
+        c_buffer[7].re, c_buffer[7].im,
+        c_buffer[8].re, c_buffer[8].im,
+        c_buffer[9].re, c_buffer[9].im,
+        c_buffer[10].re, c_buffer[10].im,
+        c_buffer[11].re, c_buffer[11].im,
+        c_buffer[12].re, c_buffer[12].im,
+        c_buffer[13].re, c_buffer[13].im,
+        c_buffer[14].re, c_buffer[14].im,
+        c_buffer[15].re, c_buffer[15].im,
         // 0f64,0f64,
         // 0f64,0f64,0f64, 0f64
     ];
@@ -202,6 +241,19 @@ impl AnalyticUnit for PatternAnalyticUnit {
     }
 
     async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult {
+
+        // TODO: move to config
+        let mut cfg = Config::new();
+        cfg.set_feature_size(FEATURES_SIZE);
+        cfg.set_max_depth(3);
+        cfg.set_iterations(50);
+        cfg.set_shrinkage(0.1);
+        cfg.set_loss("LogLikelyhood"); 
+        cfg.set_debug(false);
+        cfg.set_data_sample_ratio(1.0);
+        cfg.set_feature_sample_ratio(1.0);
+        cfg.set_training_optimization_level(2);
+
         // be careful if decide to store detections in db
         let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
         let has_segments_label = segments
@@ -263,19 +315,22 @@ impl AnalyticUnit for PatternAnalyticUnit {
             anti_patterns.push(xs);
         }
 
-        let records = Array::from_shape_fn((records_raw.len(), FEATURES_SIZE), |(i, j)| {
-            records_raw[i][j]
-        });
+        let mut train_dv = Vec::new();
+        assert_eq!(records_raw.len(), targets_raw.len());
 
-        let targets = Array::from_vec(targets_raw.clone());
+        for i in 0..train_dv.len() {
+            let data = Data::new_training_data(
+                records_raw[i].iter().map(|e| *e as f32).collect(),
+                1.0,
+                if targets_raw[i] { 1.0 } else { -1.0 },
+                Some(0.5)
+            );
+            train_dv.push(data);
+        }
 
-        let train = linfa::Dataset::new(records, targets);
 
-        let model = Svm::<_, bool>::params()
-            .pos_neg_weights(50000., 5000.)
-            .gaussian_kernel(80.0)
-            .fit(&train)
-            .unwrap();
+        let mut model = GBDT::new(&cfg);
+        model.fit(&mut train_dv);
 
         let avg_pattern_length = pattern_length_size_sum / (&patterns.len() + &anti_patterns.len());
 
@@ -346,14 +401,13 @@ impl AnalyticUnit for PatternAnalyticUnit {
                 for v in window.iter() {
                     vs.push(*v);
                 }
-                let fs = get_features(&vs);
+                let fs = get_features(&vs).iter().map(|e| *e as f32).collect();
                 let lk = lr.model.lock();
-                let p = lk.predict(Array::from_vec(fs.to_vec()));
-                if p {
-                    1
-                } else {
-                    -1
-                }
+
+                let data_t1 = Data::new_test_data(fs, Some(0.5));
+                let mut test_dv = Vec::new();
+                test_dv.push(data_t1);
+                lk.predict(&test_dv)[0]
             };
 
             let score = positive_corr * self.config.correlation_score

@@ -232,7 +232,7 @@
   version "0.1.0"
   resolved "https://codeload.github.com/chartwerk/core/tar.gz/532eddbc8ad938091b1d9ec1693cec5eddfdbfc2"
 
-"@chartwerk/line-pod@0.4.4":
+"@chartwerk/line-pod@^0.4.4":
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.4.tgz#724152e886c529df97019ba3dfed335ef42b2f57"
   integrity sha512-L7RmTzy+TVMueV91E3upVCK/V7t9ZYLwC0tIYhFJxSJjrLOhRMAOLxZdkp7CqxXFj+u+FuFDhY0Dch2nYDvLpg==
