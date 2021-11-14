@@ -9,9 +9,6 @@ use gbdt::decision_tree::{Data, DataVec, PredVec};
 use gbdt::gradient_boost::GBDT;
 
 
-
-use ndarray::Array;
-
 use crate::services::{analytic_service::types::{self, HSR, LearningTrain}, metric_service::MetricService, segments_service::{Segment, SegmentType, SegmentsService}};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, PatternConfig};
@@ -63,8 +60,6 @@ impl fmt::Debug for LearningResults {
             .finish()
     }
 }
-
-
 
 fn nan_to_zero(n: f64) -> f64 {
     if n.is_nan() {
@@ -139,7 +134,8 @@ fn get_features(xs: &Vec<f64>) -> Features {
     }
 
     return vec![
-        min, max, mean, sd,
+        min, max, 
+        mean, sd,
         c_buffer[0].re, c_buffer[0].im,
         c_buffer[1].re, c_buffer[1].im,
         c_buffer[2].re, c_buffer[2].im,
@@ -318,13 +314,14 @@ impl AnalyticUnit for PatternAnalyticUnit {
         let mut train_dv = Vec::new();
         assert_eq!(records_raw.len(), targets_raw.len());
 
-        for i in 0..train_dv.len() {
+        for i in 0..records_raw.len() {
             let data = Data::new_training_data(
                 records_raw[i].iter().map(|e| *e as f32).collect(),
                 1.0,
                 if targets_raw[i] { 1.0 } else { -1.0 },
                 Some(0.5)
             );
+            // println!("{:?}", targets_raw[i]);
             train_dv.push(data);
         }
 
