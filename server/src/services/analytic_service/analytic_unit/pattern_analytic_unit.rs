@@ -25,6 +25,8 @@ const FFT_LEN: usize = 64;
 pub const FEATURES_SIZE: usize = 4 + 16 * 2;
 pub type Features = Vec<f64>;
 
+use std::f64::consts;
+
 #[derive(Clone)]
 pub struct LearningResults {
     // TODO: replace with RWLock
@@ -117,12 +119,13 @@ fn get_features(xs: &Vec<f64>) -> Features {
 
     let mut planner = FftPlanner::<f64>::new();
 
-    // TODO: move 128 to config
+    
     let fft = planner.plan_fft_forward(FFT_LEN);
     let mut c_buffer = vec![Complex{ re: 0.0f64, im: 0.0f64 }; FFT_LEN];
 
+    let p = 1.0 / FFT_LEN as f64;
     for i in 0..FFT_LEN.min(xs.len()) {
-        c_buffer[i].re = xs[i];
+        c_buffer[i].re = xs[i] * consts::E.powf((i as f64) * p);
     }
 
     fft.process(&mut c_buffer);
