@@ -15,9 +15,9 @@ pub struct PatternConfig {
 impl Default for PatternConfig {
     fn default() -> Self {
         PatternConfig {
-            correlation_score: 0.7,
+            correlation_score: 0.3,
             anti_correlation_score: 0.1,
-            model_score: 0.5,
+            model_score: 0.8,
             threshold_score: 1.0,
         }
     }
