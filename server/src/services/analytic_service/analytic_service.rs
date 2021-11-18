@@ -8,6 +8,7 @@ use super::{
     types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
 };
 
+use crate::config::AlertingConfig;
 use crate::services::analytic_service::analytic_unit::resolve;
 use crate::services::{
     metric_service::MetricService,
@@ -48,7 +49,7 @@ impl AnalyticService {
     pub fn new(
         metric_service: MetricService,
         segments_service: segments_service::SegmentsService,
-        endpoint: Option<String>,
+        alerting: Option<AlertingConfig>,
     ) -> AnalyticService {
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 

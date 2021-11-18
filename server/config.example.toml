@@ -16,6 +16,8 @@ query = "rate(go_memstats_alloc_bytes_total[5m])"
 #   |> yield(name: "mean")
 # """
 
-[webhook]
-endpoint = "http://localhost:8086"
+[alerting]
+type = "webhook"
+interval = 10 # in seconds
+endpoint = "http://localhost:9092"
 

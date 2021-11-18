@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
     let mut analytic_service = analytic_service::AnalyticService::new(
         metric_service.clone(),
         segments_service.clone(),
-        config.endpoint,
+        config.alerting
     );
 
     let api = api::API::new(

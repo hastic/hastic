@@ -1,20 +1,39 @@
 use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
+
+#[derive(Clone)]
+pub struct WebhookAlertingConfig {
+  endpoint: String
+}
+
+#[derive(Clone)]
+pub enum AlertingType {
+  Webhook(WebhookAlertingConfig)
+}
+
+#[derive(Clone)]
+pub struct AlertingConfig {
+  alerting_type: AlertingType,
+  interval: u64 // interval in seconds
+}
+
+
+#[derive(Clone)]
 pub struct Config {
     pub port: u16,
     pub datasource_config: DatasourceConfig,
-    pub endpoint: Option<String>,
+    pub alerting: Option<AlertingConfig>,
 }
 
-impl Clone for Config {
-    fn clone(&self) -> Self {
-        return Config {
-            port: self.port,
-            datasource_config: self.datasource_config.clone(),
-            endpoint: self.endpoint.clone(),
-        };
-    }
-}
+// impl Clone for Config {
+//     fn clone(&self) -> Self {
+//         return Config {
+//             port: self.port,
+//             datasource_config: self.datasource_config.clone(),
+//             alerting: self.alerting.clone()
+//         };
+//     }
+// }
 
 fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceConfig> {
     if config.get::<String>("prometheus.url").is_ok() {
@@ -39,6 +58,10 @@ fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceC
 // TODO: use actual config and env variables
 impl Config {
     pub fn new() -> anyhow::Result<Config> {
+
+        // TODO: parse alerting config
+        // TODO: throw error on bad config
+
         let mut config = config::Config::default();
 
         if std::path::Path::new("config.toml").exists() {
@@ -52,15 +75,15 @@ impl Config {
             config.set("port", "8000").unwrap();
         }
 
-        let mut endpoint = None;
-        if config.get::<String>("webhook.endpoint").is_ok() {
-            endpoint = Some(config.get("webhook.endpoint").unwrap());
-        }
+        // let mut endpoint = None;
+        // if config.get::<String>("webhook.endpoint").is_ok() {
+        //     endpoint = Some(config.get("webhook.endpoint").unwrap());
+        // }
 
         Ok(Config {
             port: config.get::<u16>("port").unwrap(),
             datasource_config: resolve_datasource(&mut config)?,
-            endpoint,
+            alerting: None,
         })
     }
 }
