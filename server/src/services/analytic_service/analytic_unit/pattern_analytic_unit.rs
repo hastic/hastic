@@ -287,6 +287,10 @@ impl AnalyticUnit for PatternAnalyticUnit {
             }
         }
 
+        if learn_tss.len() == 0 {
+            return LearningResult::FinishedEmpty;
+        }
+
         let mut patterns = Vec::<Vec<f64>>::new();
         let mut anti_patterns = Vec::<Vec<f64>>::new();
 

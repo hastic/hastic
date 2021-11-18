@@ -22,6 +22,8 @@ impl DetectionRunner {
     }
 
     pub async fn run() {
-
+      // TODO: await detection step
+      // TODO: get last detection timestamp from persistance
+      // TODO: set lst detection from "now"
     }
 }
