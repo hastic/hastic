@@ -7,10 +7,10 @@ use crate::services::segments_service::Segment;
 use super::analytic_unit::types::AnalyticUnitConfig;
 use super::analytic_unit::types::PatchConfig;
 use super::types::DetectionTask;
-use super::types::HSR;
 use super::types::HSRTask;
 use super::types::LearningStatus;
 use super::types::LearningTrain;
+use super::types::HSR;
 use super::types::{AnalyticServiceMessage, RequestType};
 
 /// Client to be used multithreaded

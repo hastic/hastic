@@ -61,13 +61,12 @@ pub struct DetectionTask {
     pub to: u64,
 }
 
-
 // HSR Stands for Hastic Signal Representation,
 // varies for different analytic units
 #[derive(Debug, Serialize)]
 pub enum HSR {
     TimeSerie(Vec<(u64, f64)>),
-    ConfidenceTimeSerie(Vec<(u64, f64, (f64, f64))>)
+    ConfidenceTimeSerie(Vec<(u64, f64, (f64, f64))>),
 }
 
 #[derive(Debug)]
@@ -83,7 +82,6 @@ pub enum LearningWaiter {
     Detection(DetectionTask),
     HSR(HSRTask),
 }
-
 
 // TODO: review if it's needed
 #[derive(Debug)]

@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use async_trait::async_trait;
 
-use crate::services::{analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService};
+use crate::services::{
+    analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PatternConfig {
@@ -27,7 +29,7 @@ impl Default for PatternConfig {
 pub struct AnomalyConfig {
     pub alpha: f64,
     pub confidence: f64,
-    pub seasonality: u64 // step in seconds, can be zero
+    pub seasonality: u64, // step in seconds, can be zero
 }
 
 impl Default for AnomalyConfig {
@@ -35,7 +37,7 @@ impl Default for AnomalyConfig {
         AnomalyConfig {
             alpha: 0.5,
             confidence: 10.0,
-            seasonality: 60 * 60
+            seasonality: 60 * 60,
         }
     }
 }
@@ -133,12 +135,7 @@ pub trait AnalyticUnit {
     ) -> anyhow::Result<Vec<(u64, u64)>>;
 
     fn set_config(&mut self, c: AnalyticUnitConfig);
-    async fn get_hsr(
-        &self,
-        ms: MetricService,
-        from: u64,
-        to: u64,
-    ) -> anyhow::Result<HSR>;
+    async fn get_hsr(&self, ms: MetricService, from: u64, to: u64) -> anyhow::Result<HSR>;
 }
 
 #[derive(Deserialize, Serialize, Debug)]

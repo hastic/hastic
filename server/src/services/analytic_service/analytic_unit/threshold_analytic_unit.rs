@@ -1,4 +1,8 @@
-use crate::services::{analytic_service::types::{self, HSR}, metric_service::MetricService, segments_service::SegmentsService};
+use crate::services::{
+    analytic_service::types::{self, HSR},
+    metric_service::MetricService,
+    segments_service::SegmentsService,
+};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, ThresholdConfig};
 
@@ -74,12 +78,7 @@ impl AnalyticUnit for ThresholdAnalyticUnit {
     }
 
     // TODO: use hsr for learning and detections
-    async fn get_hsr(
-        &self,
-        ms: MetricService,
-        from: u64,
-        to: u64,
-    ) -> anyhow::Result<HSR> {
+    async fn get_hsr(&self, ms: MetricService, from: u64, to: u64) -> anyhow::Result<HSR> {
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {

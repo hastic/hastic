@@ -3,19 +3,21 @@ use std::{collections::VecDeque, fmt, sync::Arc};
 use futures::future;
 use parking_lot::Mutex;
 
-
 use gbdt::config::Config;
 use gbdt::decision_tree::{Data, DataVec, PredVec};
 use gbdt::gradient_boost::GBDT;
 
-
-use crate::services::{analytic_service::types::{self, HSR, LearningTrain}, metric_service::MetricService, segments_service::{Segment, SegmentType, SegmentsService}};
+use crate::services::{
+    analytic_service::types::{self, LearningTrain, HSR},
+    metric_service::MetricService,
+    segments_service::{Segment, SegmentType, SegmentsService},
+};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, PatternConfig};
 
 use async_trait::async_trait;
 
-use rustfft::{self, FftPlanner, num_complex::Complex};
+use rustfft::{self, num_complex::Complex, FftPlanner};
 
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
@@ -119,9 +121,14 @@ fn get_features(xs: &Vec<f64>) -> Features {
 
     let mut planner = FftPlanner::<f64>::new();
 
-    
     let fft = planner.plan_fft_forward(FFT_LEN);
-    let mut c_buffer = vec![Complex{ re: 0.0f64, im: 0.0f64 }; FFT_LEN];
+    let mut c_buffer = vec![
+        Complex {
+            re: 0.0f64,
+            im: 0.0f64
+        };
+        FFT_LEN
+    ];
 
     let p = 1.0 / FFT_LEN as f64;
     for i in 0..FFT_LEN.min(xs.len()) {
@@ -137,24 +144,42 @@ fn get_features(xs: &Vec<f64>) -> Features {
     }
 
     return vec![
-        min, max, 
-        mean, sd,
-        c_buffer[0].re, c_buffer[0].im,
-        c_buffer[1].re, c_buffer[1].im,
-        c_buffer[2].re, c_buffer[2].im,
-        c_buffer[3].re, c_buffer[3].im,
-        c_buffer[4].re, c_buffer[4].im,
-        c_buffer[5].re, c_buffer[5].im,
-        c_buffer[6].re, c_buffer[6].im,
-        c_buffer[7].re, c_buffer[7].im,
-        c_buffer[8].re, c_buffer[8].im,
-        c_buffer[9].re, c_buffer[9].im,
-        c_buffer[10].re, c_buffer[10].im,
-        c_buffer[11].re, c_buffer[11].im,
-        c_buffer[12].re, c_buffer[12].im,
-        c_buffer[13].re, c_buffer[13].im,
-        c_buffer[14].re, c_buffer[14].im,
-        c_buffer[15].re, c_buffer[15].im,
+        min,
+        max,
+        mean,
+        sd,
+        c_buffer[0].re,
+        c_buffer[0].im,
+        c_buffer[1].re,
+        c_buffer[1].im,
+        c_buffer[2].re,
+        c_buffer[2].im,
+        c_buffer[3].re,
+        c_buffer[3].im,
+        c_buffer[4].re,
+        c_buffer[4].im,
+        c_buffer[5].re,
+        c_buffer[5].im,
+        c_buffer[6].re,
+        c_buffer[6].im,
+        c_buffer[7].re,
+        c_buffer[7].im,
+        c_buffer[8].re,
+        c_buffer[8].im,
+        c_buffer[9].re,
+        c_buffer[9].im,
+        c_buffer[10].re,
+        c_buffer[10].im,
+        c_buffer[11].re,
+        c_buffer[11].im,
+        c_buffer[12].re,
+        c_buffer[12].im,
+        c_buffer[13].re,
+        c_buffer[13].im,
+        c_buffer[14].re,
+        c_buffer[14].im,
+        c_buffer[15].re,
+        c_buffer[15].im,
         // 0f64,0f64,
         // 0f64,0f64,0f64, 0f64
     ];
@@ -240,14 +265,13 @@ impl AnalyticUnit for PatternAnalyticUnit {
     }
 
     async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult {
-
         // TODO: move to config
         let mut cfg = Config::new();
         cfg.set_feature_size(FEATURES_SIZE);
         cfg.set_max_depth(3);
         cfg.set_iterations(50);
         cfg.set_shrinkage(0.1);
-        cfg.set_loss("LogLikelyhood"); 
+        cfg.set_loss("LogLikelyhood");
         cfg.set_debug(false);
         cfg.set_data_sample_ratio(1.0);
         cfg.set_feature_sample_ratio(1.0);
@@ -326,12 +350,11 @@ impl AnalyticUnit for PatternAnalyticUnit {
                 records_raw[i].iter().map(|e| *e as f32).collect(),
                 1.0,
                 if targets_raw[i] { 1.0 } else { -1.0 },
-                Some(0.5)
+                Some(0.5),
             );
             // println!("{:?}", targets_raw[i]);
             train_dv.push(data);
         }
-
 
         let mut model = GBDT::new(&cfg);
         model.fit(&mut train_dv);
@@ -458,12 +481,7 @@ impl AnalyticUnit for PatternAnalyticUnit {
     }
 
     // TODO: use hsr for learning and detections
-    async fn get_hsr(
-        &self,
-        ms: MetricService,
-        from: u64,
-        to: u64,
-    ) -> anyhow::Result<HSR> {
+    async fn get_hsr(&self, ms: MetricService, from: u64, to: u64) -> anyhow::Result<HSR> {
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
 
         if mr.data.keys().len() == 0 {

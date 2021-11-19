@@ -1,22 +1,20 @@
 use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
-
 #[derive(Clone)]
 pub struct WebhookAlertingConfig {
-  endpoint: String
+    endpoint: String,
 }
 
 #[derive(Clone)]
 pub enum AlertingType {
-  Webhook(WebhookAlertingConfig)
+    Webhook(WebhookAlertingConfig),
 }
 
 #[derive(Clone)]
 pub struct AlertingConfig {
-  alerting_type: AlertingType,
-  interval: u64 // interval in seconds
+    alerting_type: AlertingType,
+    interval: u64, // interval in seconds
 }
-
 
 #[derive(Clone)]
 pub struct Config {
@@ -24,16 +22,6 @@ pub struct Config {
     pub datasource_config: DatasourceConfig,
     pub alerting: Option<AlertingConfig>,
 }
-
-// impl Clone for Config {
-//     fn clone(&self) -> Self {
-//         return Config {
-//             port: self.port,
-//             datasource_config: self.datasource_config.clone(),
-//             alerting: self.alerting.clone()
-//         };
-//     }
-// }
 
 fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceConfig> {
     if config.get::<String>("prometheus.url").is_ok() {
@@ -58,7 +46,6 @@ fn resolve_datasource(config: &mut config::Config) -> anyhow::Result<DatasourceC
 // TODO: use actual config and env variables
 impl Config {
     pub fn new() -> anyhow::Result<Config> {
-
         // TODO: parse alerting config
         // TODO: throw error on bad config
 

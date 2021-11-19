@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig, PatternConfig};
-use super::types::{self, DetectionRunnerConfig, HSR, LearningTrain, LearningWaiter};
+use super::types::{self, DetectionRunnerConfig, LearningTrain, LearningWaiter, HSR};
 use super::{
     analytic_client::AnalyticClient,
     analytic_unit::pattern_analytic_unit::{self, LearningResults, PatternAnalyticUnit},
@@ -22,7 +22,6 @@ use anyhow;
 
 use tokio::sync::{mpsc, oneshot, RwLock};
 
-
 // TODO: now it's basically single analytic unit, service will operate on many AU
 pub struct AnalyticService {
     metric_service: MetricService,
@@ -41,8 +40,7 @@ pub struct AnalyticService {
     // awaiters
     learning_waiters: Vec<LearningWaiter>,
 
-
-    detection_runner: Option<DetectionRunnerConfig>
+    detection_runner: Option<DetectionRunnerConfig>,
 }
 
 impl AnalyticService {
@@ -65,14 +63,13 @@ impl AnalyticService {
             tx,
             rx,
 
-
             // handlers
             learning_handler: None,
 
             // awaiters
             learning_waiters: Vec::new(),
 
-            detection_runner: None
+            detection_runner: None,
         }
     }
 
