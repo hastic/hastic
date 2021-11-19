@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig, PatternConfig};
-use super::types::{self, DetectionRunnerConfig, LearningTrain, LearningWaiter, HSR};
+use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig};
+use super::detection_runner::DetectionRunner;
+use super::types::{self, DetectionRunnerConfig, LearningWaiter, HSR};
 use super::{
     analytic_client::AnalyticClient,
-    analytic_unit::pattern_analytic_unit::{self, LearningResults, PatternAnalyticUnit},
-    types::{AnalyticServiceMessage, DetectionTask, LearningStatus, RequestType, ResponseType},
+    types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
 };
 
 use crate::config::AlertingConfig;
@@ -40,7 +40,7 @@ pub struct AnalyticService {
     // awaiters
     learning_waiters: Vec<LearningWaiter>,
 
-    detection_runner: Option<DetectionRunnerConfig>,
+    detection_runner: Option<DetectionRunner>,
 }
 
 impl AnalyticService {
@@ -97,6 +97,7 @@ impl AnalyticService {
     }
 
     fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
+        // TODO: rerun detection runner on analytic unit change
         // if self.runner_handler.is_some() {
         //     self.runner_handler.as_mut().unwrap().abort();
         // }

@@ -1,5 +1,5 @@
 use crate::services::{
-    analytic_service::types::{self, HSR},
+    analytic_service::types::{HSR},
     metric_service::MetricService,
     segments_service::SegmentsService,
 };
@@ -14,6 +14,7 @@ const DETECTION_STEP: u64 = 10;
 
 // offset from intex in timrange in seconds
 fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> anyhow::Result<f64> {
+    // TODO: implement
     if index == 0 {
         return Err(anyhow::format_err!("index should be > 0"));
     }

@@ -1,5 +1,5 @@
 use crate::services::{
-    analytic_service::types::{self, HSR},
+    analytic_service::types::{HSR},
     metric_service::MetricService,
     segments_service::SegmentsService,
 };

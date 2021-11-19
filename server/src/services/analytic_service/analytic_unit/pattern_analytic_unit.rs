@@ -4,11 +4,11 @@ use futures::future;
 use parking_lot::Mutex;
 
 use gbdt::config::Config;
-use gbdt::decision_tree::{Data, DataVec, PredVec};
+use gbdt::decision_tree::{Data};
 use gbdt::gradient_boost::GBDT;
 
 use crate::services::{
-    analytic_service::types::{self, LearningTrain, HSR},
+    analytic_service::types::{LearningTrain, HSR},
     metric_service::MetricService,
     segments_service::{Segment, SegmentType, SegmentsService},
 };

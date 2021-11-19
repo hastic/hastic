@@ -3,7 +3,7 @@ use std::fmt;
 use crate::services::segments_service::Segment;
 
 use super::analytic_unit::{
-    pattern_analytic_unit::{self, LearningResults},
+    pattern_analytic_unit::{self},
     types::AnalyticUnitConfig,
 };
 

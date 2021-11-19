@@ -1,4 +1,3 @@
-use serde_json::Value;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 
@@ -9,7 +8,7 @@ use super::analytic_unit::types::PatchConfig;
 use super::types::DetectionTask;
 use super::types::HSRTask;
 use super::types::LearningStatus;
-use super::types::LearningTrain;
+
 use super::types::HSR;
 use super::types::{AnalyticServiceMessage, RequestType};
 
@@ -74,7 +73,7 @@ impl AnalyticClient {
         // TODO: handle second error
         match rx.await? {
             Ok(r) => Ok(r),
-            Err(e) => Ok(Vec::new()),
+            Err(_) => Ok(Vec::new()),
         }
     }
 
@@ -89,7 +88,7 @@ impl AnalyticClient {
         // TODO: handle second error
         match rx.await? {
             Ok(r) => Ok(r),
-            Err(e) => Ok(HSR::TimeSerie(Vec::new())),
+            Err(_) => Ok(HSR::TimeSerie(Vec::new())),
         }
     }
 }
