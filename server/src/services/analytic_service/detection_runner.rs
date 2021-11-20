@@ -2,7 +2,6 @@ use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
 
 use std::sync::Arc;
 
-
 use chrono::Utc;
 
 use tokio::sync::{mpsc, RwLock};

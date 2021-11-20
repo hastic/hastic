@@ -27,6 +27,8 @@ pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
 
+    alerting: Option<AlertingConfig>,
+
     analytic_unit: Option<Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>>,
     analytic_unit_config: AnalyticUnitConfig,
     analytic_unit_learning_status: LearningStatus,
@@ -54,6 +56,8 @@ impl AnalyticService {
         AnalyticService {
             metric_service,
             segments_service,
+
+            alerting,
 
             // TODO: get it from persistance
             analytic_unit: None,
@@ -96,7 +100,8 @@ impl AnalyticService {
         });
     }
 
-    fn run_detection_runner(&mut self, task: DetectionRunnerConfig) {
+    fn run_detection_runner(&mut self) {
+        // TODO: create DetectionRunnerConfig from alerting
         // TODO: rerun detection runner on analytic unit change
         // if self.runner_handler.is_some() {
         //     self.runner_handler.as_mut().unwrap().abort();
@@ -154,6 +159,8 @@ impl AnalyticService {
             RequestType::GetStatus(tx) => {
                 tx.send(self.analytic_unit_learning_status.clone()).unwrap();
             }
+
+            // TODO: do it in abstract way for all analytic units
             // RequestType::GetLearningTrain(tx) => {
             //     if self.analytic_unit_learning_results.is_none() {
             //         tx.send(LearningTrain::default()).unwrap();
@@ -264,6 +271,11 @@ impl AnalyticService {
     pub async fn serve(&mut self) {
         // TODO: remove this hack
         self.consume_request(RequestType::RunLearning);
+        // TODO: start detection runner if 
+        if self.alerting.is_some() {
+            self.run_detection_runner();
+        }
+        
 
         while let Some(message) = self.rx.recv().await {
             match message {

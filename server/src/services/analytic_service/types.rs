@@ -84,7 +84,7 @@ pub enum LearningWaiter {
 }
 
 // TODO: review if it's needed
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DetectionRunnerConfig {
     // pub sender: mpsc::Sender<Result<Vec<Segment>>>,
     pub endpoint: String,

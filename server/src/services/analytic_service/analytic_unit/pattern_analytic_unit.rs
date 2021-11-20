@@ -42,20 +42,6 @@ pub struct LearningResults {
     avg_pattern_length: usize,
 }
 
-// impl Clone for LearningResults {
-//     fn clone(&self) -> Self {
-//         // TODO: it's a hack
-//         // https://github.com/rust-ml/linfa/issues/174
-//         let model_str = serde_json::to_string(&self.model).unwrap();
-//         let model = serde_json::from_str(&model_str).unwrap();
-//         return LearningResults {
-//             model,
-//             patterns: self.patterns.clone(),
-//             anti_patterns: self.anti_patterns.clone()
-//         };
-//     }
-// }
-
 impl fmt::Debug for LearningResults {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Point")
@@ -180,14 +166,12 @@ fn corr_aligned(xs: &VecDeque<f64>, ys: &Vec<f64>) -> f32 {
     let numerator: f64 = n * s_xsys - s_xs * s_ys;
     let denominator: f64 = ((n * s_xs_2 - s_xs * s_xs) * (n * s_ys_2 - s_ys * s_ys)).sqrt();
 
-    // IT"s a hack
+    // TODO: IT"s a hack, check and make it's better
     if denominator < 0.01 {
         return 0.;
     }
 
     let result: f64 = numerator / denominator;
-
-    // assert!(result.abs() <= 1.01);
 
     if result.abs() > 1.1 {
         println!("{:?}", xs);
