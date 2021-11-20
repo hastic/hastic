@@ -120,6 +120,7 @@ impl AnalyticService {
     fn consume_request(&mut self, req: types::RequestType) -> () {
         match req {
             RequestType::RunLearning => {
+                // TODO: if detection_runner then add it to learning_waiters
                 if self.learning_handler.is_some() {
                     self.learning_handler.as_ref().unwrap().abort();
                     self.learning_handler = None;
@@ -208,14 +209,6 @@ impl AnalyticService {
                     let task = self.learning_waiters.pop().unwrap();
                     self.run_learning_waiter(task);
                 }
-
-                // TODO: fix this
-                // if self.endpoint.is_some() {
-                //     self.run_detection_runner(DetectionRunnerConfig {
-                //         endpoint: self.endpoint.as_ref().unwrap().clone(),
-                //         from: Utc::now().timestamp() as u64,
-                //     });
-                // }
             }
             ResponseType::LearningFinishedEmpty => {
                 // TODO: drop all learning_waiters with empty results
@@ -275,7 +268,6 @@ impl AnalyticService {
         if self.alerting.is_some() {
             self.run_detection_runner();
         }
-        
 
         while let Some(message) = self.rx.recv().await {
             match message {
