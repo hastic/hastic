@@ -143,46 +143,18 @@ fn get_features(xs: &Vec<f64>) -> Features {
         c_buffer[i] /= norm_factor;
     }
 
-    return vec![
-        min,
-        max,
-        mean,
-        sd,
-        c_buffer[0].re,
-        c_buffer[0].im,
-        c_buffer[1].re,
-        c_buffer[1].im,
-        c_buffer[2].re,
-        c_buffer[2].im,
-        c_buffer[3].re,
-        c_buffer[3].im,
-        c_buffer[4].re,
-        c_buffer[4].im,
-        c_buffer[5].re,
-        c_buffer[5].im,
-        c_buffer[6].re,
-        c_buffer[6].im,
-        c_buffer[7].re,
-        c_buffer[7].im,
-        c_buffer[8].re,
-        c_buffer[8].im,
-        c_buffer[9].re,
-        c_buffer[9].im,
-        c_buffer[10].re,
-        c_buffer[10].im,
-        c_buffer[11].re,
-        c_buffer[11].im,
-        c_buffer[12].re,
-        c_buffer[12].im,
-        c_buffer[13].re,
-        c_buffer[13].im,
-        c_buffer[14].re,
-        c_buffer[14].im,
-        c_buffer[15].re,
-        c_buffer[15].im,
-        // 0f64,0f64,
-        // 0f64,0f64,0f64, 0f64
-    ];
+    let mut fs_result = Vec::<f64>::new();
+    fs_result.push(min);
+    fs_result.push(max);
+    fs_result.push(mean);
+    fs_result.push(sd);
+
+    for i in 0..16usize {
+        fs_result.push(c_buffer[i].re);
+        fs_result.push(c_buffer[i].im);
+    }
+
+    return fs_result;
 }
 
 fn corr_aligned(xs: &VecDeque<f64>, ys: &Vec<f64>) -> f32 {
