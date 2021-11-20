@@ -79,6 +79,9 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
     }
     async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
+        // TODO: build SARIMA model based on seasonality
+        // TODO: don't count NaNs in model
+        // TODO: update model to work online
         return LearningResult::Finished;
     }
     async fn detect(

@@ -28,6 +28,3 @@ ndarray = "0.15.3"
 bincode = "1.3.3"
 async-trait = "0.1.51"
 rustfft = "6.0.1"
-
-# TODO: remove this from prod
-# plotlib = "0.5.1"
