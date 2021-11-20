@@ -28,7 +28,7 @@ impl DetectionRunner {
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, from: u64) {
         
         // TODO: get last detection timestamp from persistance
         // TODO: set lst detection from "now"
@@ -39,14 +39,13 @@ impl DetectionRunner {
             // TODO: clone channel
             async move {
                 // AnalyticService::run_learning(tx, cfg, ms, ss).await;
-                // TODO: run detection
-                // TODO: await detection step
+                // TODO: run detection "from"
 
                 loop {
+                    // TODO: run detection periodically
                     // TODO: use interval
                     sleep(Duration::from_secs(100)).await;
                 }
-
             }
         }));
 
