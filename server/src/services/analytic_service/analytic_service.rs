@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig};
 use super::detection_runner::DetectionRunner;
-use super::types::{self, DetectionRunnerConfig, LearningWaiter, HSR};
+use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, HSR, LearningWaiter};
 use super::{
     analytic_client::AnalyticClient,
     types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
@@ -29,7 +29,7 @@ pub struct AnalyticService {
 
     alerting: Option<AlertingConfig>,
 
-    analytic_unit: Option<Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>>,
+    analytic_unit: Option<AnalyticUnitRF>,
     analytic_unit_config: AnalyticUnitConfig,
     analytic_unit_learning_status: LearningStatus,
 
@@ -318,7 +318,7 @@ impl AnalyticService {
 
     async fn get_detections(
         tx: oneshot::Sender<anyhow::Result<Vec<Segment>>>,
-        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
+        analytic_unit: AnalyticUnitRF,
         ms: MetricService,
         from: u64,
         to: u64,
@@ -353,7 +353,7 @@ impl AnalyticService {
 
     async fn get_hsr(
         tx: oneshot::Sender<anyhow::Result<HSR>>,
-        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
+        analytic_unit: AnalyticUnitRF,
         ms: MetricService,
         from: u64,
         to: u64,

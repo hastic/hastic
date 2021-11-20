@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 use crate::services::segments_service::Segment;
 
@@ -11,9 +11,11 @@ use super::analytic_unit::types::PatchConfig;
 
 use anyhow::Result;
 use serde::Serialize;
-use tokio::sync::oneshot;
+use tokio::sync::{RwLock, oneshot};
 
 use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
+
+pub type AnalyticUnitRF = Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum LearningStatus {
