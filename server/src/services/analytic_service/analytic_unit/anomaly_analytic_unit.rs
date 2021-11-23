@@ -16,17 +16,29 @@ struct SARIMA {
 }
 
 impl SARIMA {
-    pub fn learn() {
-        
+
+    pub fn new(seasonality: u64) -> SARIMA {
+        return SARIMA {
+            ts: Vec::new(),
+            seasonality
+        }
+    }
+    
+    pub fn learn(ts: Vec<(u64, f64)>) {
+        // TODO: compute avg based on seasonality
     }
     pub fn predict(timestamp: u64, value: f64) -> (f64, f64, f64) {
+        // TODO: implement
         return (0.0, 0.0, 0.0);
     }
-    // TODO: learn
-    // TODO: update
-    // TODO: predict with HSR
+
+    pub fn push_point() {
+        // TODO: inmplement
+    }
+    
     // TODO: don't count NaNs in model
 }
+
 
 
 // TODO: move to config
@@ -46,14 +58,16 @@ fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> any
 
 pub struct AnomalyAnalyticUnit {
     config: AnomalyConfig,
+    sarima: Option<SARIMA>
 }
 
 impl AnomalyAnalyticUnit {
     pub fn new(config: AnomalyConfig) -> AnomalyAnalyticUnit {
-        AnomalyAnalyticUnit { config }
+        AnomalyAnalyticUnit { config, sarima: None }
     }
 
     fn get_hsr_from_metric_result(&self, mr: &MetricResult) -> anyhow::Result<HSR> {
+        // TODO: get it from model
         if mr.data.keys().len() == 0 {
             return Ok(HSR::ConfidenceTimeSerie(Vec::new()));
         }
@@ -99,6 +113,8 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
     }
     async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
+
+        let sarima = SARIMA::new(self.config.seasonality);
         // TODO: ensue that learning runs on seasonaliy change
         // TODO: load data to learning
         
@@ -111,6 +127,9 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         from: u64,
         to: u64,
     ) -> anyhow::Result<Vec<(u64, u64)>> {
+        if self.sarima.is_none() {
+            return Err(anyhow::format_err!("Learning model is not ready"));
+        }
         let mr = ms
             .query(from - self.config.seasonality * 5, to, DETECTION_STEP)
             .await
