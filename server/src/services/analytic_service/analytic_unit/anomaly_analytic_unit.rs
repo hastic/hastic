@@ -9,6 +9,7 @@ use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResu
 use async_trait::async_trait;
 use subbeat::metric::MetricResult;
 
+use chrono::prelude::*;
 
 struct SARIMA {
     pub ts: Vec<f64>,
@@ -24,10 +25,10 @@ impl SARIMA {
         }
     }
     
-    pub fn learn(ts: Vec<(u64, f64)>) {
+    pub fn learn(&mut self, ts: &Vec<(u64, f64)>) {
         // TODO: compute avg based on seasonality
     }
-    pub fn predict(timestamp: u64, value: f64) -> (f64, f64, f64) {
+    pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
         // TODO: implement
         return (0.0, 0.0, 0.0);
     }
@@ -112,10 +113,24 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
             panic!("Bad config!");
         }
     }
-    async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
+    async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> LearningResult {
 
-        let sarima = SARIMA::new(self.config.seasonality);
-        // TODO: ensue that learning runs on seasonaliy change
+        let mut sarima = SARIMA::new(self.config.seasonality);
+
+        let utc: DateTime<Utc> = Utc::now();
+        let to = utc.timestamp() as u64;
+        let from = to - self.config.seasonality * 3;
+
+        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+        if mr.data.keys().len() == 0 {
+            return LearningResult::FinishedEmpty;
+        }
+
+        let k = mr.data.keys().nth(0).unwrap();
+        let ts = &mr.data[k];
+        sarima.learn(ts);
+        
+        // TODO: ensure that learning reruns on seasonaliy change
         // TODO: load data to learning
         
         // TODO: update model to work online

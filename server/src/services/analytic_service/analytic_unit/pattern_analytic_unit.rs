@@ -51,6 +51,7 @@ impl fmt::Debug for LearningResults {
     }
 }
 
+// TODO: maye remove this because metric service works with interpolate_nans_and_gaps_with_zeros
 fn nan_to_zero(n: f64) -> f64 {
     if n.is_nan() {
         return 0.;
@@ -429,8 +430,6 @@ impl AnalyticUnit for PatternAnalyticUnit {
 
         if to.is_some() {
             results.push((from.unwrap(), to.unwrap()));
-            from = None;
-            to = None;
         }
 
         Ok(results)
