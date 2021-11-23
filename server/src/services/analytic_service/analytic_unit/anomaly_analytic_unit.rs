@@ -9,33 +9,6 @@ use subbeat::metric::MetricResult;
 
 use chrono::prelude::*;
 
-struct SARIMA {
-    pub ts: Vec<f64>,
-    pub seasonality: u64,
-}
-
-impl SARIMA {
-    pub fn new(seasonality: u64) -> SARIMA {
-        return SARIMA {
-            ts: Vec::new(),
-            seasonality,
-        };
-    }
-
-    pub fn learn(&mut self, ts: &Vec<(u64, f64)>) {
-        // TODO: compute avg based on seasonality
-    }
-    pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
-        // TODO: implement
-        return (0.0, 0.0, 0.0);
-    }
-
-    pub fn push_point() {
-        // TODO: inmplement
-    }
-
-    // TODO: don't count NaNs in model
-}
 
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
@@ -51,6 +24,56 @@ fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> any
     // let index_candidate =
     // let intex_candidate =
 }
+
+
+
+struct SARIMA {
+    pub ts: Vec<(u64, f64)>,
+    pub seasonality: u64,
+}
+
+impl SARIMA {
+    pub fn new(seasonality: u64) -> SARIMA {
+        return SARIMA {
+            ts: Vec::new(),
+            seasonality,
+        };
+    }
+
+    pub fn learn(&mut self, ts: &Vec<(u64, f64)>) -> anyhow::Result<()> {
+
+        if ts.len() < 2 {
+            return Err(anyhow::format_err!("to short timeserie to learn from"));
+        }
+        // TODO: ensure capacity with seasonality size
+        let res_ts = Vec::<(u64, f64)>::new();
+        let from = ts[0].0;
+        let to = ts.last().unwrap().0;
+        
+        if to - from != 3 * self.seasonality {
+            return Err(anyhow::format_err!("timeserie to learn from should be 3 * sasonality"));
+        }
+
+        // TODO: compute avg based on seasonality
+
+        self.ts = res_ts;
+
+        return Ok(());
+        
+    }
+    pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
+        // TODO: implement
+        return (0.0, 0.0, 0.0);
+    }
+
+    pub fn push_point() {
+        // TODO: inmplement
+    }
+
+    // TODO: don't count NaNs in model
+}
+
+
 
 pub struct AnomalyAnalyticUnit {
     config: AnomalyConfig,
