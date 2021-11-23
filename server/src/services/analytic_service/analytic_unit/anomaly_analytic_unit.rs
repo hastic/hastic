@@ -9,6 +9,26 @@ use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResu
 use async_trait::async_trait;
 use subbeat::metric::MetricResult;
 
+
+struct SARIMA {
+    pub ts: Vec<f64>,
+    pub seasonality: u64
+}
+
+impl SARIMA {
+    pub fn learn() {
+        
+    }
+    pub fn predict(timestamp: u64, value: f64) -> (f64, f64, f64) {
+        return (0.0, 0.0, 0.0);
+    }
+    // TODO: learn
+    // TODO: update
+    // TODO: predict with HSR
+    // TODO: don't count NaNs in model
+}
+
+
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
 
@@ -79,8 +99,9 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
     }
     async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> LearningResult {
-        // TODO: build SARIMA model based on seasonality
-        // TODO: don't count NaNs in model
+        // TODO: ensue that learning runs on seasonaliy change
+        // TODO: load data to learning
+        
         // TODO: update model to work online
         return LearningResult::Finished;
     }

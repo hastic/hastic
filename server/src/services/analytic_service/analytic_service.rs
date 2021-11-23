@@ -20,9 +20,10 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
-use tokio::sync::{mpsc, oneshot, RwLock};
+use tokio::sync::{mpsc, oneshot};
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
+// TODO: trigger anomaly unit model update in runner
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,

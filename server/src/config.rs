@@ -73,11 +73,8 @@ fn resolve_alerting(config: &config::Config) -> anyhow::Result<Option<AlertingCo
     
 }
 
-// TODO: use actual config and env variables
 impl Config {
     pub fn new() -> anyhow::Result<Config> {
-        // TODO: parse alerting config
-        // TODO: throw error on bad config
 
         let mut config = config::Config::default();
 
