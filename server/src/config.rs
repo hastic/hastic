@@ -49,33 +49,34 @@ fn resolve_alerting(config: &config::Config) -> anyhow::Result<Option<AlertingCo
     }
 
     if config.get::<String>("alerting.endpoint").is_err() {
-        return  Err(anyhow::format_err!("missing endpoint param in alerting"));
+        return Err(anyhow::format_err!("missing endpoint param in alerting"));
     }
     if config.get::<String>("alerting.interval").is_err() {
-        return  Err(anyhow::format_err!("missing interval param in alerting"));
+        return Err(anyhow::format_err!("missing interval param in alerting"));
     }
     if config.get::<u64>("alerting.interval").is_err() {
-        return  Err(anyhow::format_err!("alerting interval should be a positive integer number"));
+        return Err(anyhow::format_err!(
+            "alerting interval should be a positive integer number"
+        ));
     }
     let analytic_type = config.get::<String>("alerting.type").unwrap();
     if analytic_type != "webhook" {
-        return  Err(anyhow::format_err!("unknown alerting typy {}", analytic_type));
+        return Err(anyhow::format_err!(
+            "unknown alerting typy {}",
+            analytic_type
+        ));
     }
 
     let endpoint = config.get::<String>("alerting.endpoint").unwrap();
     let interval = config.get::<u64>("alerting.interval").unwrap();
     return Ok(Some(AlertingConfig {
-        alerting_type: AlertingType::Webhook(WebhookAlertingConfig{ 
-            endpoint
-        }),
-        interval
-    }))
-    
+        alerting_type: AlertingType::Webhook(WebhookAlertingConfig { endpoint }),
+        interval,
+    }));
 }
 
 impl Config {
     pub fn new() -> anyhow::Result<Config> {
-
         let mut config = config::Config::default();
 
         if std::path::Path::new("config.toml").exists() {
@@ -90,11 +91,10 @@ impl Config {
             config.set("port", "8000").unwrap();
         }
 
-
         Ok(Config {
             port: config.get::<u16>("port").unwrap(),
             datasource_config: resolve_datasource(&config)?,
-            alerting: resolve_alerting(&config)?
+            alerting: resolve_alerting(&config)?,
         })
     }
 }

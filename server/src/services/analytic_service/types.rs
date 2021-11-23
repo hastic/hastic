@@ -11,7 +11,7 @@ use super::analytic_unit::types::PatchConfig;
 
 use anyhow::Result;
 use serde::Serialize;
-use tokio::sync::{RwLock, oneshot};
+use tokio::sync::{oneshot, RwLock};
 
 use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
 

@@ -4,7 +4,7 @@ use futures::future;
 use parking_lot::Mutex;
 
 use gbdt::config::Config;
-use gbdt::decision_tree::{Data};
+use gbdt::decision_tree::Data;
 use gbdt::gradient_boost::GBDT;
 
 use crate::services::{

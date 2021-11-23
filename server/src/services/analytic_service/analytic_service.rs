@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig};
 use super::detection_runner::DetectionRunner;
-use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, HSR, LearningWaiter};
+use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, LearningWaiter, HSR};
 use super::{
     analytic_client::AnalyticClient,
     types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
@@ -265,7 +265,7 @@ impl AnalyticService {
     pub async fn serve(&mut self) {
         // TODO: remove this hack
         self.consume_request(RequestType::RunLearning);
-        // TODO: start detection runner if 
+        // TODO: start detection runner if
         if self.alerting.is_some() {
             self.run_detection_runner();
         }

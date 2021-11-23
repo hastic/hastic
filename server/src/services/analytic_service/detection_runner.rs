@@ -9,7 +9,6 @@ use tokio::sync::{mpsc, RwLock};
 use super::types::{AnalyticUnitRF, DetectionRunnerConfig};
 use tokio::time::{sleep, Duration};
 
-
 pub struct DetectionRunner {
     config: DetectionRunnerConfig,
     analytic_unit: AnalyticUnitRF,
@@ -17,19 +16,15 @@ pub struct DetectionRunner {
 }
 
 impl DetectionRunner {
-    pub fn new(
-        config: DetectionRunnerConfig,
-        analytic_unit: AnalyticUnitRF,
-    ) -> DetectionRunner {
+    pub fn new(config: DetectionRunnerConfig, analytic_unit: AnalyticUnitRF) -> DetectionRunner {
         DetectionRunner {
             config,
             analytic_unit,
-            running_handler: None
+            running_handler: None,
         }
     }
 
     pub async fn run(&mut self, from: u64) {
-        
         // TODO: get last detection timestamp from persistance
         // TODO: set lst detection from "now"
         if self.running_handler.is_some() {
@@ -48,10 +43,10 @@ impl DetectionRunner {
                 }
             }
         }));
-
     }
 
-    pub async fn set_analytic_unit(analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>) {
-        
+    pub async fn set_analytic_unit(
+        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
+    ) {
     }
 }

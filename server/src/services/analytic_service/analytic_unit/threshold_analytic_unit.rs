@@ -1,7 +1,5 @@
 use crate::services::{
-    analytic_service::types::{HSR},
-    metric_service::MetricService,
-    segments_service::SegmentsService,
+    analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService,
 };
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, LearningResult, ThresholdConfig};

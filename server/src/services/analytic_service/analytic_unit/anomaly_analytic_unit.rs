@@ -1,7 +1,5 @@
 use crate::services::{
-    analytic_service::types::{HSR},
-    metric_service::MetricService,
-    segments_service::SegmentsService,
+    analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService,
 };
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResult};
@@ -13,18 +11,17 @@ use chrono::prelude::*;
 
 struct SARIMA {
     pub ts: Vec<f64>,
-    pub seasonality: u64
+    pub seasonality: u64,
 }
 
 impl SARIMA {
-
     pub fn new(seasonality: u64) -> SARIMA {
         return SARIMA {
             ts: Vec::new(),
-            seasonality
-        }
+            seasonality,
+        };
     }
-    
+
     pub fn learn(&mut self, ts: &Vec<(u64, f64)>) {
         // TODO: compute avg based on seasonality
     }
@@ -36,11 +33,9 @@ impl SARIMA {
     pub fn push_point() {
         // TODO: inmplement
     }
-    
+
     // TODO: don't count NaNs in model
 }
-
-
 
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
@@ -59,12 +54,15 @@ fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> any
 
 pub struct AnomalyAnalyticUnit {
     config: AnomalyConfig,
-    sarima: Option<SARIMA>
+    sarima: Option<SARIMA>,
 }
 
 impl AnomalyAnalyticUnit {
     pub fn new(config: AnomalyConfig) -> AnomalyAnalyticUnit {
-        AnomalyAnalyticUnit { config, sarima: None }
+        AnomalyAnalyticUnit {
+            config,
+            sarima: None,
+        }
     }
 
     fn get_hsr_from_metric_result(&self, mr: &MetricResult) -> anyhow::Result<HSR> {
@@ -114,7 +112,6 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
     }
     async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> LearningResult {
-
         let mut sarima = SARIMA::new(self.config.seasonality);
 
         let utc: DateTime<Utc> = Utc::now();
@@ -129,10 +126,10 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
         sarima.learn(ts);
-        
+
         // TODO: ensure that learning reruns on seasonaliy change
         // TODO: load data to learning
-        
+
         // TODO: update model to work online
         return LearningResult::Finished;
     }
