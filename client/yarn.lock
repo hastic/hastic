@@ -223,21 +223,21 @@
     "@babel/helper-validator-identifier" "^7.14.9"
     to-fast-properties "^2.0.0"
 
-"@chartwerk/core@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.3.2.tgz#40187a4d1dda5045effc04c01559ff16c236bca7"
-  integrity sha512-E4Bb2rDBDTNXRM7koSXDwM6IYYNdLnqxJel1y2BmH4p9R0Z+3L0C4B+jYurkiwcnIWdGlHXVFL0E0khPeLypfA==
+"@chartwerk/core@^0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@chartwerk/core/-/core-0.3.3.tgz#f48db1307cb068fe1fefc2089593903643c223bd"
+  integrity sha512-aauWwYLPeMuLF727twW74GW6Uw2yqPXD8vYuFle/4nN4xjKbjWJvU7/9wlF4xh/azrpOrYWdD4l4SD25u8DzUg==
 
 "@chartwerk/core@github:chartwerk/core#532eddbc8ad938091b1d9ec1693cec5eddfdbfc2":
   version "0.1.0"
   resolved "https://codeload.github.com/chartwerk/core/tar.gz/532eddbc8ad938091b1d9ec1693cec5eddfdbfc2"
 
-"@chartwerk/line-pod@^0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.4.tgz#724152e886c529df97019ba3dfed335ef42b2f57"
-  integrity sha512-L7RmTzy+TVMueV91E3upVCK/V7t9ZYLwC0tIYhFJxSJjrLOhRMAOLxZdkp7CqxXFj+u+FuFDhY0Dch2nYDvLpg==
+"@chartwerk/line-pod@^0.4.6":
+  version "0.4.6"
+  resolved "https://registry.yarnpkg.com/@chartwerk/line-pod/-/line-pod-0.4.6.tgz#b4cd4b48acf2eaacf8a9e2db81c79533908ca567"
+  integrity sha512-hZNsrjM0euDhh2SRr1EZTXrnDXdGQ+rUmBpg3HhFJR70MWrrvJMYjtaRCsP6Xx1z8h3ayGq5ye7yLY9AQD4Y9g==
   dependencies:
-    "@chartwerk/core" "^0.3.2"
+    "@chartwerk/core" "^0.3.3"
 
 "@chartwerk/scatter-pod@^0.2.4":
   version "0.2.4"

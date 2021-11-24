@@ -13,18 +13,18 @@ use chrono::prelude::*;
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
 
-// offset from intex in timrange in seconds
-fn get_value_with_offset(ts: &Vec<(u64, f64)>, index: usize, offset: u64) -> anyhow::Result<f64> {
-    // TODO: implement
-    if index == 0 {
-        return Err(anyhow::format_err!("index should be > 0"));
+// timerange offset in seconds backwards from end of ts in assumption that ts has no gaps
+fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)>{
+    // TODO: remove dependency to DETECTION_STEP
+    
+    let indexes_offset = (offset / DETECTION_STEP) as usize;
+    let n = ts.len() - 1;
+    if n < indexes_offset {
+        return None;
     }
-    return Ok(0.0);
-    // let step =
-    // let index_candidate =
-    // let intex_candidate =
+    let i = n - indexes_offset;
+    return Some(ts[i]);
 }
-
 
 
 struct SARIMA {
@@ -42,19 +42,28 @@ impl SARIMA {
 
     pub fn learn(&mut self, ts: &Vec<(u64, f64)>) -> anyhow::Result<()> {
 
+        // TODO: don't count NaNs in model
+
         if ts.len() < 2 {
             return Err(anyhow::format_err!("to short timeserie to learn from"));
         }
         // TODO: ensure capacity with seasonality size
-        let res_ts = Vec::<(u64, f64)>::new();
+        let mut res_ts = Vec::<(u64, f64)>::new();
         let from = ts[0].0;
         let to = ts.last().unwrap().0;
-        
+        let s_from = ts[ts.len() - (self.seasonality / DETECTION_STEP) as usize].0;
+
         if to - from != 3 * self.seasonality {
             return Err(anyhow::format_err!("timeserie to learn from should be 3 * sasonality"));
         }
 
-        // TODO: compute avg based on seasonality
+        for k in 0..self.seasonality {
+            let v1 = get_value_with_offset(ts, 3 * self.seasonality + k * DETECTION_STEP).unwrap();
+            let v2 = get_value_with_offset(ts, 2 * self.seasonality + k * DETECTION_STEP).unwrap();
+            let v3 = get_value_with_offset(ts, 1 * self.seasonality + k * DETECTION_STEP).unwrap();
+            let v = (v1.1 + v2.1 + v3.1) / 3.0;
+            res_ts.push((s_from + k * DETECTION_STEP, v));
+        }
 
         self.ts = res_ts;
 
@@ -62,7 +71,7 @@ impl SARIMA {
         
     }
     pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
-        // TODO: implement
+        // TODO: basic implement based on existing ts
         return (0.0, 0.0, 0.0);
     }
 
@@ -70,9 +79,7 @@ impl SARIMA {
         // TODO: inmplement
     }
 
-    // TODO: don't count NaNs in model
 }
-
 
 
 pub struct AnomalyAnalyticUnit {
@@ -148,7 +155,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
-        sarima.learn(ts);
+        sarima.learn(ts).unwrap();
 
         // TODO: ensure that learning reruns on seasonaliy change
         // TODO: load data to learning
