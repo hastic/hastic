@@ -82,6 +82,7 @@ impl AnalyticUnitConfig {
             },
 
             PatchConfig::Anomaly(tcfg) => match self.clone() {
+                // TODO: return true is it's seasonality change
                 AnalyticUnitConfig::Anomaly(_) => {
                     if tcfg.is_some() {
                         return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), false);

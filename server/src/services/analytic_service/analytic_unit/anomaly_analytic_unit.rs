@@ -61,16 +61,20 @@ impl SARIMA {
         }
 
         let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
-        let mut vts = Vec::new();
+        
         for k in 0..iter_steps {
+            let mut vts = Vec::new();
             for si in 0..SEASONALITY_ITERATIONS {
                 vts.push(ts[k + iter_steps * si as usize].1);
             }
             let mut vt: f64 = vts.iter().sum();
             vt /= SEASONALITY_ITERATIONS as f64;
-            res_ts.push((k as u64 * DETECTION_STEP, vt));
+            let t = ts[k + iter_steps * (SEASONALITY_ITERATIONS as usize - 1)].0;
+            
+            res_ts.push((t, vt));
         }
 
+        // TODO: `to` should be equal to res_ts.last().0
         self.ts = res_ts;
 
         return Ok(());
