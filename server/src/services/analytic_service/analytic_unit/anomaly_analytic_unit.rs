@@ -54,13 +54,11 @@ impl SARIMA {
         let mut res_ts = Vec::<(u64, f64)>::new();
         let from = ts[0].0;
         let to = ts.last().unwrap().0;
-        // let s_from = ts[ts.len() - (self.seasonality / DETECTION_STEP) as usize].0;
+        let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
 
         if to - from != SEASONALITY_ITERATIONS * self.seasonality {
             return Err(anyhow::format_err!("timeserie to learn from should be {} * sasonality", SEASONALITY_ITERATIONS));
         }
-
-        let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
         
         for k in 0..iter_steps {
             let mut vts = Vec::new();
@@ -69,12 +67,10 @@ impl SARIMA {
             }
             let mut vt: f64 = vts.iter().sum();
             vt /= SEASONALITY_ITERATIONS as f64;
-            let t = ts[k + iter_steps * (SEASONALITY_ITERATIONS as usize - 1)].0;
-            
+            let t = ts[ts.len() - iter_steps + k].0;
             res_ts.push((t, vt));
         }
 
-        // TODO: `to` should be equal to res_ts.last().0
         self.ts = res_ts;
 
         return Ok(());
