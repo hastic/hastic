@@ -12,6 +12,7 @@ use chrono::prelude::*;
 
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
+const SEASONALITY_ITERATIONS: u64 = 3; // TODO: better name
 
 // timerange offset in seconds backwards from end of ts in assumption that ts has no gaps
 fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)>{
@@ -43,6 +44,8 @@ impl SARIMA {
     pub fn learn(&mut self, ts: &Vec<(u64, f64)>) -> anyhow::Result<()> {
 
         // TODO: don't count NaNs in model
+        // TODO: add exponental smooting to model
+        // TODO: trend detection
 
         if ts.len() < 2 {
             return Err(anyhow::format_err!("to short timeserie to learn from"));
@@ -51,24 +54,26 @@ impl SARIMA {
         let mut res_ts = Vec::<(u64, f64)>::new();
         let from = ts[0].0;
         let to = ts.last().unwrap().0;
-        let s_from = ts[ts.len() - (self.seasonality / DETECTION_STEP) as usize].0;
+        // let s_from = ts[ts.len() - (self.seasonality / DETECTION_STEP) as usize].0;
 
-        if to - from != 3 * self.seasonality {
-            return Err(anyhow::format_err!("timeserie to learn from should be 3 * sasonality"));
+        if to - from != SEASONALITY_ITERATIONS * self.seasonality {
+            return Err(anyhow::format_err!("timeserie to learn from should be {} * sasonality", SEASONALITY_ITERATIONS));
         }
 
-        for k in 0..self.seasonality {
-            let v1 = get_value_with_offset(ts, 3 * self.seasonality + k * DETECTION_STEP).unwrap();
-            let v2 = get_value_with_offset(ts, 2 * self.seasonality + k * DETECTION_STEP).unwrap();
-            let v3 = get_value_with_offset(ts, 1 * self.seasonality + k * DETECTION_STEP).unwrap();
-            let v = (v1.1 + v2.1 + v3.1) / 3.0;
-            res_ts.push((s_from + k * DETECTION_STEP, v));
+        let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
+        let mut vts = Vec::new();
+        for k in 0..iter_steps {
+            for si in 0..SEASONALITY_ITERATIONS {
+                vts.push(ts[k + iter_steps * si as usize].1);
+            }
+            let mut vt: f64 = vts.iter().sum();
+            vt /= SEASONALITY_ITERATIONS as f64;
+            res_ts.push((k as u64 * DETECTION_STEP, vt));
         }
 
         self.ts = res_ts;
 
         return Ok(());
-        
     }
     pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
         // TODO: basic implement based on existing ts
@@ -146,7 +151,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         let utc: DateTime<Utc> = Utc::now();
         let to = utc.timestamp() as u64;
-        let from = to - self.config.seasonality * 3;
+        let from = to - self.config.seasonality * SEASONALITY_ITERATIONS;
 
         let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
         if mr.data.keys().len() == 0 {
@@ -156,6 +161,8 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
         sarima.learn(ts).unwrap();
+
+        self.sarima = Some(sarima);
 
         // TODO: ensure that learning reruns on seasonaliy change
         // TODO: load data to learning
