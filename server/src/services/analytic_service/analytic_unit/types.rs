@@ -82,10 +82,11 @@ impl AnalyticUnitConfig {
             },
 
             PatchConfig::Anomaly(tcfg) => match self.clone() {
-                // TODO: return true is it's seasonality change
-                AnalyticUnitConfig::Anomaly(_) => {
+                AnalyticUnitConfig::Anomaly(scfg) => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), false);
+                        let t = tcfg.as_ref().unwrap();
+                        let need_learning = t.seasonality != scfg.seasonality;
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning);
                     } else {
                         return (AnalyticUnitConfig::Anomaly(Default::default()), false);
                     }
