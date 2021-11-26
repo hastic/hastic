@@ -1,6 +1,4 @@
-use crate::services::{
-    analytic_service::types::HSR, metric_service::MetricService, segments_service::SegmentsService,
-};
+use crate::services::{analytic_service::types::{AnomalyHSRConfig, HSR}, metric_service::MetricService, segments_service::SegmentsService};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResult};
 
@@ -31,13 +29,15 @@ fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)
 struct SARIMA {
     pub ts: Vec<(u64, f64)>,
     pub seasonality: u64,
+    pub confidence: f64,
 }
 
 impl SARIMA {
-    pub fn new(seasonality: u64) -> SARIMA {
+    pub fn new(seasonality: u64, confidence: f64) -> SARIMA {
         return SARIMA {
             ts: Vec::new(),
             seasonality,
+            confidence
         };
     }
 
@@ -59,7 +59,7 @@ impl SARIMA {
         if to - from != SEASONALITY_ITERATIONS * self.seasonality {
             return Err(anyhow::format_err!("timeserie to learn from should be {} * sasonality", SEASONALITY_ITERATIONS));
         }
-        
+
         for k in 0..iter_steps {
             let mut vts = Vec::new();
             for si in 0..SEASONALITY_ITERATIONS {
@@ -75,9 +75,24 @@ impl SARIMA {
 
         return Ok(());
     }
-    pub fn predict(&self, timestamp: u64, value: f64) -> (f64, f64, f64) {
-        // TODO: basic implement based on existing ts
-        return (0.0, 0.0, 0.0);
+    pub fn predict(&self, mut timestamp: u64) -> (f64, (f64, f64)) {
+        let from = self.ts[0].0;
+
+        if timestamp < from {
+            let len = from - timestamp;
+            timestamp += self.seasonality * (len / self.seasonality);
+            if len % self.seasonality != 0 {
+                timestamp += self.seasonality;
+            }
+        }
+
+        let len_from = timestamp - from;
+        // TODO: take avg if timestamp in between
+        let index_diff = (len_from / DETECTION_STEP) % self.ts.len() as u64;
+        
+
+        let p = self.ts[index_diff as usize].1;
+        return (p, (p + self.confidence, p - self.confidence));
     }
 
     pub fn push_point() {
@@ -101,39 +116,41 @@ impl AnomalyAnalyticUnit {
     }
 
     fn get_hsr_from_metric_result(&self, mr: &MetricResult) -> anyhow::Result<HSR> {
+        if self.sarima.is_none() {
+            return Err(anyhow::format_err!("model is not ready"));
+        }
         // TODO: get it from model
         if mr.data.keys().len() == 0 {
-            return Ok(HSR::ConfidenceTimeSerie(Vec::new()));
+            return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
+                seasonality: self.config.seasonality,
+                timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
+                ts: Vec::new()
+            }));
         }
 
         let k = mr.data.keys().nth(0).unwrap();
         let ts = mr.data[k].clone();
 
         if ts.len() == 0 {
-            return Ok(HSR::ConfidenceTimeSerie(Vec::new()));
+            return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
+                seasonality: self.config.seasonality,
+                timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
+                ts: Vec::new()
+            }));
         }
 
         let mut sts = Vec::new();
-        sts.push((
-            ts[0].0,
-            ts[0].1,
-            ((
-                ts[0].1 + self.config.confidence,
-                ts[0].1 - self.config.confidence,
-            )),
-        ));
-
-        for t in 1..ts.len() {
-            let alpha = self.config.alpha;
-            let stv = alpha * ts[t].1 + (1.0 - alpha) * sts[t - 1].1;
-            sts.push((
-                ts[t].0,
-                stv,
-                (stv + self.config.confidence, stv - self.config.confidence),
-            ));
+        let sarima = self.sarima.as_ref().unwrap();
+        for vt in ts {
+            let x = sarima.predict(vt.0);
+            sts.push((vt.0, x.0, (x.1.0, x.1.1)));
         }
 
-        Ok(HSR::ConfidenceTimeSerie(sts))
+        return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
+            seasonality: self.config.seasonality,
+            timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
+            ts: sts
+        }));
     }
 }
 
@@ -147,7 +164,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         }
     }
     async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> LearningResult {
-        let mut sarima = SARIMA::new(self.config.seasonality);
+        let mut sarima = SARIMA::new(self.config.seasonality, self.config.confidence);
 
         let utc: DateTime<Utc> = Utc::now();
         let to = utc.timestamp() as u64;
@@ -199,10 +216,10 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
 
         let confidence_time_serie = self.get_hsr_from_metric_result(&mr)?;
 
-        if let HSR::ConfidenceTimeSerie(hsr) = confidence_time_serie {
+        if let HSR::AnomalyHSR(hsr) = confidence_time_serie {
             let mut from = None;
 
-            for ((t, _, (u, l)), (t1, rv)) in hsr.iter().zip(ts.iter()) {
+            for ((t, _, (u, l)), (t1, rv)) in hsr.ts.iter().zip(ts.iter()) {
                 if *t != *t1 {
                     return Err(anyhow::format_err!("incompatible hsr/ts"));
                 }

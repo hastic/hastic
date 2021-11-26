@@ -6,7 +6,7 @@
 
 <script lang="ts">
 
-import { TimeRange } from "@/types";
+import { AnomalyHSR, TimeRange } from "@/types";
 import { PatternPod } from "./pods/pattern_pod";
 import { ThresholdPod } from './pods/threshold_pod';
 import { AnomalyPod } from './pods/anomaly_pod';
@@ -86,7 +86,7 @@ async function resolveDataThreshold(range: TimeRange): Promise<{
 // TODO: remove code repetition
 async function resolveDataAnomaly(range: TimeRange): Promise<{
   timeserie: LineTimeSerie[],
-  bounds: [number, [number, number]][],
+  hsr: AnomalyHSR,
   segments: Segment[]
 }> {
 
@@ -103,13 +103,8 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
     return {
       timeserie: [
         { target: target, datapoints: values, color: 'green' },
-        // { 
-        //   target: "HSR",
-        //   datapoints: hsr.map(([t, v, [l, u]]) => [t, v]),
-        //   color: 'red'
-        // }
       ],
-      bounds: hsr.map(([t, v, [u, l]]) => [t, [u, l]]),
+      hsr,
       segments: segments,
     }
   } catch (e) {
