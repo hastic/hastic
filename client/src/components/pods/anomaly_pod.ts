@@ -5,6 +5,8 @@ import { Segment } from "@/types/segment";
 import { LineTimeSerie } from '@chartwerk/line-pod';
 import { SegmentsSet } from '@/types/segment_set';
 
+import * as _ from 'lodash';
+
 
 export type UpdateDataCallback = (range: TimeRange) => Promise<{
   timeserie: LineTimeSerie[],
@@ -12,21 +14,83 @@ export type UpdateDataCallback = (range: TimeRange) => Promise<{
   segments: Segment[]
 }>;
 
-import * as _ from 'lodash';
+export type SetSeasonalityCallback = (from: number, to: number) => void;
 
 
 export class AnomalyPod extends HasticPod<UpdateDataCallback> {
 
+  private _ssc: SetSeasonalityCallback;
+
   private _hsr: AnomalyHSR;
+
+  private _zKeyIsDown: boolean;
+
+  private _labelSeasonality: boolean;
 
   constructor(
     el: HTMLElement,
     udc: UpdateDataCallback,
+    ssc: SetSeasonalityCallback,
     segmentSet: SegmentsSet<Segment>
   ) {
-    super(el, udc, segmentSet)
+    super(el, udc, segmentSet);
+    this._zKeyIsDown = false;
+    this._ssc = ssc;
+
+    window.addEventListener("keydown", e => {
+      if(e.code == "KeyZ") {
+        this._zKeyIsDown = true;
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if(e.code == "KeyZ") {
+        this._zKeyIsDown = false;
+      }
+    });
+
     this.fetchData();
   }
+
+  protected onBrushStart(): void {
+    if(this._zKeyIsDown) {
+      this._labelSeasonality = true;
+      this.svg.select('.selection')
+        .attr('fill', 'orange');
+    }
+
+    // TODO: move to state
+    this.isBrushing === true;
+    const selection = this.d3.event.selection;
+    if(selection !== null && selection.length > 0) {
+      this.brushStartSelection = this.d3.event.selection[0];
+    }
+    this.onMouseOut();
+  }
+
+  protected onBrushEnd(): void {
+    console.log("END");
+    if(!this._labelSeasonality) {
+      super.onBrushEnd();
+    } else {
+      const extent = this.d3.event.selection;
+      this.isBrushing === false;
+      if(extent === undefined || extent === null || extent.length < 2) {
+        return;
+      }
+      this.chartContainer
+        .call(this.brush.move, null);
+
+      const startTimestamp = this.xScale.invert(extent[0]);
+      const endTimestamp = this.xScale.invert(extent[1]);
+
+      if(this._labelSeasonality) {
+        this._ssc(startTimestamp, endTimestamp);
+        this._labelSeasonality = false;
+      }
+    }
+  }
+
 
   public fetchData(): void {
     let to = Math.floor(Date.now() / 1000);
@@ -76,9 +140,7 @@ export class AnomalyPod extends HasticPod<UpdateDataCallback> {
       .attr('pointer-events', 'none')
       .attr('points', points);
 
-    // render timestamp
-
-
+    // seasonality grid
     let ts = this._hsr.timestamp;
     this._renderHSRGridLine(ts, true);
     ts -= this._hsr.seasonality;

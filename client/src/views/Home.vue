@@ -19,7 +19,7 @@
       <div v-if="analyticUnitType == analyticUnitTypes[1]">
         Hold <pre>S</pre> to label patterns; 
         Hold <pre>A</pre> to label anti patterns <br/>
-        Holde key <pre>D</pre> to delete patterns
+        Hold <pre>D</pre> to delete patterns
         <br/>
         <hr/>
         Correlation score:
@@ -33,8 +33,10 @@
         <button @click="clearAllLabeling"> clear all labeling </button>
       </div>
       <div v-if="analyticUnitType == analyticUnitTypes[2]">
-        Alpha: 
-        <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/>
+        Hold <pre>Z</pre> to set seasonality timespan
+        <hr/>
+        <!-- Alpha: 
+        <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/> -->
         Confidence:
         <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
         Seasonality:
