@@ -1,6 +1,6 @@
 # Hastic
 
-Hasti need [Prometheus](https://prometheus.io/) or [InfluxDB](https://www.influxdata.com/get-influxdb/)
+Hastic needs [Prometheus](https://prometheus.io/) or [InfluxDB](https://www.influxdata.com/get-influxdb/)
 instance for getting metrics.
 
 ## Build from source (Linux)
