@@ -147,6 +147,7 @@ async function _deleteSegment(from: number, to: number): Promise<number> {
   }
 }
 
+
 // TODO: convert to class component
 export default defineComponent({
   name: 'Graph',
@@ -211,10 +212,19 @@ export default defineComponent({
         this.pod = new AnomalyPod(
           document.getElementById('chart'),
           resolveDataAnomaly.bind(this),
+          this.setSeasonality.bind(this),
           sa
         );
       }
       this.pod.render();
+    },
+    setSeasonality(from: number, to: number) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      // TODO: get 10 (step) from API config
+      cfg.seasonality = Math.ceil(Math.abs(from - to) / 10) * 10;
+      console.log("cfg.seasonality: " + cfg.seasonality);
+      
+      this.$store.dispatch('patchConfig',  { Anomaly: cfg });
     }
   },
   computed: {

@@ -92,9 +92,6 @@ export abstract class HasticPod<T> extends LinePod {
   }
 
   protected async updateRange(range: AxisRange[]) {
-    // in assumption that range have been changed
-    console.log('update range.....');
-    console.log(range)
     this.fetchData();
   }
 

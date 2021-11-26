@@ -8,7 +8,7 @@ import { getGenerator } from '@/utils';
 import _ from 'lodash';
 import { 
   AnalyticUnitType, AnlyticUnitConfig,
-  PatternConfig, ThresholdConfig, AnomalyConfig 
+  PatternConfig, ThresholdConfig, AnomalyConfig
 } from "@/types/analytic_units";
 import { AnomalyHSR } from "@/types";
 

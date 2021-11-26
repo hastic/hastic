@@ -114,7 +114,7 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
     this.onMouseOut();
   }
 
-  protected onBrushEnd(): void {
+  protected onBrushEnd(): void {    
     if(!this._labelBrush && !this._antiLabelBrush && !this._deleteBrush) {
       super.onBrushEnd();
     } else {
