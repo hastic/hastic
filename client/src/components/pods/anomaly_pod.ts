@@ -55,13 +55,11 @@ export class AnomalyPod extends HasticPod<UpdateDataCallback> {
   }
 
   renderHSR() {
-    
     // TODO: check the case when this._bounds == undefined
     if(this._hsr == undefined) {
       return;
     }
 
-    
     const pointsUp = this._hsr.ts.map(([t, v, [p, q]]) => [t, q]);
     const pointsDown = this._hsr.ts.map(([t, v, [p, q]]) => [t, p]);
 
@@ -78,8 +76,29 @@ export class AnomalyPod extends HasticPod<UpdateDataCallback> {
       .attr('pointer-events', 'none')
       .attr('points', points);
 
-    // TODO: render timestamp
-    // TODO: render seasonality grid
+    // render timestamp
+
+
+    let ts = this._hsr.timestamp;
+    this._renderHSRGridLine(ts, true);
+    ts -= this._hsr.seasonality;
+    while(ts > this.state.xValueRange[0]) {
+      this._renderHSRGridLine(ts, false);
+      ts -= this._hsr.seasonality;
+    }
+  }
+
+  _renderHSRGridLine(timestamp, head) {
+    const x = this.xScale(timestamp);
+    
+    this.metricContainer
+      .append('line')
+      .attr('x1', x)
+      .attr('x2', x)
+      .attr('y1', 0)
+      .attr('y2', this.height)
+      .attr("style", `stroke:blue;stroke-width: ${head ? 2 : 1}`)
+      .attr('opacity', head ? 0.5 : 0.3)
   }
 
 }
