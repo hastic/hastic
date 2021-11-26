@@ -8,6 +8,7 @@ instance for getting metrics.
 ### Prerequirements
 1. [Install cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
 2. Install x86_64-unknown-linux-musl:  `rustup target add x86_64-unknown-linux-musl`
+3. musl-tools: `sudo apt install musl-tools`
 
 
 ### Build
