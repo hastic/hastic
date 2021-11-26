@@ -63,12 +63,18 @@ pub struct DetectionTask {
     pub to: u64,
 }
 
+#[derive(Debug, Serialize)]
+pub struct AnomalyHSRConfig {
+    pub timestamp: u64,
+    pub seasonality: u64,
+    pub ts: Vec<(u64, f64, (f64, f64))>
+}
 // HSR Stands for Hastic Signal Representation,
 // varies for different analytic units
 #[derive(Debug, Serialize)]
 pub enum HSR {
     TimeSerie(Vec<(u64, f64)>),
-    ConfidenceTimeSerie(Vec<(u64, f64, (f64, f64))>),
+    AnomalyHSR(AnomalyHSRConfig),
 }
 
 #[derive(Debug)]

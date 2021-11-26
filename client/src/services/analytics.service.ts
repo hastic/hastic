@@ -10,6 +10,7 @@ import {
   AnalyticUnitType, AnlyticUnitConfig,
   PatternConfig, ThresholdConfig, AnomalyConfig 
 } from "@/types/analytic_units";
+import { AnomalyHSR } from "@/types";
 
 const ANALYTICS_API_URL = API_URL + "analytics/";
 
@@ -57,7 +58,8 @@ export function getStatusGenerator(): AsyncIterableIterator<string> {
   return getGenerator<string>(100, getStatus);
 }
 
-export async function getHSRAnomaly(from: number, to: number): Promise<[number, number, [number, number]][]> {
+
+export async function getHSRAnomaly(from: number, to: number): Promise<AnomalyHSR> {
   if(from >= to) {
     throw new Error("`from` can`t be less than `to`");
   }
@@ -65,7 +67,7 @@ export async function getHSRAnomaly(from: number, to: number): Promise<[number, 
   const uri = ANALYTICS_API_URL + `hsr/?from=${from}&to=${to}`;
   const res = await axios.get(uri);
 
-  const values = res["data"]["ConfidenceTimeSerie"];
+  const values = res["data"]["AnomalyHSR"];
   
-  return values as [number, number, [number, number]][];
+  return values as AnomalyHSR;
 }

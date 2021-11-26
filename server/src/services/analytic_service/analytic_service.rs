@@ -196,7 +196,7 @@ impl AnalyticService {
     // TODO: maybe make `consume_response` async
     fn consume_response(&mut self, res: types::ResponseType) {
         match res {
-            // TODO: handle when learning panic
+            // TODO: handle when learning panics
             ResponseType::LearningStarted => {
                 self.analytic_unit_learning_status = LearningStatus::Learning
             }
