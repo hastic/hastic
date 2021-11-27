@@ -40,8 +40,6 @@ impl DetectionRunner {
 
                 loop {
                     // TODO: run detection periodically
-                    // TODO: use interval
-                    // TODO: sell to config
                     sleep(Duration::from_secs(cfg.interval)).await;
                 }
             }

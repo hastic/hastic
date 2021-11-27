@@ -2,7 +2,7 @@ use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
 #[derive(Clone)]
 pub struct WebhookAlertingConfig {
-    endpoint: String,
+    pub endpoint: String,
 }
 
 #[derive(Clone)]
@@ -12,8 +12,8 @@ pub enum AlertingType {
 
 #[derive(Clone)]
 pub struct AlertingConfig {
-    alerting_type: AlertingType,
-    interval: u64, // interval in seconds
+    pub alerting_type: AlertingType,
+    pub interval: u64, // interval in seconds
 }
 
 #[derive(Clone)]

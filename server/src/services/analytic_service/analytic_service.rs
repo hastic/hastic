@@ -8,7 +8,7 @@ use super::{
     types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
 };
 
-use crate::config::AlertingConfig;
+use crate::config::{AlertingConfig, AlertingType};
 use crate::services::analytic_service::analytic_unit::resolve;
 use crate::services::{
     metric_service::MetricService,
@@ -102,6 +102,28 @@ impl AnalyticService {
     }
 
     fn run_detection_runner(&mut self) {
+        // TODO: handle case or make it impossible to run_detection_runner second time
+
+        if self.analytic_unit.is_none() {
+            return;
+        }
+
+        if self.analytic_unit_learning_status != LearningStatus::Ready {
+            // TODO: add to waiter
+            return;
+        }
+
+        let AlertingType::Webhook(acfg) = self.alerting.as_ref().unwrap().alerting_type.clone();
+        let drcfg = DetectionRunnerConfig {
+            endpoint: acfg.endpoint.clone(),
+            interval: self.alerting.as_ref().unwrap().interval
+        };
+        
+        let dr = DetectionRunner::new(drcfg, self.analytic_unit.as_ref().unwrap().clone());
+        self.detection_runner = Some(dr);
+        // dr.run();
+
+
         // TODO: create DetectionRunnerConfig from alerting
         // TODO: rerun detection runner on analytic unit change
         // if self.runner_handler.is_some() {
