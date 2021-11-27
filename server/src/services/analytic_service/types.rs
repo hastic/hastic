@@ -97,6 +97,7 @@ pub struct DetectionRunnerConfig {
     // pub sender: mpsc::Sender<Result<Vec<Segment>>>,
     pub endpoint: String,
     pub from: u64,
+    pub interval: u64
 }
 
 #[derive(Debug)]

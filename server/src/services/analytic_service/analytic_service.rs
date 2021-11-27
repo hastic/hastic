@@ -265,7 +265,6 @@ impl AnalyticService {
     pub async fn serve(&mut self) {
         // TODO: remove this hack
         self.consume_request(RequestType::RunLearning);
-        // TODO: start detection runner if
         if self.alerting.is_some() {
             self.run_detection_runner();
         }

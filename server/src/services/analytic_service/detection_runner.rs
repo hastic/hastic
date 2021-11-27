@@ -26,20 +26,23 @@ impl DetectionRunner {
 
     pub async fn run(&mut self, from: u64) {
         // TODO: get last detection timestamp from persistance
-        // TODO: set lst detection from "now"
+        // TODO: set last detection from "now"
         if self.running_handler.is_some() {
             self.running_handler.as_mut().unwrap().abort();
         }
         self.running_handler = Some(tokio::spawn({
             // TODO: clone channel
+            let cfg = self.config.clone();
             async move {
                 // AnalyticService::run_learning(tx, cfg, ms, ss).await;
                 // TODO: run detection "from"
+                // TODO: define window for detection
 
                 loop {
                     // TODO: run detection periodically
                     // TODO: use interval
-                    sleep(Duration::from_secs(100)).await;
+                    // TODO: sell to config
+                    sleep(Duration::from_secs(cfg.interval)).await;
                 }
             }
         }));
@@ -48,5 +51,6 @@ impl DetectionRunner {
     pub async fn set_analytic_unit(
         analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
     ) {
+        // TODO: implement
     }
 }
