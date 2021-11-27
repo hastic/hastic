@@ -35,7 +35,7 @@
       <div v-if="analyticUnitType == analyticUnitTypes[2]">
         Hold <pre>Z</pre> to set seasonality timespan
         <hr/>
-        <!-- Alpha: 
+        <!-- Alpha:
         <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/> -->
         Confidence:
         <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
@@ -48,10 +48,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
 import Graph from '@/components/Graph.vue';
 import AnalyticStatus from '@/components/AnlyticsStatus.vue';
 import { AnalyticUnitType } from '@/types/analytic_units';
+
+import { defineComponent } from 'vue';
 
 import * as _ from 'lodash';
 

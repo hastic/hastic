@@ -10,18 +10,20 @@ import { AnomalyHSR, TimeRange } from "@/types";
 import { PatternPod } from "./pods/pattern_pod";
 import { ThresholdPod } from './pods/threshold_pod';
 import { AnomalyPod } from './pods/anomaly_pod';
-import { getMetrics } from '../services/metrics.service';
-import { getSegments, postSegment, deleteSegment } from '../services/segments.service';
+
 import { LineTimeSerie } from "@chartwerk/line-pod";
 
 import { SegmentArray } from '@/types/segment_array';
 import { Segment, SegmentId } from '@/types/segment';
 
-import _ from "lodash";
 import { AnalyticUnitType } from '@/types/analytic_units';
 
-import { defineComponent, watch } from 'vue';
 import { getHSRAnomaly } from "@/services/analytics.service";
+import { getMetrics } from '@/services/metrics.service';
+import { getSegments, postSegment, deleteSegment } from '@/services/segments.service';
+
+import { defineComponent } from 'vue';
+import _ from "lodash";
 
 // TODO: move to store
 async function resolveDataPatterns(range: TimeRange): Promise<{
@@ -117,7 +119,6 @@ async function resolveDataAnomaly(range: TimeRange): Promise<{
   }
 }
 
-
 // TODO: move to store
 async function addSegment(segment: Segment): Promise<SegmentId> {
   try {
@@ -146,7 +147,6 @@ async function _deleteSegment(from: number, to: number): Promise<number> {
     console.error(e);
   }
 }
-
 
 // TODO: convert to class component
 export default defineComponent({
@@ -222,8 +222,6 @@ export default defineComponent({
       let cfg = _.clone(this.analyticUnitConfig);
       // TODO: get 10 (step) from API config
       cfg.seasonality = Math.ceil(Math.abs(from - to) / 10) * 10;
-      console.log("cfg.seasonality: " + cfg.seasonality);
-      
       this.$store.dispatch('patchConfig',  { Anomaly: cfg });
     }
   },
