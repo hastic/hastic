@@ -159,6 +159,9 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
     fn set_config(&mut self, config: AnalyticUnitConfig) {
         if let AnalyticUnitConfig::Anomaly(cfg) = config {
             self.config = cfg;
+            if self.sarima.is_some() {
+                self.sarima.as_mut().unwrap().confidence = self.config.confidence;
+            }
         } else {
             panic!("Bad config!");
         }

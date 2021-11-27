@@ -123,7 +123,6 @@ impl AnalyticService {
         self.detection_runner = Some(dr);
         // dr.run();
 
-
         // TODO: create DetectionRunnerConfig from alerting
         // TODO: rerun detection runner on analytic unit change
         // if self.runner_handler.is_some() {

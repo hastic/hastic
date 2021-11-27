@@ -61,7 +61,7 @@ pub enum AnalyticUnitConfig {
 }
 
 impl AnalyticUnitConfig {
-    // return tru if patch is different type
+    // return true if patch is different type
     pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
         match patch {
             PatchConfig::Pattern(tcfg) => match self.clone() {
