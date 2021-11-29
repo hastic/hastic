@@ -41,6 +41,8 @@
         <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
         Seasonality:
         <input :value="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
+        Seasonality iterations:
+        <input :value="analyticUnitConfig.seasonality_iterations" @change="seasonalityIterationsChange" /> <br/>
         <br/>
       </div>
     </div>
@@ -117,7 +119,11 @@ export default defineComponent({
       cfg.seasonality = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig',  { Anomaly: cfg });
     },
-
+    seasonalityIterationsChange(e) {
+      let cfg = _.clone(this.analyticUnitConfig);
+      cfg.seasonality_iterations = Math.ceil(e.target.value);
+      this.$store.dispatch('patchConfig',  { Anomaly: cfg });
+    },
   },
   data: function () {
     return {
