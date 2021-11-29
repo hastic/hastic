@@ -30,6 +30,7 @@ pub struct AnomalyConfig {
     pub alpha: f64,
     pub confidence: f64,
     pub seasonality: u64, // step in seconds, can be zero
+    pub seasonality_iterations: u64
 }
 
 impl Default for AnomalyConfig {
@@ -38,6 +39,7 @@ impl Default for AnomalyConfig {
             alpha: 0.5,
             confidence: 10.0,
             seasonality: 60 * 60,
+            seasonality_iterations: 3
         }
     }
 }
@@ -85,7 +87,8 @@ impl AnalyticUnitConfig {
                 AnalyticUnitConfig::Anomaly(scfg) => {
                     if tcfg.is_some() {
                         let t = tcfg.as_ref().unwrap();
-                        let need_learning = t.seasonality != scfg.seasonality;
+                        let mut need_learning = t.seasonality != scfg.seasonality;
+                        need_learning |= t.seasonality_iterations != scfg.seasonality_iterations;
                         return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning);
                     } else {
                         return (AnalyticUnitConfig::Anomaly(Default::default()), false);
