@@ -54,6 +54,7 @@ impl SARIMA {
         // TODO: ensure capacity with seasonality size
         let mut res_ts = Vec::<(u64, f64)>::new();
         let from = ts[0].0;
+        // TODO: unwrap -> ?
         let to = ts.last().unwrap().0;
         let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
 
@@ -167,21 +168,22 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
             panic!("Bad config!");
         }
     }
-    async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> LearningResult {
+    async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> anyhow::Result<LearningResult> {
         let mut sarima = SARIMA::new(self.config.seasonality, self.config.confidence, self.config.seasonality_iterations);
 
         let utc: DateTime<Utc> = Utc::now();
         let to = utc.timestamp() as u64;
         let from = to - self.config.seasonality * self.config.seasonality_iterations;
 
-        let mr = ms.query(from, to, DETECTION_STEP).await.unwrap();
+        let mr = ms.query(from, to, DETECTION_STEP).await?;
         if mr.data.keys().len() == 0 {
-            return LearningResult::FinishedEmpty;
+            return Ok(LearningResult::FinishedEmpty);
         }
 
+        // TODO: unwrap -> ?
         let k = mr.data.keys().nth(0).unwrap();
         let ts = &mr.data[k];
-        sarima.learn(ts).unwrap();
+        sarima.learn(ts)?;
 
         self.sarima = Some(sarima);
 
@@ -189,7 +191,7 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
         // TODO: load data to learning
 
         // TODO: update model to work online
-        return LearningResult::Finished;
+        return Ok(LearningResult::Finished);
     }
     async fn detect(
         &self,

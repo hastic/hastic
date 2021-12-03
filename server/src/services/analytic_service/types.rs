@@ -45,8 +45,7 @@ impl Default for LearningTrain {
 pub enum ResponseType {
     LearningStarted,
     LearningFinished(Box<dyn AnalyticUnit + Send + Sync>),
-    LearningFinishedEmpty,
-    LearningDatasourceError,
+    LearningFinishedEmpty
 }
 
 impl fmt::Debug for ResponseType {
@@ -117,5 +116,5 @@ pub enum RequestType {
 pub enum AnalyticServiceMessage {
     // Status,
     Request(RequestType),
-    Response(ResponseType), // Detect { from: u64, to: u64 },
+    Response(anyhow::Result<ResponseType>), // Detect { from: u64, to: u64 },
 }
