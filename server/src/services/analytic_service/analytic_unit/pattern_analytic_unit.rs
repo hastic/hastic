@@ -74,6 +74,7 @@ async fn segment_to_segdata(ms: &MetricService, segment: &Segment) -> anyhow::Re
         });
     }
 
+    // TODO: unwrap -> ?
     let k = mr.data.keys().nth(0).unwrap().clone();
     let ts = mr.data.remove(&k).unwrap();
 
@@ -221,7 +222,7 @@ impl AnalyticUnit for PatternAnalyticUnit {
         }
     }
 
-    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult {
+    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> anyhow::Result<LearningResult> {
         // TODO: move to config
         let mut cfg = Config::new();
         cfg.set_feature_size(FEATURES_SIZE);
@@ -235,14 +236,14 @@ impl AnalyticUnit for PatternAnalyticUnit {
         cfg.set_training_optimization_level(2);
 
         // be careful if decide to store detections in db
-        let segments = ss.get_segments_inside(0, u64::MAX / 2).unwrap();
+        let segments = ss.get_segments_inside(0, u64::MAX / 2)?;
         let has_segments_label = segments
             .iter()
             .find(|s| s.segment_type == SegmentType::Label)
             .is_some();
 
         if !has_segments_label {
-            return LearningResult::FinishedEmpty;
+            return Ok(LearningResult::FinishedEmpty);
         }
 
         let fs = segments.iter().map(|s| segment_to_segdata(&ms, s));
@@ -253,11 +254,11 @@ impl AnalyticUnit for PatternAnalyticUnit {
 
         for r in rs {
             if r.is_err() {
-                println!("Error extracting metrics from datasource");
-                return LearningResult::DatasourceError;
+                // TODO: custom DatasourceError error type
+                return Err(anyhow::format_err!("Error extracting metrics from datasource"));
             }
 
-            let sd = r.unwrap();
+            let sd = r?;
             if sd.data.is_empty() {
                 continue;
             }
@@ -269,7 +270,7 @@ impl AnalyticUnit for PatternAnalyticUnit {
         }
 
         if learn_tss.len() == 0 {
-            return LearningResult::FinishedEmpty;
+            return Ok(LearningResult::FinishedEmpty);
         }
 
         let mut patterns = Vec::<Vec<f64>>::new();
@@ -332,7 +333,7 @@ impl AnalyticUnit for PatternAnalyticUnit {
             avg_pattern_length,
         });
 
-        return LearningResult::Finished;
+        return Ok(LearningResult::Finished);
     }
 
     // TODO: get iterator instead of vector

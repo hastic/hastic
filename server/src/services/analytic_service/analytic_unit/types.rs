@@ -125,13 +125,12 @@ impl AnalyticUnitConfig {
 
 pub enum LearningResult {
     Finished,
-    FinishedEmpty,
-    DatasourceError,
+    FinishedEmpty
 }
 
 #[async_trait]
 pub trait AnalyticUnit {
-    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> LearningResult;
+    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> anyhow::Result<LearningResult>;
     async fn detect(
         &self,
         ms: MetricService,
