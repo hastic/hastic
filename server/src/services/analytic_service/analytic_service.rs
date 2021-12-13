@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig};
 use super::detection_runner::DetectionRunner;
-use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, LearningWaiter, HSR};
+use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, LearningWaiter, HSR, DetectionRunnerTask};
 use super::{
     analytic_client::AnalyticClient,
     types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
@@ -20,6 +20,7 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
+use chrono::{TimeZone, DateTime, Utc};
 use tokio::sync::{mpsc, oneshot};
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
@@ -109,7 +110,12 @@ impl AnalyticService {
         }
 
         if self.analytic_unit_learning_status != LearningStatus::Ready {
-            // TODO: add to waiter
+            let now: DateTime<Utc> = Utc::now();
+            let from = now.timestamp() as u64;
+            let task = DetectionRunnerTask {
+                from: from
+            }
+            self.learning_waiters.push(LearningWaiter::DetectionRunner(task));
             return;
         }
 
