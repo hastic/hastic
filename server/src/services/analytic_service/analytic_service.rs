@@ -83,26 +83,36 @@ impl AnalyticService {
         AnalyticClient::new(self.tx.clone())
     }
 
-    fn run_learning_waiter(&self, learning_waiter: LearningWaiter) {
+    fn run_learning_waiter(&mut self, learning_waiter: LearningWaiter) {
         // TODO: save handler of the task
-        tokio::spawn({
-            let ms = self.metric_service.clone();
-            let au = self.analytic_unit.as_ref().unwrap().clone();
-            async move {
-                match learning_waiter {
-                    LearningWaiter::Detection(task) => {
+        match learning_waiter {
+            LearningWaiter::Detection(task) => {
+                tokio::spawn({
+                    let ms = self.metric_service.clone();
+                    let au = self.analytic_unit.as_ref().unwrap().clone();
+                    async move {
                         AnalyticService::get_detections(task.sender, au, ms, task.from, task.to)
                             .await
                     }
-                    LearningWaiter::HSR(task) => {
+                });
+            }
+            LearningWaiter::HSR(task) => {
+                tokio::spawn({
+                    let ms = self.metric_service.clone();
+                    let au = self.analytic_unit.as_ref().unwrap().clone();
+                    async move {
                         AnalyticService::get_hsr(task.sender, au, ms, task.from, task.to).await
                     }
-                }
+                });
             }
-        });
+            LearningWaiter::DetectionRunner(task) => {
+                self.run_detection_runner(task.from);
+            }
+        }
     }
 
-    fn run_detection_runner(&mut self) {
+    // TODO: make 
+    fn run_detection_runner(&mut self, from: u64) {
         // TODO: handle case or make it impossible to run_detection_runner second time
 
         if self.analytic_unit.is_none() {
@@ -110,11 +120,9 @@ impl AnalyticService {
         }
 
         if self.analytic_unit_learning_status != LearningStatus::Ready {
-            let now: DateTime<Utc> = Utc::now();
-            let from = now.timestamp() as u64;
             let task = DetectionRunnerTask {
-                from: from
-            }
+                from
+            };
             self.learning_waiters.push(LearningWaiter::DetectionRunner(task));
             return;
         }
@@ -293,7 +301,10 @@ impl AnalyticService {
         // TODO: remove this hack
         self.consume_request(RequestType::RunLearning);
         if self.alerting.is_some() {
-            self.run_detection_runner();
+            // TODO: get it from persistance
+            let now: DateTime<Utc> = Utc::now();
+            let from = now.timestamp() as u64;
+            self.run_detection_runner(from);
         }
 
         while let Some(message) = self.rx.recv().await {
