@@ -62,6 +62,12 @@ pub struct DetectionTask {
     pub to: u64,
 }
 
+#[derive(Debug)]
+pub struct DetectionRunnerTask {
+    pub from: u64,
+}
+
+
 #[derive(Debug, Serialize)]
 pub struct AnomalyHSRConfig {
     pub timestamp: u64,
@@ -87,6 +93,7 @@ pub struct HSRTask {
 #[derive(Debug)]
 pub enum LearningWaiter {
     Detection(DetectionTask),
+    DetectionRunner(DetectionRunnerTask),
     HSR(HSRTask),
 }
 
