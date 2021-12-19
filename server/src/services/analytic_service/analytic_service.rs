@@ -114,14 +114,12 @@ impl AnalyticService {
 
     // TODO: make 
     fn run_detection_runner(&mut self, from: u64) {
-        println!("run_detection_runner");
         // TODO: handle case or make it impossible to run_detection_runner second time
 
         if self.analytic_unit_learning_status != LearningStatus::Ready {
             let task = DetectionRunnerTask {
                 from
             };
-            println!("add learning waiter");
             self.learning_waiters.push(LearningWaiter::DetectionRunner(task));
             return;
         }

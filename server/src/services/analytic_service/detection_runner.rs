@@ -27,7 +27,6 @@ impl DetectionRunner {
     pub fn run(&mut self, from: u64) {
         // TODO: get last detection timestamp from persistance
         // TODO: set last detection from "now"
-        println!("Run begn");
         if self.running_handler.is_some() {
             self.running_handler.as_mut().unwrap().abort();
         }
@@ -40,9 +39,9 @@ impl DetectionRunner {
                 // TODO: define window for detection
                 // TODO: save last detection
 
-
+                println!("detection runner started from {}", from);
                 loop {
-                    println!("runner detect");
+                    
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
                 }
