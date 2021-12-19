@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use super::analytic_unit::types::{AnalyticUnitConfig, PatchConfig};
 use super::detection_runner::DetectionRunner;
-use super::types::{self, AnalyticUnitRF, DetectionRunnerConfig, LearningWaiter, HSR, DetectionRunnerTask};
+use super::types::{
+    self, AnalyticUnitRF, DetectionRunnerConfig, DetectionRunnerTask, LearningWaiter, HSR,
+};
 use super::{
     analytic_client::AnalyticClient,
     types::{AnalyticServiceMessage, LearningStatus, RequestType, ResponseType},
@@ -20,7 +22,7 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
-use chrono::{TimeZone, DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use tokio::sync::{mpsc, oneshot};
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
@@ -112,25 +114,25 @@ impl AnalyticService {
         }
     }
 
-    // TODO: make 
+    // TODO: make
     fn run_detection_runner(&mut self, from: u64) {
         // TODO: handle case or make it impossible to run_detection_runner second time
 
         if self.analytic_unit_learning_status != LearningStatus::Ready {
-            let task = DetectionRunnerTask {
-                from
-            };
-            self.learning_waiters.push(LearningWaiter::DetectionRunner(task));
+            let task = DetectionRunnerTask { from };
+            self.learning_waiters
+                .push(LearningWaiter::DetectionRunner(task));
             return;
         }
 
         let AlertingType::Webhook(acfg) = self.alerting.as_ref().unwrap().alerting_type.clone();
         let drcfg = DetectionRunnerConfig {
             endpoint: acfg.endpoint.clone(),
-            interval: self.alerting.as_ref().unwrap().interval
+            interval: self.alerting.as_ref().unwrap().interval,
         };
-        
-        let dr = DetectionRunner::new(drcfg, self.analytic_unit.as_ref().unwrap().clone());
+        let tx = self.tx.clone();
+        let au = self.analytic_unit.as_ref().unwrap().clone();
+        let dr = DetectionRunner::new(tx, drcfg, au);
         self.detection_runner = Some(dr);
         self.detection_runner.as_mut().unwrap().run(from);
 
@@ -250,7 +252,7 @@ impl AnalyticService {
                         self.analytic_unit_learning_status = LearningStatus::Initialization;
                     }
                 }
-            },
+            }
             // TODO: create custom DatasourceError error type
             Err(_) => {
                 self.analytic_unit = None;
@@ -324,9 +326,9 @@ impl AnalyticService {
         let mut au = resolve(aucfg);
 
         match tx
-            .send(AnalyticServiceMessage::Response(
-                Ok(ResponseType::LearningStarted),
-            ))
+            .send(AnalyticServiceMessage::Response(Ok(
+                ResponseType::LearningStarted,
+            )))
             .await
         {
             Ok(_) => {}
@@ -335,13 +337,11 @@ impl AnalyticService {
 
         // TODO: maybe to spawn_blocking here
         let lr = match au.learn(ms, ss).await {
-            Ok(res) => {
-                match res {
-                    LearningResult::Finished => Ok(ResponseType::LearningFinished(au)),
-                    LearningResult::FinishedEmpty => Ok(ResponseType::LearningFinishedEmpty)
-                }
-            }
-            Err(e) => Err(e)
+            Ok(res) => match res {
+                LearningResult::Finished => Ok(ResponseType::LearningFinished(au)),
+                LearningResult::FinishedEmpty => Ok(ResponseType::LearningFinishedEmpty),
+            },
+            Err(e) => Err(e),
         };
 
         match tx.send(AnalyticServiceMessage::Response(lr)).await {

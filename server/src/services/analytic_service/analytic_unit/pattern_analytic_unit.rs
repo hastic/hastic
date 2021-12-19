@@ -222,7 +222,11 @@ impl AnalyticUnit for PatternAnalyticUnit {
         }
     }
 
-    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> anyhow::Result<LearningResult> {
+    async fn learn(
+        &mut self,
+        ms: MetricService,
+        ss: SegmentsService,
+    ) -> anyhow::Result<LearningResult> {
         // TODO: move to config
         let mut cfg = Config::new();
         cfg.set_feature_size(FEATURES_SIZE);
@@ -255,7 +259,9 @@ impl AnalyticUnit for PatternAnalyticUnit {
         for r in rs {
             if r.is_err() {
                 // TODO: custom DatasourceError error type
-                return Err(anyhow::format_err!("Error extracting metrics from datasource"));
+                return Err(anyhow::format_err!(
+                    "Error extracting metrics from datasource"
+                ));
             }
 
             let sd = r?;

@@ -6,18 +6,24 @@ use chrono::Utc;
 
 use tokio::sync::{mpsc, RwLock};
 
-use super::types::{AnalyticUnitRF, DetectionRunnerConfig};
+use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig};
 use tokio::time::{sleep, Duration};
 
 pub struct DetectionRunner {
+    tx: mpsc::Sender<AnalyticServiceMessage>,
     config: DetectionRunnerConfig,
     analytic_unit: AnalyticUnitRF,
     running_handler: Option<tokio::task::JoinHandle<()>>,
 }
 
 impl DetectionRunner {
-    pub fn new(config: DetectionRunnerConfig, analytic_unit: AnalyticUnitRF) -> DetectionRunner {
+    pub fn new(
+        tx: mpsc::Sender<AnalyticServiceMessage>,
+        config: DetectionRunnerConfig,
+        analytic_unit: AnalyticUnitRF,
+    ) -> DetectionRunner {
         DetectionRunner {
+            tx,
             config,
             analytic_unit,
             running_handler: None,
@@ -34,14 +40,14 @@ impl DetectionRunner {
             // TODO: clone channel
             let cfg = self.config.clone();
             async move {
-                // AnalyticService::run_learning(tx, cfg, ms, ss).await;
-                // TODO: run detection "from"
+                // TODO: run detection "from" for big timespan
+                // TODO: parse detections to webhooks
                 // TODO: define window for detection
                 // TODO: save last detection
+                // TODO: handle case when detection is in the end and continues after "now"
 
                 println!("detection runner started from {}", from);
                 loop {
-                    
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
                 }
@@ -49,10 +55,10 @@ impl DetectionRunner {
         }));
     }
 
-    pub async fn set_analytic_unit(&mut self, analytic_unit: AnalyticUnitRF,
-    ) {
-        self.analytic_unit = analytic_unit;
-        // TODO: stop running_handler
-        // TODO: rerun detection with new anomaly units
-    }
+    // pub async fn set_analytic_unit(&mut self, analytic_unit: AnalyticUnitRF,
+    // ) {
+    //     self.analytic_unit = analytic_unit;
+    //     // TODO: stop running_handler
+    //     // TODO: rerun detection with new anomaly units
+    // }
 }

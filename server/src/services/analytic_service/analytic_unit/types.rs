@@ -30,7 +30,7 @@ pub struct AnomalyConfig {
     pub alpha: f64,
     pub confidence: f64,
     pub seasonality: u64, // step in seconds, can be zero
-    pub seasonality_iterations: u64
+    pub seasonality_iterations: u64,
 }
 
 impl Default for AnomalyConfig {
@@ -39,7 +39,7 @@ impl Default for AnomalyConfig {
             alpha: 0.5,
             confidence: 10.0,
             seasonality: 60 * 60,
-            seasonality_iterations: 3
+            seasonality_iterations: 3,
         }
     }
 }
@@ -125,12 +125,16 @@ impl AnalyticUnitConfig {
 
 pub enum LearningResult {
     Finished,
-    FinishedEmpty
+    FinishedEmpty,
 }
 
 #[async_trait]
 pub trait AnalyticUnit {
-    async fn learn(&mut self, ms: MetricService, ss: SegmentsService) -> anyhow::Result<LearningResult>;
+    async fn learn(
+        &mut self,
+        ms: MetricService,
+        ss: SegmentsService,
+    ) -> anyhow::Result<LearningResult>;
     async fn detect(
         &self,
         ms: MetricService,

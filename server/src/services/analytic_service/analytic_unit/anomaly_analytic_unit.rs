@@ -1,4 +1,8 @@
-use crate::services::{analytic_service::types::{AnomalyHSRConfig, HSR}, metric_service::MetricService, segments_service::SegmentsService};
+use crate::services::{
+    analytic_service::types::{AnomalyHSRConfig, HSR},
+    metric_service::MetricService,
+    segments_service::SegmentsService,
+};
 
 use super::types::{AnalyticUnit, AnalyticUnitConfig, AnomalyConfig, LearningResult};
 
@@ -7,14 +11,13 @@ use subbeat::metric::MetricResult;
 
 use chrono::prelude::*;
 
-
 // TODO: move to config
 const DETECTION_STEP: u64 = 10;
 
 // timerange offset in seconds backwards from end of ts in assumption that ts has no gaps
-fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)>{
+fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)> {
     // TODO: remove dependency to DETECTION_STEP
-    
+
     let indexes_offset = (offset / DETECTION_STEP) as usize;
     let n = ts.len() - 1;
     if n < indexes_offset {
@@ -24,12 +27,11 @@ fn get_value_with_offset(ts: &Vec<(u64, f64)>, offset: u64) -> Option<(u64, f64)
     return Some(ts[i]);
 }
 
-
 struct SARIMA {
     pub ts: Vec<(u64, f64)>,
     pub seasonality: u64,
     pub confidence: f64,
-    pub seasonality_iterations: u64
+    pub seasonality_iterations: u64,
 }
 
 impl SARIMA {
@@ -38,12 +40,11 @@ impl SARIMA {
             ts: Vec::new(),
             seasonality,
             confidence,
-            seasonality_iterations
+            seasonality_iterations,
         };
     }
 
     pub fn learn(&mut self, ts: &Vec<(u64, f64)>) -> anyhow::Result<()> {
-
         // TODO: don't count NaNs in model
         // TODO: add exponental smooting to model
         // TODO: trend detection
@@ -59,7 +60,10 @@ impl SARIMA {
         let iter_steps = (self.seasonality / DETECTION_STEP) as usize;
 
         if to - from != self.seasonality_iterations * self.seasonality {
-            return Err(anyhow::format_err!("timeserie to learn from should be {} * sasonality", self.seasonality_iterations));
+            return Err(anyhow::format_err!(
+                "timeserie to learn from should be {} * sasonality",
+                self.seasonality_iterations
+            ));
         }
 
         for k in 0..iter_steps {
@@ -91,7 +95,6 @@ impl SARIMA {
         let len_from = timestamp - from;
         // TODO: take avg if timestamp in between
         let index_diff = (len_from / DETECTION_STEP) % self.ts.len() as u64;
-        
 
         let p = self.ts[index_diff as usize].1;
         return (p, (p + self.confidence, p - self.confidence));
@@ -100,9 +103,7 @@ impl SARIMA {
     pub fn push_point() {
         // TODO: inmplement
     }
-
 }
-
 
 pub struct AnomalyAnalyticUnit {
     config: AnomalyConfig,
@@ -126,7 +127,7 @@ impl AnomalyAnalyticUnit {
             return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
                 seasonality: self.config.seasonality,
                 timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
-                ts: Vec::new()
+                ts: Vec::new(),
             }));
         }
 
@@ -137,7 +138,7 @@ impl AnomalyAnalyticUnit {
             return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
                 seasonality: self.config.seasonality,
                 timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
-                ts: Vec::new()
+                ts: Vec::new(),
             }));
         }
 
@@ -145,13 +146,13 @@ impl AnomalyAnalyticUnit {
         let sarima = self.sarima.as_ref().unwrap();
         for vt in ts {
             let x = sarima.predict(vt.0);
-            sts.push((vt.0, x.0, (x.1.0, x.1.1)));
+            sts.push((vt.0, x.0, (x.1 .0, x.1 .1)));
         }
 
         return Ok(HSR::AnomalyHSR(AnomalyHSRConfig {
             seasonality: self.config.seasonality,
             timestamp: self.sarima.as_ref().unwrap().ts.last().unwrap().0,
-            ts: sts
+            ts: sts,
         }));
     }
 }
@@ -168,8 +169,16 @@ impl AnalyticUnit for AnomalyAnalyticUnit {
             panic!("Bad config!");
         }
     }
-    async fn learn(&mut self, ms: MetricService, _ss: SegmentsService) -> anyhow::Result<LearningResult> {
-        let mut sarima = SARIMA::new(self.config.seasonality, self.config.confidence, self.config.seasonality_iterations);
+    async fn learn(
+        &mut self,
+        ms: MetricService,
+        _ss: SegmentsService,
+    ) -> anyhow::Result<LearningResult> {
+        let mut sarima = SARIMA::new(
+            self.config.seasonality,
+            self.config.confidence,
+            self.config.seasonality_iterations,
+        );
 
         let utc: DateTime<Utc> = Utc::now();
         let to = utc.timestamp() as u64;

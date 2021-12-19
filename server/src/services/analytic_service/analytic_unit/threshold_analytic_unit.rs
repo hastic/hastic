@@ -21,7 +21,11 @@ impl ThresholdAnalyticUnit {
 
 #[async_trait]
 impl AnalyticUnit for ThresholdAnalyticUnit {
-    async fn learn(&mut self, _ms: MetricService, _ss: SegmentsService) -> anyhow::Result<LearningResult> {
+    async fn learn(
+        &mut self,
+        _ms: MetricService,
+        _ss: SegmentsService,
+    ) -> anyhow::Result<LearningResult> {
         return Ok(LearningResult::Finished);
     }
 

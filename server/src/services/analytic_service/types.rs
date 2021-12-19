@@ -45,7 +45,7 @@ impl Default for LearningTrain {
 pub enum ResponseType {
     LearningStarted,
     LearningFinished(Box<dyn AnalyticUnit + Send + Sync>),
-    LearningFinishedEmpty
+    LearningFinishedEmpty,
 }
 
 impl fmt::Debug for ResponseType {
@@ -67,12 +67,11 @@ pub struct DetectionRunnerTask {
     pub from: u64,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct AnomalyHSRConfig {
     pub timestamp: u64,
     pub seasonality: u64,
-    pub ts: Vec<(u64, f64, (f64, f64))>
+    pub ts: Vec<(u64, f64, (f64, f64))>,
 }
 // HSR Stands for Hastic Signal Representation,
 // varies for different analytic units
@@ -103,7 +102,7 @@ pub struct DetectionRunnerConfig {
     // pub sender: mpsc::Sender<Result<Vec<Segment>>>,
     pub endpoint: String,
     // pub from: u64,
-    pub interval: u64
+    pub interval: u64,
 }
 
 #[derive(Debug)]
