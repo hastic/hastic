@@ -35,6 +35,7 @@ pub struct AnalyticService {
     analytic_unit_config: AnalyticUnitConfig,
     analytic_unit_learning_status: LearningStatus,
 
+    // TODO: add comment about how it's used
     tx: mpsc::Sender<AnalyticServiceMessage>,
     rx: mpsc::Receiver<AnalyticServiceMessage>,
 
@@ -113,16 +114,14 @@ impl AnalyticService {
 
     // TODO: make 
     fn run_detection_runner(&mut self, from: u64) {
+        println!("run_detection_runner");
         // TODO: handle case or make it impossible to run_detection_runner second time
-
-        if self.analytic_unit.is_none() {
-            return;
-        }
 
         if self.analytic_unit_learning_status != LearningStatus::Ready {
             let task = DetectionRunnerTask {
                 from
             };
+            println!("add learning waiter");
             self.learning_waiters.push(LearningWaiter::DetectionRunner(task));
             return;
         }
@@ -135,7 +134,7 @@ impl AnalyticService {
         
         let dr = DetectionRunner::new(drcfg, self.analytic_unit.as_ref().unwrap().clone());
         self.detection_runner = Some(dr);
-        // dr.run();
+        self.detection_runner.as_mut().unwrap().run(from);
 
         // TODO: create DetectionRunnerConfig from alerting
         // TODO: rerun detection runner on analytic unit change

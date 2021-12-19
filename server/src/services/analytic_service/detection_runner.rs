@@ -24,9 +24,10 @@ impl DetectionRunner {
         }
     }
 
-    pub async fn run(&mut self, from: u64) {
+    pub fn run(&mut self, from: u64) {
         // TODO: get last detection timestamp from persistance
         // TODO: set last detection from "now"
+        println!("Run begn");
         if self.running_handler.is_some() {
             self.running_handler.as_mut().unwrap().abort();
         }
@@ -37,8 +38,11 @@ impl DetectionRunner {
                 // AnalyticService::run_learning(tx, cfg, ms, ss).await;
                 // TODO: run detection "from"
                 // TODO: define window for detection
+                // TODO: save last detection
+
 
                 loop {
+                    println!("runner detect");
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
                 }
@@ -46,9 +50,10 @@ impl DetectionRunner {
         }));
     }
 
-    pub async fn set_analytic_unit(
-        analytic_unit: Arc<RwLock<Box<dyn AnalyticUnit + Send + Sync>>>,
+    pub async fn set_analytic_unit(&mut self, analytic_unit: AnalyticUnitRF,
     ) {
-        // TODO: implement
+        self.analytic_unit = analytic_unit;
+        // TODO: stop running_handler
+        // TODO: rerun detection with new anomaly units
     }
 }
