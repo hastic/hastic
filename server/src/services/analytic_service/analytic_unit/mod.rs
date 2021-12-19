@@ -8,10 +8,4 @@ use self::{
     threshold_analytic_unit::ThresholdAnalyticUnit, types::AnalyticUnitConfig,
 };
 
-pub fn resolve(cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
-    match cfg {
-        AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new(c.clone())),
-        AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new(c.clone())),
-        AnalyticUnitConfig::Anomaly(c) => Box::new(AnomalyAnalyticUnit::new(c.clone())),
-    }
-}
+

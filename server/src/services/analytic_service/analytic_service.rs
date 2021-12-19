@@ -11,7 +11,8 @@ use super::{
 };
 
 use crate::config::{AlertingConfig, AlertingType};
-use crate::services::analytic_service::analytic_unit::resolve;
+
+use crate::services::analytic_unit_service::AnalyticUnitService;
 use crate::services::{
     metric_service::MetricService,
     segments_service::{self, Segment, SegmentType, SegmentsService, ID_LENGTH},
@@ -30,6 +31,7 @@ use tokio::sync::{mpsc, oneshot};
 pub struct AnalyticService {
     metric_service: MetricService,
     segments_service: SegmentsService,
+    analytic_unit_service: AnalyticUnitService,
 
     alerting: Option<AlertingConfig>,
 
@@ -52,6 +54,7 @@ pub struct AnalyticService {
 
 impl AnalyticService {
     pub fn new(
+        analytic_unit_service: AnalyticUnitService,
         metric_service: MetricService,
         segments_service: segments_service::SegmentsService,
         alerting: Option<AlertingConfig>,
@@ -59,6 +62,7 @@ impl AnalyticService {
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
         AnalyticService {
+            analytic_unit_service,
             metric_service,
             segments_service,
 
@@ -161,11 +165,12 @@ impl AnalyticService {
                 self.learning_handler = Some(tokio::spawn({
                     self.analytic_unit_learning_status = LearningStatus::Starting;
                     let tx = self.tx.clone();
+                    let aus = self.analytic_unit_service.clone();
                     let ms = self.metric_service.clone();
                     let ss = self.segments_service.clone();
                     let cfg = self.analytic_unit_config.clone();
                     async move {
-                        AnalyticService::run_learning(tx, cfg, ms, ss).await;
+                        AnalyticService::run_learning(tx, cfg, aus, ms, ss).await;
                     }
                 }));
             }
@@ -321,10 +326,11 @@ impl AnalyticService {
     async fn run_learning(
         tx: mpsc::Sender<AnalyticServiceMessage>,
         aucfg: AnalyticUnitConfig,
+        aus: AnalyticUnitService,
         ms: MetricService,
         ss: SegmentsService,
     ) {
-        let mut au = resolve(aucfg);
+        let mut au = aus.resolve(aucfg);
 
         match tx
             .send(AnalyticServiceMessage::Response(Ok(

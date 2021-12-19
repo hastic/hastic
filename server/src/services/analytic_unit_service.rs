@@ -1,13 +1,17 @@
+use std::sync::{Arc, Mutex};
+
 use crate::utils::get_random_str;
 
 use rusqlite::{params, Connection, Row};
 
+use super::analytic_service::analytic_unit::{types::{AnalyticUnitConfig, self}, threshold_analytic_unit::ThresholdAnalyticUnit, pattern_analytic_unit::PatternAnalyticUnit, anomaly_analytic_unit::AnomalyAnalyticUnit};
+
+#[derive(Clone)]
 pub struct AnalyticUnitService {
     // TODO: resolve by setting id for 3 types 
     // TODO: create database
     // TODO: update detection
-
-    
+    connection: Arc<Mutex<Connection>>
 }
 
 impl AnalyticUnitService {
@@ -20,7 +24,7 @@ impl AnalyticUnitService {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS analytic_unit (
                       id              TEXT PRIMARY KEY,
-                      last_detection  INTEGER NOT NULL,
+                      last_detection  INTEGER NOT NULL
                  )",
             [],
         )?;
@@ -28,5 +32,13 @@ impl AnalyticUnitService {
         Ok(AnalyticUnitService {
             connection: Arc::new(Mutex::new(conn)),
         })
+    }
+
+    pub fn resolve(&self, cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
+        match cfg {
+            AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new(c.clone())),
+            AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new(c.clone())),
+            AnalyticUnitConfig::Anomaly(c) => Box::new(AnomalyAnalyticUnit::new(c.clone())),
+        }
     }
 }
