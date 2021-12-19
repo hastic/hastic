@@ -43,6 +43,7 @@ impl Default for LearningTrain {
 }
 
 pub enum ResponseType {
+    DetectionRunnerStarted(u64),
     LearningStarted,
     LearningFinished(Box<dyn AnalyticUnit + Send + Sync>),
     LearningFinishedEmpty,

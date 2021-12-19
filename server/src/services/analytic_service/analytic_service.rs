@@ -232,6 +232,9 @@ impl AnalyticService {
         match res {
             Ok(response_type) => {
                 match response_type {
+                    ResponseType::DetectionRunnerStarted(from) => {
+                        println!("Detection runner started from {}", from)
+                    }
                     ResponseType::LearningStarted => {
                         self.analytic_unit_learning_status = LearningStatus::Learning
                     }

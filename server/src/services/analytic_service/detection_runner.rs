@@ -6,7 +6,7 @@ use chrono::Utc;
 
 use tokio::sync::{mpsc, RwLock};
 
-use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig};
+use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig, ResponseType};
 use tokio::time::{sleep, Duration};
 
 pub struct DetectionRunner {
@@ -39,6 +39,7 @@ impl DetectionRunner {
         self.running_handler = Some(tokio::spawn({
             // TODO: clone channel
             let cfg = self.config.clone();
+            let tx = self.tx.clone();
             async move {
                 // TODO: run detection "from" for big timespan
                 // TODO: parse detections to webhooks
@@ -46,7 +47,17 @@ impl DetectionRunner {
                 // TODO: save last detection
                 // TODO: handle case when detection is in the end and continues after "now"
 
-                println!("detection runner started from {}", from);
+                match tx
+                    .send(AnalyticServiceMessage::Response(Ok(
+                        ResponseType::DetectionRunnerStarted(from),
+                    )))
+                    .await
+                    {
+                        Ok(_) => {}
+                        Err(_e) => println!("Fail to send detection runner started notification"),
+                    }
+
+                
                 loop {
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
