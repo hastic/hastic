@@ -114,7 +114,6 @@ impl AnalyticService {
         }
     }
 
-    // TODO: make
     fn run_detection_runner(&mut self, from: u64) {
         // TODO: handle case or make it impossible to run_detection_runner second time
 
@@ -136,8 +135,7 @@ impl AnalyticService {
         self.detection_runner = Some(dr);
         self.detection_runner.as_mut().unwrap().run(from);
 
-        // TODO: create DetectionRunnerConfig from alerting
-        // TODO: rerun detection runner on analytic unit change
+        // TODO: rerun detection runner on analytic unit change (by setting analytic unit)
         // if self.runner_handler.is_some() {
         //     self.runner_handler.as_mut().unwrap().abort();
         // }

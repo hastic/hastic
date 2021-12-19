@@ -1,7 +1,3 @@
-use crate::services::analytic_service::analytic_unit::types::AnalyticUnit;
-
-use std::sync::Arc;
-
 use chrono::Utc;
 
 use tokio::sync::{mpsc, RwLock};
@@ -52,12 +48,11 @@ impl DetectionRunner {
                         ResponseType::DetectionRunnerStarted(from),
                     )))
                     .await
-                    {
-                        Ok(_) => {}
-                        Err(_e) => println!("Fail to send detection runner started notification"),
-                    }
+                {
+                    Ok(_) => {}
+                    Err(_e) => println!("Fail to send detection runner started notification"),
+                }
 
-                
                 loop {
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
@@ -71,5 +66,8 @@ impl DetectionRunner {
     //     self.analytic_unit = analytic_unit;
     //     // TODO: stop running_handler
     //     // TODO: rerun detection with new anomaly units
+    // if self.runner_handler.is_some() {
+    //     self.runner_handler.as_mut().unwrap().abort();
+    // }
     // }
 }

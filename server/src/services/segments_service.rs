@@ -68,6 +68,7 @@ impl SegmentsService {
         // TODO: move it to data service
         std::fs::create_dir_all("./data").unwrap();
 
+        // TODO: add unilytic_unit id as a new field
         let conn = Connection::open("./data/segments.db")?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS segment (

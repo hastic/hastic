@@ -46,7 +46,7 @@ impl SARIMA {
 
     pub fn learn(&mut self, ts: &Vec<(u64, f64)>) -> anyhow::Result<()> {
         // TODO: don't count NaNs in model
-        // TODO: add exponental smooting to model
+        // TODO: add exponental smooting to the model
         // TODO: trend detection
 
         if ts.len() < 2 {
