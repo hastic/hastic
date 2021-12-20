@@ -56,6 +56,7 @@ impl DetectionRunner {
                 loop {
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
+                    // TODO: use tx senf detection update
                 }
             }
         }));

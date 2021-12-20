@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use crate::utils::get_random_str;
 
 use rusqlite::{params, Connection, Row};
+use warp::hyper::rt::Executor;
 
 use super::analytic_service::analytic_unit::{types::{AnalyticUnitConfig, self}, threshold_analytic_unit::ThresholdAnalyticUnit, pattern_analytic_unit::PatternAnalyticUnit, anomaly_analytic_unit::AnomalyAnalyticUnit};
 
@@ -24,7 +25,7 @@ impl AnalyticUnitService {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS analytic_unit (
                       id              TEXT PRIMARY KEY,
-                      last_detection  INTEGER NOT NULL
+                      last_detection  INTEGER
                  )",
             [],
         )?;
@@ -34,11 +35,37 @@ impl AnalyticUnitService {
         })
     }
 
-    pub fn resolve(&self, cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
+    // TODO: optional id
+    pub fn resolve_au(&self, cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
         match cfg {
             AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new("1".to_string(), c.clone())),
             AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new("2".to_string(), c.clone())),
             AnalyticUnitConfig::Anomaly(c) => Box::new(AnomalyAnalyticUnit::new("3".to_string(), c.clone())),
         }
+    }
+
+    pub fn resolve(&self, cfg: AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
+        let au = self.resolve_au(cfg);
+        let id = au.as_ref().get_id();
+
+        let conn = self.connection.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id from analytic_unit WHERE id = ?1",
+        )?;
+        let res = stmt.exists(params![id])?;
+
+        if res == false {
+            conn.execute(
+            "INSERT INTO analytic_unit (id) VALUES (?1)",
+            params![id]
+            )?;
+        }
+
+        return Ok(au);
+    }
+
+    // TODO: resolve with saving by id
+    pub fn set_last_detection(id: String, last_detection: u64) -> anyhow::Result<()> {
+        Ok(())
     }
 }

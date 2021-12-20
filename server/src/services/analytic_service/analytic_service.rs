@@ -330,7 +330,10 @@ impl AnalyticService {
         ms: MetricService,
         ss: SegmentsService,
     ) {
-        let mut au = aus.resolve(aucfg);
+        let mut au = match aus.resolve(aucfg) {
+            Ok(a) => a,
+            Err(e) => { panic!("{}", e); }
+        };
 
         match tx
             .send(AnalyticServiceMessage::Response(Ok(
