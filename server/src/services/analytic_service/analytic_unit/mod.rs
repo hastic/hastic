@@ -8,4 +8,3 @@ use self::{
     threshold_analytic_unit::ThresholdAnalyticUnit, types::AnalyticUnitConfig,
 };
 
-

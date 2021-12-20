@@ -130,6 +130,7 @@ pub enum LearningResult {
 
 #[async_trait]
 pub trait AnalyticUnit {
+    fn get_id(&self) -> String;
     async fn learn(
         &mut self,
         ms: MetricService,

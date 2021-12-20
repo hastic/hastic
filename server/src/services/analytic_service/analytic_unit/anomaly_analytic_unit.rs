@@ -106,13 +106,15 @@ impl SARIMA {
 }
 
 pub struct AnomalyAnalyticUnit {
+    id: String,
     config: AnomalyConfig,
     sarima: Option<SARIMA>,
 }
 
 impl AnomalyAnalyticUnit {
-    pub fn new(config: AnomalyConfig) -> AnomalyAnalyticUnit {
+    pub fn new(id: String, config: AnomalyConfig) -> AnomalyAnalyticUnit {
         AnomalyAnalyticUnit {
+            id,
             config,
             sarima: None,
         }
@@ -159,6 +161,9 @@ impl AnomalyAnalyticUnit {
 
 #[async_trait]
 impl AnalyticUnit for AnomalyAnalyticUnit {
+    fn get_id(&self) -> String {
+        return self.id.to_owned();
+    }
     fn set_config(&mut self, config: AnalyticUnitConfig) {
         if let AnalyticUnitConfig::Anomaly(cfg) = config {
             self.config = cfg;

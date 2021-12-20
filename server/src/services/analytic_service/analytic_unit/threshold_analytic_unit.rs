@@ -10,17 +10,21 @@ use async_trait::async_trait;
 const DETECTION_STEP: u64 = 10;
 
 pub struct ThresholdAnalyticUnit {
+    id: String,
     config: ThresholdConfig,
 }
 
 impl ThresholdAnalyticUnit {
-    pub fn new(config: ThresholdConfig) -> ThresholdAnalyticUnit {
-        ThresholdAnalyticUnit { config }
+    pub fn new(id: String, config: ThresholdConfig) -> ThresholdAnalyticUnit {
+        ThresholdAnalyticUnit { id, config }
     }
 }
 
 #[async_trait]
 impl AnalyticUnit for ThresholdAnalyticUnit {
+    fn get_id(&self) -> String {
+        return self.id.to_owned();
+    }
     async fn learn(
         &mut self,
         _ms: MetricService,

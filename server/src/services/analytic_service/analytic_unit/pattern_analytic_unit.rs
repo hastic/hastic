@@ -198,14 +198,16 @@ fn max_corr_with_segments(xs: &VecDeque<f64>, yss: &Vec<Vec<f64>>) -> f32 {
 }
 
 pub struct PatternAnalyticUnit {
+    id: String,
     config: PatternConfig,
     learning_results: Option<LearningResults>,
 }
 
 // TODO: move this to loginc of analytic unit
 impl PatternAnalyticUnit {
-    pub fn new(cfg: PatternConfig) -> PatternAnalyticUnit {
+    pub fn new(id: String, cfg: PatternConfig) -> PatternAnalyticUnit {
         PatternAnalyticUnit {
+            id,
             config: cfg,
             learning_results: None,
         }
@@ -214,6 +216,9 @@ impl PatternAnalyticUnit {
 
 #[async_trait]
 impl AnalyticUnit for PatternAnalyticUnit {
+    fn get_id(&self) -> String {
+        return self.id.to_owned();
+    }
     fn set_config(&mut self, config: AnalyticUnitConfig) {
         if let AnalyticUnitConfig::Pattern(cfg) = config {
             self.config = cfg;
