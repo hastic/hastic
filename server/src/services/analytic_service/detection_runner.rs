@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{Utc, DateTime};
 
 use tokio::sync::{mpsc, RwLock};
 
@@ -36,6 +36,7 @@ impl DetectionRunner {
             // TODO: clone channel
             let cfg = self.config.clone();
             let tx = self.tx.clone();
+            let au = self.analytic_unit.clone();
             async move {
                 // TODO: run detection "from" for big timespan
                 // TODO: parse detections to webhooks
@@ -54,9 +55,17 @@ impl DetectionRunner {
                 }
 
                 loop {
+                    // TODO: don't use DateTime, but count timestamp by steps
+                    let now: DateTime<Utc> = Utc::now();
+                    let to = now.timestamp() as u64;
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
-                    // TODO: use tx senf detection update
+                    match tx.send(AnalyticServiceMessage::Response(Ok(
+                        ResponseType::DetectionRunnerUpdate(au.as_ref().read().await.get_id(), to)
+                    ))).await {
+                        Ok(_) => {},
+                        Err(_e) => println!("Fail to send detection runner started notification"),
+                    }
                 }
             }
         }));

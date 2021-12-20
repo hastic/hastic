@@ -65,7 +65,12 @@ impl AnalyticUnitService {
     }
 
     // TODO: resolve with saving by id
-    pub fn set_last_detection(id: String, last_detection: u64) -> anyhow::Result<()> {
+    pub fn set_last_detection(&self, id: String, last_detection: u64) -> anyhow::Result<()> {
+        let conn = self.connection.lock().unwrap();
+        conn.execute(
+            "UPDATE analytic_unit SET last_detection = ?1 WHERE id = ?2",
+            params![last_detection, id]
+        )?;
         Ok(())
     }
 }
