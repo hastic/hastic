@@ -70,7 +70,7 @@ impl DetectionRunner {
                     let detections = a.detect(ms.clone(), t_from, t_to).await.unwrap();
 
                     for d in detections {
-                        println!("detection: {} {}", d);
+                        println!("detection: {} {}", d.0, d.1);
                     }
 
                     // TODO: run detection periodically
