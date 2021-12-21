@@ -238,6 +238,9 @@ impl AnalyticService {
                     ResponseType::DetectionRunnerStarted(from) => {
                         println!("Detection runner started from {}", from)
                     }
+                    ResponseType::DetectionRunnerUpdate(id, timestamp) => {
+                        self.analytic_unit_service.set_last_detection(id, timestamp).unwrap();
+                    }
                     ResponseType::LearningStarted => {
                         self.analytic_unit_learning_status = LearningStatus::Learning
                     }
