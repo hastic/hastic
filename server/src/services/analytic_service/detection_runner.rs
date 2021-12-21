@@ -1,9 +1,13 @@
 use chrono::{Utc, DateTime};
 
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{mpsc};
 
 use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig, ResponseType};
 use tokio::time::{sleep, Duration};
+
+
+const DETECTION_STEP: u64 = 10;
+
 
 pub struct DetectionRunner {
     tx: mpsc::Sender<AnalyticServiceMessage>,
@@ -41,7 +45,6 @@ impl DetectionRunner {
                 // TODO: run detection "from" for big timespan
                 // TODO: parse detections to webhooks
                 // TODO: define window for detection
-                // TODO: save last detection
                 // TODO: handle case when detection is in the end and continues after "now"
 
                 match tx
@@ -60,6 +63,7 @@ impl DetectionRunner {
                     let to = now.timestamp() as u64;
                     // TODO: run detection periodically
                     sleep(Duration::from_secs(cfg.interval)).await;
+                    // TODO: update from / to based on detection step
                     match tx.send(AnalyticServiceMessage::Response(Ok(
                         ResponseType::DetectionRunnerUpdate(au.as_ref().read().await.get_id(), to)
                     ))).await {

@@ -25,6 +25,9 @@ impl AnalyticUnit for ThresholdAnalyticUnit {
     fn get_id(&self) -> String {
         return self.id.to_owned();
     }
+    fn get_detection_window(&self) -> u64 {
+        return DETECTION_STEP;
+    }
     async fn learn(
         &mut self,
         _ms: MetricService,
