@@ -219,6 +219,10 @@ impl AnalyticUnit for PatternAnalyticUnit {
     fn get_id(&self) -> String {
         return self.id.to_owned();
     }
+    fn get_detection_window(&self) -> u64 {
+        // TODO: return window based on real petterns info
+        return DETECTION_STEP;
+    }
     fn set_config(&mut self, config: AnalyticUnitConfig) {
         if let AnalyticUnitConfig::Pattern(cfg) = config {
             self.config = cfg;

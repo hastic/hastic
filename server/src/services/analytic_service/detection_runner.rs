@@ -1,11 +1,18 @@
 use chrono::{Utc, DateTime};
 
-use tokio::sync::{mpsc, RwLock};
+use tokio::sync::{mpsc};
+
+use crate::services::metric_service::MetricService;
 
 use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig, ResponseType};
 use tokio::time::{sleep, Duration};
 
+
+const DETECTION_STEP: u64 = 10;
+
+
 pub struct DetectionRunner {
+    metric_service: MetricService,
     tx: mpsc::Sender<AnalyticServiceMessage>,
     config: DetectionRunnerConfig,
     analytic_unit: AnalyticUnitRF,
@@ -14,11 +21,13 @@ pub struct DetectionRunner {
 
 impl DetectionRunner {
     pub fn new(
+        metric_service: MetricService,
         tx: mpsc::Sender<AnalyticServiceMessage>,
         config: DetectionRunnerConfig,
         analytic_unit: AnalyticUnitRF,
     ) -> DetectionRunner {
         DetectionRunner {
+            metric_service,
             tx,
             config,
             analytic_unit,
@@ -33,16 +42,18 @@ impl DetectionRunner {
             self.running_handler.as_mut().unwrap().abort();
         }
         self.running_handler = Some(tokio::spawn({
-            // TODO: clone channel
             let cfg = self.config.clone();
+            let ms = self.metric_service.clone();
             let tx = self.tx.clone();
             let au = self.analytic_unit.clone();
             async move {
                 // TODO: run detection "from" for big timespan
                 // TODO: parse detections to webhooks
                 // TODO: define window for detection
-                // TODO: save last detection
                 // TODO: handle case when detection is in the end and continues after "now"
+                let window_size = au.as_ref().read().await.get_detection_window();
+                let mut t_from = from - window_size;
+                let mut t_to = from;
 
                 match tx
                     .send(AnalyticServiceMessage::Response(Ok(
@@ -55,17 +66,25 @@ impl DetectionRunner {
                 }
 
                 loop {
-                    // TODO: don't use DateTime, but count timestamp by steps
-                    let now: DateTime<Utc> = Utc::now();
-                    let to = now.timestamp() as u64;
+                    let a = au.as_ref().read().await;
+                    let detections = a.detect(ms.clone(), t_from, t_to).await.unwrap();
+
+                    for d in detections {
+                        println!("detection: {} {}", d.0, d.1);
+                    }
+
                     // TODO: run detection periodically
-                    sleep(Duration::from_secs(cfg.interval)).await;
+                    // TODO: set info about detections to tx
+
+                    
                     match tx.send(AnalyticServiceMessage::Response(Ok(
-                        ResponseType::DetectionRunnerUpdate(au.as_ref().read().await.get_id(), to)
+                        ResponseType::DetectionRunnerUpdate(au.as_ref().read().await.get_id(), t_to)
                     ))).await {
                         Ok(_) => {},
                         Err(_e) => println!("Fail to send detection runner started notification"),
                     }
+
+                    sleep(Duration::from_secs(cfg.interval)).await;
                 }
             }
         }));
