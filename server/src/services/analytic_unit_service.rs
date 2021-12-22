@@ -1,17 +1,11 @@
 use std::sync::{Arc, Mutex};
 
-use crate::utils::get_random_str;
-
-use rusqlite::{params, Connection, Row};
-use warp::hyper::rt::Executor;
+use rusqlite::{params, Connection};
 
 use super::analytic_service::analytic_unit::{types::{AnalyticUnitConfig, self}, threshold_analytic_unit::ThresholdAnalyticUnit, pattern_analytic_unit::PatternAnalyticUnit, anomaly_analytic_unit::AnomalyAnalyticUnit};
 
 #[derive(Clone)]
 pub struct AnalyticUnitService {
-    // TODO: resolve by setting id for 3 types 
-    // TODO: create database
-    // TODO: update detection
     connection: Arc<Mutex<Connection>>
 }
 
