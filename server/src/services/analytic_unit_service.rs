@@ -53,7 +53,7 @@ impl AnalyticUnitService {
         let res = stmt.exists(params![id])?;
 
         if res == false {
-            // TODO: save default 
+            // TODO: save default
             conn.execute(
             "INSERT INTO analytic_unit (id) VALUES (?1)",
             params![id]
@@ -73,7 +73,21 @@ impl AnalyticUnitService {
         Ok(())
     }
 
-    pub fn get_active() {
+    pub fn get_active(&self) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
+        let conn = self.connection.lock().unwrap();
+        let stmt = conn.prepare(
+            "SELECT id, type, config from analytic_unit WHERE active = TRUE"
+        )?;
+
+        // stmt.query_row([], |row| {
+
+        //     // resolve_au()
+        // });
+
+        // TODO: use serde to deserialise config
+
+        return Err(anyhow::format_err!("bot implemented"));
+        
         // TODO: query by id
         // TODO: deserialisation of analytic_unit by config and it's type
     }
