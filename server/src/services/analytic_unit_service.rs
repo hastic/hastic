@@ -21,6 +21,8 @@ impl AnalyticUnitService {
                       id              TEXT PRIMARY KEY,
                       last_detection  INTEGER
                       active          BOOLEAN
+                      type            INTEGER
+                      config          TEXT
                  )",
             [],
         )?;
@@ -70,6 +72,7 @@ impl AnalyticUnitService {
     }
 
     pub fn get_active() {
-        
+        // TODO: query by id
+        // TODO: deserialisation of analytic_unit by config and it's type
     }
 }
