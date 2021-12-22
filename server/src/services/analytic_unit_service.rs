@@ -41,6 +41,7 @@ impl AnalyticUnitService {
         }
     }
 
+    // TODO: get id of analytic_unit which be used also as it's type
     pub fn resolve(&self, cfg: AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
         let au = self.resolve_au(cfg);
         let id = au.as_ref().get_id();
@@ -52,6 +53,7 @@ impl AnalyticUnitService {
         let res = stmt.exists(params![id])?;
 
         if res == false {
+            // TODO: save default 
             conn.execute(
             "INSERT INTO analytic_unit (id) VALUES (?1)",
             params![id]
