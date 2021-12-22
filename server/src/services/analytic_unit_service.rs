@@ -20,6 +20,7 @@ impl AnalyticUnitService {
             "CREATE TABLE IF NOT EXISTS analytic_unit (
                       id              TEXT PRIMARY KEY,
                       last_detection  INTEGER
+                      active          BOOLEAN
                  )",
             [],
         )?;
@@ -66,5 +67,9 @@ impl AnalyticUnitService {
             params![last_detection, id]
         )?;
         Ok(())
+    }
+
+    pub fn get_active() {
+        
     }
 }

@@ -70,6 +70,7 @@ impl AnalyticService {
 
             // TODO: get it from persistance
             analytic_unit: None,
+            // TODO: get pattern from saved in analytic_unit_service
             analytic_unit_config: AnalyticUnitConfig::Pattern(Default::default()),
 
             analytic_unit_learning_status: LearningStatus::Initialization,
@@ -275,7 +276,7 @@ impl AnalyticService {
         self.analytic_unit_config = new_conf;
         if need_learning {
             self.consume_request(RequestType::RunLearning);
-            // TODO: it's not fullu correct: we need to wait when the learning starts
+            // TODO: it's not fully correct: we need to wait when the learning starts
             match tx.send(()) {
                 Ok(_) => {}
                 Err(_e) => {
