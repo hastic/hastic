@@ -127,7 +127,16 @@ impl AnalyticUnitService {
         }
     }
 
-    pub fn update_active_config() {
-        // TODO: implement
+    pub fn update_active_config(&self, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
+        let conn = self.connection.lock().unwrap();
+
+        let cfg_json = serde_json::to_string(&cfg)?;
+
+        conn.execute(
+            "UPDATE analytic_unit SET config = ?1 WHERE active = TRUE",
+            params![cfg_json]
+        )?;
+
+        return Ok(());
     }
 }

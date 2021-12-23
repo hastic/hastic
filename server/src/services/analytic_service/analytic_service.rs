@@ -274,9 +274,9 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
-        // TODO: update config in db
+        
         let (new_conf, need_learning, same_type) = self.analytic_unit_config.patch(patch);
-        self.analytic_unit_config = new_conf;
+        self.analytic_unit_config = new_conf.clone();
         if need_learning {
             self.consume_request(RequestType::RunLearning);
             // TODO: it's not fully correct: we need to wait when the learning starts
@@ -309,6 +309,13 @@ impl AnalyticService {
                     }
                 }
             }
+        }
+
+        if same_type {
+            // TODO: avoid using `unwrap`
+            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
+        } else {
+            // TODO: implement
         }
 
         // TODO: save config depending on type
