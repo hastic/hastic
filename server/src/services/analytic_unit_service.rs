@@ -101,16 +101,23 @@ impl AnalyticUnitService {
     }
 
     pub fn get_active_config(&self) -> anyhow::Result<AnalyticUnitConfig> {
-        let conn = self.connection.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT config from analytic_unit WHERE active = TRUE"
-        )?;
+        let exists = {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare(
+                "SELECT config from analytic_unit WHERE active = TRUE"
+            )?;
+            stmt.exists([])?
+        };
 
-        if stmt.exists([])? == false {
+        if exists == false {
             let c = AnalyticUnitConfig::Pattern(Default::default());
             self.resolve(&c)?;
             return Ok(c);
         } else {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare(
+                "SELECT config from analytic_unit WHERE active = TRUE"
+            )?;
             let acfg = stmt.query_row([], |row| {
                 let c: String = row.get(0)?;
                 let cfg = serde_json::from_str(&c).unwrap();
