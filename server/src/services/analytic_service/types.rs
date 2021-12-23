@@ -22,7 +22,7 @@ pub enum LearningStatus {
     Initialization,
     Starting,
     Learning,
-    Error,
+    Error(String),
     Ready,
 }
 

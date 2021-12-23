@@ -264,9 +264,9 @@ impl AnalyticService {
                 }
             }
             // TODO: create custom DatasourceError error type
-            Err(_) => {
+            Err(err) => {
                 self.analytic_unit = None;
-                self.analytic_unit_learning_status = LearningStatus::Error;
+                self.analytic_unit_learning_status = LearningStatus::Error(err.to_string());
             }
         }
     }
