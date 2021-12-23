@@ -23,7 +23,7 @@ use crate::services::analytic_service::analytic_unit::types::{AnalyticUnit, Lear
 
 use anyhow;
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use tokio::sync::{mpsc, oneshot};
 
 // TODO: now it's basically single analytic unit, service will operate on many AU
@@ -59,10 +59,14 @@ impl AnalyticService {
         segments_service: segments_service::SegmentsService,
         alerting: Option<AlertingConfig>,
     ) -> AnalyticService {
+
+        // TODO: move buffer size to config
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
+        let aus = analytic_unit_service.clone();
+
         AnalyticService {
-            analytic_unit_service,
+            analytic_unit_service: aus,
             metric_service,
             segments_service,
 
@@ -71,7 +75,7 @@ impl AnalyticService {
             // TODO: get it from persistance
             analytic_unit: None,
             // TODO: get pattern from saved in analytic_unit_service
-            analytic_unit_config: AnalyticUnitConfig::Pattern(Default::default()),
+            analytic_unit_config: analytic_unit_service.get_active_config().unwrap(),
 
             analytic_unit_learning_status: LearningStatus::Initialization,
             tx,
@@ -272,6 +276,7 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
+        // TODO: update config in db
         let (new_conf, need_learning) = self.analytic_unit_config.patch(patch);
         self.analytic_unit_config = new_conf;
         if need_learning {
@@ -334,7 +339,7 @@ impl AnalyticService {
         ms: MetricService,
         ss: SegmentsService,
     ) {
-        let mut au = match aus.resolve(aucfg) {
+        let mut au = match aus.resolve(&aucfg) {
             Ok(a) => a,
             Err(e) => { panic!("{}", e); }
         };

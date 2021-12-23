@@ -21,9 +21,9 @@ impl AnalyticUnitService {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS analytic_unit (
                       id              TEXT PRIMARY KEY,
-                      last_detection  INTEGER
-                      active          BOOLEAN
-                      type            INTEGER
+                      last_detection  INTEGER,
+                      active          BOOLEAN,
+                      type            INTEGER,
                       config          TEXT
                  )",
             [],
@@ -44,8 +44,8 @@ impl AnalyticUnitService {
     }
 
     // TODO: get id of analytic_unit which be used also as it's type
-    pub fn resolve(&self, cfg: AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
-        let au = self.resolve_au(&cfg);
+    pub fn resolve(&self, cfg: &AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
+        let au = self.resolve_au(cfg);
         let id = au.as_ref().get_id();
 
         let conn = self.connection.lock().unwrap();
@@ -74,7 +74,6 @@ impl AnalyticUnitService {
         return Ok(au);
     }
 
-    // TODO: resolve with saving by id
     pub fn set_last_detection(&self, id: String, last_detection: u64) -> anyhow::Result<()> {
         let conn = self.connection.lock().unwrap();
         conn.execute(
@@ -85,6 +84,7 @@ impl AnalyticUnitService {
     }
 
     pub fn get_active(&self) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
+        // TODO: return default when there is no active
         let conn = self.connection.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, type, config from analytic_unit WHERE active = TRUE"
@@ -92,11 +92,31 @@ impl AnalyticUnitService {
 
         let au = stmt.query_row([], |row| {
             let c: String = row.get(2)?;
-            let cfg = serde_json::from_str(&c).unwrap();
-            Ok(self.resolve(cfg))
-        })?;
+            let cfg: AnalyticUnitConfig = serde_json::from_str(&c).unwrap();
+            Ok(self.resolve(&cfg))
+        })??;
 
         return Ok(au);
 
+    }
+
+    pub fn get_active_config(&self) -> anyhow::Result<AnalyticUnitConfig> {
+        let conn = self.connection.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT config from analytic_unit WHERE active = TRUE"
+        )?;
+
+        if stmt.exists([])? == false {
+            let c = AnalyticUnitConfig::Pattern(Default::default());
+            self.resolve(&c)?;
+            return Ok(c);
+        } else {
+            let acfg = stmt.query_row([], |row| {
+                let c: String = row.get(0)?;
+                let cfg = serde_json::from_str(&c).unwrap();
+                Ok(cfg)
+            })?;
+            return Ok(acfg);
+        }
     }
 }
