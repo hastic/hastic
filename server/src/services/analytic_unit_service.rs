@@ -55,14 +55,21 @@ impl AnalyticUnitService {
         let res = stmt.exists(params![id])?;
 
         if res == false {
-            // TODO: save default
-            // TODO: save serialised config
             let cfg_json = serde_json::to_string(&cfg)?;
             conn.execute(
             "INSERT INTO analytic_unit (id, type, config) VALUES (?1, ?1, ?2)",
             params![id, cfg_json]
             )?;
         }
+
+        conn.execute(
+            "UPDATE analytic_unit set active = FALSE where active = TRUE",
+            params![]
+        )?;
+        conn.execute(
+            "UPDATE analytic_unit set active = TRUE where id = ?1",
+            params![id]
+        )?;
 
         return Ok(au);
     }
@@ -79,20 +86,17 @@ impl AnalyticUnitService {
 
     pub fn get_active(&self) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
         let conn = self.connection.lock().unwrap();
-        let stmt = conn.prepare(
+        let mut stmt = conn.prepare(
             "SELECT id, type, config from analytic_unit WHERE active = TRUE"
         )?;
 
-        // stmt.query_row([], |row| {
+        let au = stmt.query_row([], |row| {
+            let c: String = row.get(2)?;
+            let cfg = serde_json::from_str(&c).unwrap();
+            Ok(self.resolve(cfg))
+        })?;
 
-        //     // resolve_au()
-        // });
+        return Ok(au);
 
-        // TODO: use serde to deserialise config
-
-        return Err(anyhow::format_err!("bot implemented"));
-        
-        // TODO: query by id
-        // TODO: deserialisation of analytic_unit by config and it's type
     }
 }
