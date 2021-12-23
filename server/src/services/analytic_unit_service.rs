@@ -1,4 +1,6 @@
 use std::sync::{Arc, Mutex};
+use serde_json::{Result, Value};
+use serde::{Deserialize, Serialize};
 
 use rusqlite::{params, Connection};
 
@@ -33,7 +35,7 @@ impl AnalyticUnitService {
     }
 
     // TODO: optional id
-    pub fn resolve_au(&self, cfg: AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
+    pub fn resolve_au(&self, cfg: &AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
         match cfg {
             AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new("1".to_string(), c.clone())),
             AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new("2".to_string(), c.clone())),
@@ -43,7 +45,7 @@ impl AnalyticUnitService {
 
     // TODO: get id of analytic_unit which be used also as it's type
     pub fn resolve(&self, cfg: AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
-        let au = self.resolve_au(cfg);
+        let au = self.resolve_au(&cfg);
         let id = au.as_ref().get_id();
 
         let conn = self.connection.lock().unwrap();
@@ -54,9 +56,11 @@ impl AnalyticUnitService {
 
         if res == false {
             // TODO: save default
+            // TODO: save serialised config
+            let cfg_json = serde_json::to_string(&cfg)?;
             conn.execute(
-            "INSERT INTO analytic_unit (id) VALUES (?1)",
-            params![id]
+            "INSERT INTO analytic_unit (id, type, config) VALUES (?1, ?1, ?2)",
+            params![id, cfg_json]
             )?;
         }
 
