@@ -126,4 +126,8 @@ impl AnalyticUnitService {
             return Ok(acfg);
         }
     }
+
+    pub fn update_active_config() {
+        // TODO: implement
+    }
 }
