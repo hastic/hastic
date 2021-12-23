@@ -63,22 +63,22 @@ pub enum AnalyticUnitConfig {
 }
 
 impl AnalyticUnitConfig {
-    // return true if patch is different type
-    pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
+    // return true if need needs relearning and true if the config of the same type
+    pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool, bool) {
         match patch {
             PatchConfig::Pattern(tcfg) => match self.clone() {
                 AnalyticUnitConfig::Pattern(_) => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false);
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false, true);
                     } else {
-                        return (AnalyticUnitConfig::Pattern(Default::default()), false);
+                        return (AnalyticUnitConfig::Pattern(Default::default()), false, true);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true);
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true, false);
                     } else {
-                        return (AnalyticUnitConfig::Pattern(Default::default()), true);
+                        return (AnalyticUnitConfig::Pattern(Default::default()), true, false);
                     }
                 }
             },
@@ -89,16 +89,16 @@ impl AnalyticUnitConfig {
                         let t = tcfg.as_ref().unwrap();
                         let mut need_learning = t.seasonality != scfg.seasonality;
                         need_learning |= t.seasonality_iterations != scfg.seasonality_iterations;
-                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning);
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning, true);
                     } else {
-                        return (AnalyticUnitConfig::Anomaly(Default::default()), false);
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), false, true);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true);
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true, false);
                     } else {
-                        return (AnalyticUnitConfig::Anomaly(Default::default()), true);
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), true, false);
                     }
                 }
             },
@@ -106,16 +106,16 @@ impl AnalyticUnitConfig {
             PatchConfig::Threshold(tcfg) => match self.clone() {
                 AnalyticUnitConfig::Threshold(_) => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false);
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false, true);
                     } else {
-                        return (AnalyticUnitConfig::Threshold(Default::default()), false);
+                        return (AnalyticUnitConfig::Threshold(Default::default()), false, true);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true);
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true, false);
                     } else {
-                        return (AnalyticUnitConfig::Threshold(Default::default()), true);
+                        return (AnalyticUnitConfig::Threshold(Default::default()), true, false);
                     }
                 }
             },

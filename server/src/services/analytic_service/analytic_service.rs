@@ -72,9 +72,7 @@ impl AnalyticService {
 
             alerting,
 
-            // TODO: get it from persistance
             analytic_unit: None,
-            // TODO: get pattern from saved in analytic_unit_service
             analytic_unit_config: analytic_unit_service.get_active_config().unwrap(),
 
             analytic_unit_learning_status: LearningStatus::Initialization,
@@ -277,7 +275,7 @@ impl AnalyticService {
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
         // TODO: update config in db
-        let (new_conf, need_learning) = self.analytic_unit_config.patch(patch);
+        let (new_conf, need_learning, same_type) = self.analytic_unit_config.patch(patch);
         self.analytic_unit_config = new_conf;
         if need_learning {
             self.consume_request(RequestType::RunLearning);
@@ -312,6 +310,8 @@ impl AnalyticService {
                 }
             }
         }
+
+        // TODO: save config depending on type
     }
 
     pub async fn serve(&mut self) {
