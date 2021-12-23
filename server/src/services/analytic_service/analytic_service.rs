@@ -311,14 +311,17 @@ impl AnalyticService {
             }
         }
 
+        
         if same_type {
             // TODO: avoid using `unwrap`
             self.analytic_unit_service.update_active_config(&new_conf).unwrap();
         } else {
-            // TODO: implement
+            // TODO: it's a hack, make it a better way
+            // TODO: avoid using unwrap
+            self.analytic_unit_service.resolve(&new_conf).unwrap();
+            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
         }
 
-        // TODO: save config depending on type
     }
 
     pub async fn serve(&mut self) {
