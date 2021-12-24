@@ -1,14 +1,19 @@
-use std::sync::{Arc, Mutex};
-use serde_json::{Result, Value};
 use serde::{Deserialize, Serialize};
+use serde_json::{Result, Value};
+use std::sync::{Arc, Mutex};
 
 use rusqlite::{params, Connection};
 
-use super::analytic_service::analytic_unit::{types::{AnalyticUnitConfig, self}, threshold_analytic_unit::ThresholdAnalyticUnit, pattern_analytic_unit::PatternAnalyticUnit, anomaly_analytic_unit::AnomalyAnalyticUnit};
+use super::analytic_service::analytic_unit::{
+    anomaly_analytic_unit::AnomalyAnalyticUnit,
+    pattern_analytic_unit::PatternAnalyticUnit,
+    threshold_analytic_unit::ThresholdAnalyticUnit,
+    types::{self, AnalyticUnitConfig},
+};
 
 #[derive(Clone)]
 pub struct AnalyticUnitService {
-    connection: Arc<Mutex<Connection>>
+    connection: Arc<Mutex<Connection>>,
 }
 
 impl AnalyticUnitService {
@@ -35,40 +40,50 @@ impl AnalyticUnitService {
     }
 
     // TODO: optional id
-    pub fn resolve_au(&self, cfg: &AnalyticUnitConfig) -> Box<dyn types::AnalyticUnit + Send + Sync> {
+    pub fn resolve_au(
+        &self,
+        cfg: &AnalyticUnitConfig,
+    ) -> Box<dyn types::AnalyticUnit + Send + Sync> {
         match cfg {
-            AnalyticUnitConfig::Threshold(c) => Box::new(ThresholdAnalyticUnit::new("1".to_string(), c.clone())),
-            AnalyticUnitConfig::Pattern(c) => Box::new(PatternAnalyticUnit::new("2".to_string(), c.clone())),
-            AnalyticUnitConfig::Anomaly(c) => Box::new(AnomalyAnalyticUnit::new("3".to_string(), c.clone())),
+            AnalyticUnitConfig::Threshold(c) => {
+                Box::new(ThresholdAnalyticUnit::new("1".to_string(), c.clone()))
+            }
+            AnalyticUnitConfig::Pattern(c) => {
+                Box::new(PatternAnalyticUnit::new("2".to_string(), c.clone()))
+            }
+            AnalyticUnitConfig::Anomaly(c) => {
+                Box::new(AnomalyAnalyticUnit::new("3".to_string(), c.clone()))
+            }
         }
     }
 
     // TODO: get id of analytic_unit which be used also as it's type
-    pub fn resolve(&self, cfg: &AnalyticUnitConfig) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
+    pub fn resolve(
+        &self,
+        cfg: &AnalyticUnitConfig,
+    ) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
         let au = self.resolve_au(cfg);
         let id = au.as_ref().get_id();
 
         let conn = self.connection.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id from analytic_unit WHERE id = ?1",
-        )?;
+        let mut stmt = conn.prepare("SELECT id from analytic_unit WHERE id = ?1")?;
         let res = stmt.exists(params![id])?;
 
         if res == false {
             let cfg_json = serde_json::to_string(&cfg)?;
             conn.execute(
-            "INSERT INTO analytic_unit (id, type, config) VALUES (?1, ?1, ?2)",
-            params![id, cfg_json]
+                "INSERT INTO analytic_unit (id, type, config) VALUES (?1, ?1, ?2)",
+                params![id, cfg_json],
             )?;
         }
 
         conn.execute(
             "UPDATE analytic_unit set active = FALSE where active = TRUE",
-            params![]
+            params![],
         )?;
         conn.execute(
             "UPDATE analytic_unit set active = TRUE where id = ?1",
-            params![id]
+            params![id],
         )?;
 
         return Ok(au);
@@ -78,7 +93,7 @@ impl AnalyticUnitService {
         let conn = self.connection.lock().unwrap();
         conn.execute(
             "UPDATE analytic_unit SET last_detection = ?1 WHERE id = ?2",
-            params![last_detection, id]
+            params![last_detection, id],
         )?;
         Ok(())
     }
@@ -86,9 +101,8 @@ impl AnalyticUnitService {
     pub fn get_active(&self) -> anyhow::Result<Box<dyn types::AnalyticUnit + Send + Sync>> {
         // TODO: return default when there is no active
         let conn = self.connection.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id, type, config from analytic_unit WHERE active = TRUE"
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, type, config from analytic_unit WHERE active = TRUE")?;
 
         let au = stmt.query_row([], |row| {
             let c: String = row.get(2)?;
@@ -97,15 +111,12 @@ impl AnalyticUnitService {
         })??;
 
         return Ok(au);
-
     }
 
     pub fn get_active_config(&self) -> anyhow::Result<AnalyticUnitConfig> {
         let exists = {
             let conn = self.connection.lock().unwrap();
-            let mut stmt = conn.prepare(
-                "SELECT config from analytic_unit WHERE active = TRUE"
-            )?;
+            let mut stmt = conn.prepare("SELECT config from analytic_unit WHERE active = TRUE")?;
             stmt.exists([])?
         };
 
@@ -115,9 +126,7 @@ impl AnalyticUnitService {
             return Ok(c);
         } else {
             let conn = self.connection.lock().unwrap();
-            let mut stmt = conn.prepare(
-                "SELECT config from analytic_unit WHERE active = TRUE"
-            )?;
+            let mut stmt = conn.prepare("SELECT config from analytic_unit WHERE active = TRUE")?;
             let acfg = stmt.query_row([], |row| {
                 let c: String = row.get(0)?;
                 let cfg = serde_json::from_str(&c).unwrap();
@@ -127,6 +136,51 @@ impl AnalyticUnitService {
         }
     }
 
+    pub fn get_config_by_id(&self, id: &String) -> anyhow::Result<AnalyticUnitConfig> {
+        let exists = {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare("SELECT config from analytic_unit WHERE id = ?1")?;
+            stmt.exists([id])?
+        };
+
+        if exists == false {
+            let c = AnalyticUnitConfig::get_default_by_id(id);
+            self.resolve(&c)?;
+            return Ok(c);
+        } else {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare("SELECT config from analytic_unit WHERE id = ?1")?;
+            let acfg = stmt.query_row([id], |row| {
+                let c: String = row.get(0)?;
+                let cfg = serde_json::from_str(&c).unwrap();
+                Ok(cfg)
+            })?;
+            return Ok(acfg);
+        }
+    }
+
+    pub fn get_config_id(&self, cfg: &AnalyticUnitConfig) -> String {
+        match cfg {
+            AnalyticUnitConfig::Threshold(_) => "1".to_string(),
+            AnalyticUnitConfig::Pattern(_) => "2".to_string(),
+            AnalyticUnitConfig::Anomaly(_) => "3".to_string(),
+        }
+    }
+
+    pub fn update_config_by_id(&self, id: &String, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
+        // TODO: it's possble that config doesn't exist, but we trying to update it
+        let conn = self.connection.lock().unwrap();
+
+        let cfg_json = serde_json::to_string(&cfg)?;
+
+        conn.execute(
+            "UPDATE analytic_unit SET config = ?1 WHERE id = ?2",
+            params![cfg_json, id],
+        )?;
+
+        return Ok(());
+    }
+
     pub fn update_active_config(&self, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
         let conn = self.connection.lock().unwrap();
 
@@ -134,7 +188,7 @@ impl AnalyticUnitService {
 
         conn.execute(
             "UPDATE analytic_unit SET config = ?1 WHERE active = TRUE",
-            params![cfg_json]
+            params![cfg_json],
         )?;
 
         return Ok(());

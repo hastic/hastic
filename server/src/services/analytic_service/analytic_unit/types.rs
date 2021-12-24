@@ -57,28 +57,77 @@ impl Default for ThresholdConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AnalyticUnitConfig {
-    Pattern(PatternConfig),
     Threshold(ThresholdConfig),
+    Pattern(PatternConfig),
     Anomaly(AnomalyConfig),
 }
 
 impl AnalyticUnitConfig {
-    // return true if need needs relearning and true if the config of the same type
-    pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool, bool) {
+    pub fn get_default_by_id(id: &String) -> AnalyticUnitConfig {
+        let iid = id.as_str();
+        match iid {
+            "1" => AnalyticUnitConfig::Threshold(Default::default()),
+            "2" => AnalyticUnitConfig::Pattern(Default::default()),
+            "3" => AnalyticUnitConfig::Anomaly(Default::default()),
+            _ => panic!("bad id for getting get_default_by_id"),
+        }
+    }
+
+    pub fn patch_needs_learning(&self, patch: &PatchConfig) -> bool {
+        // TODO: maybe use type id's to optimise code
+        match patch {
+            PatchConfig::Pattern(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Pattern(_) => {
+                    return false;
+                }
+                _ => return true,
+            },
+
+            PatchConfig::Anomaly(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Anomaly(scfg) => {
+                    if tcfg.is_some() {
+                        let t = tcfg.as_ref().unwrap();
+                        let mut need_learning = t.seasonality != scfg.seasonality;
+                        need_learning |= t.seasonality_iterations != scfg.seasonality_iterations;
+                        return need_learning;
+                    } else {
+                        return false;
+                    }
+                }
+                _ => {
+                    return true;
+                }
+            },
+
+            PatchConfig::Threshold(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Threshold(_) => {
+                    return false;
+                }
+                _ => {
+                    return true;
+                }
+            },
+        }
+    }
+
+    // TODO: maybe this method depricated
+    // return true if need needs relearning
+    pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
         match patch {
             PatchConfig::Pattern(tcfg) => match self.clone() {
                 AnalyticUnitConfig::Pattern(_) => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false, true);
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false);
                     } else {
-                        return (AnalyticUnitConfig::Pattern(Default::default()), false, true);
+                        // TODO: it should be extraced from db
+                        return (AnalyticUnitConfig::Pattern(Default::default()), false);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true, false);
+                        return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), true);
                     } else {
-                        return (AnalyticUnitConfig::Pattern(Default::default()), true, false);
+                        return (AnalyticUnitConfig::Pattern(Default::default()), true);
                     }
                 }
             },
@@ -89,16 +138,16 @@ impl AnalyticUnitConfig {
                         let t = tcfg.as_ref().unwrap();
                         let mut need_learning = t.seasonality != scfg.seasonality;
                         need_learning |= t.seasonality_iterations != scfg.seasonality_iterations;
-                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning, true);
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), need_learning);
                     } else {
-                        return (AnalyticUnitConfig::Anomaly(Default::default()), false, true);
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), false);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true, false);
+                        return (AnalyticUnitConfig::Anomaly(tcfg.unwrap()), true);
                     } else {
-                        return (AnalyticUnitConfig::Anomaly(Default::default()), true, false);
+                        return (AnalyticUnitConfig::Anomaly(Default::default()), true);
                     }
                 }
             },
@@ -106,16 +155,16 @@ impl AnalyticUnitConfig {
             PatchConfig::Threshold(tcfg) => match self.clone() {
                 AnalyticUnitConfig::Threshold(_) => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false, true);
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), false);
                     } else {
-                        return (AnalyticUnitConfig::Threshold(Default::default()), false, true);
+                        return (AnalyticUnitConfig::Threshold(Default::default()), false);
                     }
                 }
                 _ => {
                     if tcfg.is_some() {
-                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true, false);
+                        return (AnalyticUnitConfig::Threshold(tcfg.unwrap()), true);
                     } else {
-                        return (AnalyticUnitConfig::Threshold(Default::default()), true, false);
+                        return (AnalyticUnitConfig::Threshold(Default::default()), true);
                     }
                 }
             },
@@ -153,4 +202,24 @@ pub enum PatchConfig {
     Pattern(Option<PatternConfig>),
     Threshold(Option<ThresholdConfig>),
     Anomaly(Option<AnomalyConfig>),
+}
+
+impl PatchConfig {
+    pub fn get_type_id(&self) -> String {
+        match &self {
+            PatchConfig::Threshold(_) => "1".to_string(),
+            PatchConfig::Pattern(_) => "2".to_string(),
+            PatchConfig::Anomaly(_) => "3".to_string(),
+        }
+    }
+
+    pub fn get_new_config(&self) -> AnalyticUnitConfig {
+        match &self {
+            PatchConfig::Threshold(cfg) => {
+                AnalyticUnitConfig::Threshold(cfg.as_ref().unwrap().clone())
+            }
+            PatchConfig::Pattern(cfg) => AnalyticUnitConfig::Pattern(cfg.as_ref().unwrap().clone()),
+            PatchConfig::Anomaly(cfg) => AnalyticUnitConfig::Anomaly(cfg.as_ref().unwrap().clone()),
+        }
+    }
 }

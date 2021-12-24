@@ -59,7 +59,6 @@ impl AnalyticService {
         segments_service: segments_service::SegmentsService,
         alerting: Option<AlertingConfig>,
     ) -> AnalyticService {
-
         // TODO: move buffer size to config
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
@@ -242,7 +241,9 @@ impl AnalyticService {
                         println!("Detection runner started from {}", from)
                     }
                     ResponseType::DetectionRunnerUpdate(id, timestamp) => {
-                        self.analytic_unit_service.set_last_detection(id, timestamp).unwrap();
+                        self.analytic_unit_service
+                            .set_last_detection(id, timestamp)
+                            .unwrap();
                     }
                     ResponseType::LearningStarted => {
                         self.analytic_unit_learning_status = LearningStatus::Learning
@@ -274,34 +275,52 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
-        
-        let (new_conf, need_learning, same_type) = self.analytic_unit_config.patch(patch);
-        self.analytic_unit_config = new_conf.clone();
-        if need_learning {
-            self.consume_request(RequestType::RunLearning);
-            // TODO: it's not fully correct: we need to wait when the learning starts
-            match tx.send(()) {
-                Ok(_) => {}
-                Err(_e) => {
-                    println!("Can`t send patch config notification");
-                }
-            }
-        } else {
+        let my_id = self
+            .analytic_unit_service
+            .get_config_id(&self.analytic_unit_config);
+
+        let patch_id = patch.get_type_id();
+
+        let same_type = my_id == patch_id;
+
+        // TODO: need_learning and same_type logic overlaps, there is a way to optimise this
+        let need_learning = self.analytic_unit_config.patch_needs_learning(&patch);
+
+        if same_type {
+            // TODO: check when learning should be started
+            let new_conf = patch.get_new_config();
+            self.analytic_unit_config = new_conf.clone();
+            self.analytic_unit_service
+                .update_config_by_id(&my_id, &new_conf)
+                .unwrap();
+
             if self.analytic_unit.is_some() {
-                tokio::spawn({
-                    let au = self.analytic_unit.clone();
-                    let cfg = self.analytic_unit_config.clone();
-                    async move {
-                        au.unwrap().write().await.set_config(cfg);
-                        match tx.send(()) {
-                            Ok(_) => {}
-                            Err(_e) => {
-                                println!("Can`t send patch config notification");
-                            }
+                if need_learning {
+                    self.consume_request(RequestType::RunLearning);
+                    match tx.send(()) {
+                        Ok(_) => {}
+                        Err(_e) => {
+                            println!("Can`t send patch config notification");
                         }
                     }
-                });
+                    return;
+                } else {
+                    tokio::spawn({
+                        let au = self.analytic_unit.clone();
+                        let cfg = self.analytic_unit_config.clone();
+                        async move {
+                            au.unwrap().write().await.set_config(cfg);
+                            match tx.send(()) {
+                                Ok(_) => {}
+                                Err(_e) => {
+                                    println!("Can`t send patch config notification");
+                                }
+                            }
+                        }
+                    });
+                }
             } else {
+                // TODO: check if we need this else
                 match tx.send(()) {
                     Ok(_) => {}
                     Err(_e) => {
@@ -309,19 +328,20 @@ impl AnalyticService {
                     }
                 }
             }
-        }
-
-        
-        if same_type {
-            // TODO: avoid using `unwrap`
-            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
         } else {
-            // TODO: it's a hack, make it a better way
-            // TODO: avoid using unwrap
-            self.analytic_unit_service.resolve(&new_conf).unwrap();
-            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
+            let new_conf = self
+                .analytic_unit_service
+                .get_config_by_id(&patch_id)
+                .unwrap();
+            self.analytic_unit_config = new_conf.clone();
+            self.consume_request(RequestType::RunLearning);
+            match tx.send(()) {
+                Ok(_) => {}
+                Err(_e) => {
+                    println!("Can`t send patch config notification");
+                }
+            }
         }
-
     }
 
     pub async fn serve(&mut self) {
@@ -351,7 +371,9 @@ impl AnalyticService {
     ) {
         let mut au = match aus.resolve(&aucfg) {
             Ok(a) => a,
-            Err(e) => { panic!("{}", e); }
+            Err(e) => {
+                panic!("{}", e);
+            }
         };
 
         match tx

@@ -50,7 +50,10 @@ impl SARIMA {
         // TODO: trend detection
 
         if ts.len() < 2 {
-            return Err(anyhow::format_err!("too short timeserie to learn from, timeserie length: {}", ts.len()));
+            return Err(anyhow::format_err!(
+                "too short timeserie to learn from, timeserie length: {}",
+                ts.len()
+            ));
         }
         // TODO: ensure capacity with seasonality size
         let mut res_ts = Vec::<(u64, f64)>::new();

@@ -7,4 +7,3 @@ use self::{
     anomaly_analytic_unit::AnomalyAnalyticUnit, pattern_analytic_unit::PatternAnalyticUnit,
     threshold_analytic_unit::ThresholdAnalyticUnit, types::AnalyticUnitConfig,
 };
-
