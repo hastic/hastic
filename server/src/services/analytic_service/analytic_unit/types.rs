@@ -71,6 +71,7 @@ impl AnalyticUnitConfig {
                     if tcfg.is_some() {
                         return (AnalyticUnitConfig::Pattern(tcfg.unwrap()), false, true);
                     } else {
+                        // TODO: it should be extraced from db
                         return (AnalyticUnitConfig::Pattern(Default::default()), false, true);
                     }
                 }

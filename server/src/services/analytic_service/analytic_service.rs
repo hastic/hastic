@@ -274,7 +274,6 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
-        
         let (new_conf, need_learning, same_type) = self.analytic_unit_config.patch(patch);
         self.analytic_unit_config = new_conf.clone();
         if need_learning {
