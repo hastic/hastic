@@ -164,4 +164,12 @@ impl PatchConfig {
             PatchConfig::Anomaly(_) => "3".to_string()
         }
     }
+
+    pub fn get_new_config(&self) -> AnalyticUnitConfig {
+        match &self {
+            PatchConfig::Threshold(cfg) => AnalyticUnitConfig::Threshold(cfg.as_ref().unwrap().clone()),
+            PatchConfig::Pattern(cfg) => AnalyticUnitConfig::Pattern(cfg.as_ref().unwrap().clone()),
+            PatchConfig::Anomaly(cfg) => AnalyticUnitConfig::Anomaly(cfg.as_ref().unwrap().clone())
+        }
+    }    
 }

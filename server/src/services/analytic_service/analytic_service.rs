@@ -283,18 +283,48 @@ impl AnalyticService {
 
         println!("equals: {}", my_id == patch_id);
 
+        let same_type = my_id == patch_id;
+
+        if same_type {
+            let new_conf = patch.get_new_config();
+            self.analytic_unit_config = new_conf.clone();
+            self.analytic_unit_service.update_config_by_id(&my_id, &new_conf).unwrap();
+            if self.analytic_unit.is_some() {
+                tokio::spawn({
+                    let au = self.analytic_unit.clone();
+                    let cfg = self.analytic_unit_config.clone();
+                    async move {
+                        au.unwrap().write().await.set_config(cfg);
+                        match tx.send(()) {
+                            Ok(_) => {}
+                            Err(_e) => {
+                                println!("Can`t send patch config notification");
+                            }
+                        }
+                    }
+                });
+            } else {
+                // TODO: implement
+            }
+        } else {
+            // TODO: extracdt from db
+
+            match tx.send(()) {
+                Ok(_) => {}
+                Err(_e) => {
+                    println!("Can`t send patch config notification");
+                }
+            }
+        }
+        
+
         // TODO: update analytic_unit config if some
         // TODO: save updated
         // TODO: run learning when different
         // TODO: run learning when it's necessary
     
 
-        match tx.send(()) {
-            Ok(_) => {}
-            Err(_e) => {
-                println!("Can`t send patch config notification");
-            }
-        }
+        
 
 
         
