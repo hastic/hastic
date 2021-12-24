@@ -49,6 +49,7 @@ impl DetectionRunner {
                 // TODO: parse detections to webhooks
                 // TODO: define window for detection
                 // TODO: handle case when detection is in the end and continues after "now"
+                // TODO: update t_from / t_to
                 let window_size = au.as_ref().read().await.get_detection_window();
                 let mut t_from = from - window_size;
                 let mut t_to = from;
@@ -71,7 +72,6 @@ impl DetectionRunner {
                         println!("detection: {} {}", d.0, d.1);
                     }
 
-                    // TODO: run detection periodically
                     // TODO: set info about detections to tx
 
                     match tx
