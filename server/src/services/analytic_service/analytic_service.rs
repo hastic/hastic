@@ -59,7 +59,6 @@ impl AnalyticService {
         segments_service: segments_service::SegmentsService,
         alerting: Option<AlertingConfig>,
     ) -> AnalyticService {
-
         // TODO: move buffer size to config
         let (tx, rx) = mpsc::channel::<AnalyticServiceMessage>(32);
 
@@ -242,7 +241,9 @@ impl AnalyticService {
                         println!("Detection runner started from {}", from)
                     }
                     ResponseType::DetectionRunnerUpdate(id, timestamp) => {
-                        self.analytic_unit_service.set_last_detection(id, timestamp).unwrap();
+                        self.analytic_unit_service
+                            .set_last_detection(id, timestamp)
+                            .unwrap();
                     }
                     ResponseType::LearningStarted => {
                         self.analytic_unit_learning_status = LearningStatus::Learning
@@ -274,13 +275,13 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
+        let my_id = self
+            .analytic_unit_service
+            .get_config_id(&self.analytic_unit_config);
 
-        let my_id = self.analytic_unit_service.get_config_id(&self.analytic_unit_config);
-        
         let patch_id = patch.get_type_id();
 
         let same_type = my_id == patch_id;
-
 
         // TODO: need_learning and same_type logic overlaps, there is a way to optimise this
         let need_learning = self.analytic_unit_config.patch_needs_learning(&patch);
@@ -289,7 +290,9 @@ impl AnalyticService {
             // TODO: check when learning should be started
             let new_conf = patch.get_new_config();
             self.analytic_unit_config = new_conf.clone();
-            self.analytic_unit_service.update_config_by_id(&my_id, &new_conf).unwrap();
+            self.analytic_unit_service
+                .update_config_by_id(&my_id, &new_conf)
+                .unwrap();
 
             if self.analytic_unit.is_some() {
                 if need_learning {
@@ -326,7 +329,10 @@ impl AnalyticService {
                 }
             }
         } else {
-            let new_conf = self.analytic_unit_service.get_config_by_id(&patch_id).unwrap();
+            let new_conf = self
+                .analytic_unit_service
+                .get_config_by_id(&patch_id)
+                .unwrap();
             self.analytic_unit_config = new_conf.clone();
             self.consume_request(RequestType::RunLearning);
             match tx.send(()) {
@@ -365,7 +371,9 @@ impl AnalyticService {
     ) {
         let mut au = match aus.resolve(&aucfg) {
             Ok(a) => a,
-            Err(e) => { panic!("{}", e); }
+            Err(e) => {
+                panic!("{}", e);
+            }
         };
 
         match tx

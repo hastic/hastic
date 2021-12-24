@@ -63,14 +63,13 @@ pub enum AnalyticUnitConfig {
 }
 
 impl AnalyticUnitConfig {
-
     pub fn get_default_by_id(id: &String) -> AnalyticUnitConfig {
         let iid = id.as_str();
         match iid {
             "1" => AnalyticUnitConfig::Threshold(Default::default()),
             "2" => AnalyticUnitConfig::Pattern(Default::default()),
             "3" => AnalyticUnitConfig::Anomaly(Default::default()),
-            _ => panic!("bad id for getting get_default_by_id")
+            _ => panic!("bad id for getting get_default_by_id"),
         }
     }
 
@@ -81,9 +80,7 @@ impl AnalyticUnitConfig {
                 AnalyticUnitConfig::Pattern(_) => {
                     return false;
                 }
-                _ => {
-                    return true
-                }
+                _ => return true,
             },
 
             PatchConfig::Anomaly(tcfg) => match self.clone() {
@@ -212,15 +209,17 @@ impl PatchConfig {
         match &self {
             PatchConfig::Threshold(_) => "1".to_string(),
             PatchConfig::Pattern(_) => "2".to_string(),
-            PatchConfig::Anomaly(_) => "3".to_string()
+            PatchConfig::Anomaly(_) => "3".to_string(),
         }
     }
 
     pub fn get_new_config(&self) -> AnalyticUnitConfig {
         match &self {
-            PatchConfig::Threshold(cfg) => AnalyticUnitConfig::Threshold(cfg.as_ref().unwrap().clone()),
+            PatchConfig::Threshold(cfg) => {
+                AnalyticUnitConfig::Threshold(cfg.as_ref().unwrap().clone())
+            }
             PatchConfig::Pattern(cfg) => AnalyticUnitConfig::Pattern(cfg.as_ref().unwrap().clone()),
-            PatchConfig::Anomaly(cfg) => AnalyticUnitConfig::Anomaly(cfg.as_ref().unwrap().clone())
+            PatchConfig::Anomaly(cfg) => AnalyticUnitConfig::Anomaly(cfg.as_ref().unwrap().clone()),
         }
-    }    
+    }
 }

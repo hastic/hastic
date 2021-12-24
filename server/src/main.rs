@@ -1,6 +1,6 @@
 mod api;
 
-use hastic::services::{analytic_service, metric_service, segments_service, analytic_unit_service};
+use hastic::services::{analytic_service, analytic_unit_service, metric_service, segments_service};
 
 use anyhow;
 

@@ -1,15 +1,13 @@
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 
-use tokio::sync::{mpsc};
+use tokio::sync::mpsc;
 
 use crate::services::metric_service::MetricService;
 
 use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig, ResponseType};
 use tokio::time::{sleep, Duration};
 
-
 const DETECTION_STEP: u64 = 10;
-
 
 pub struct DetectionRunner {
     metric_service: MetricService,
@@ -76,11 +74,16 @@ impl DetectionRunner {
                     // TODO: run detection periodically
                     // TODO: set info about detections to tx
 
-                    
-                    match tx.send(AnalyticServiceMessage::Response(Ok(
-                        ResponseType::DetectionRunnerUpdate(au.as_ref().read().await.get_id(), t_to)
-                    ))).await {
-                        Ok(_) => {},
+                    match tx
+                        .send(AnalyticServiceMessage::Response(Ok(
+                            ResponseType::DetectionRunnerUpdate(
+                                au.as_ref().read().await.get_id(),
+                                t_to,
+                            ),
+                        )))
+                        .await
+                    {
+                        Ok(_) => {}
                         Err(_e) => println!("Fail to send detection runner started notification"),
                     }
 
