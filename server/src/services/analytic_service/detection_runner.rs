@@ -48,7 +48,6 @@ impl DetectionRunner {
                 // TODO: parse detections to webhooks
                 // TODO: define window for detection
                 // TODO: handle case when detection is in the end and continues after "now"
-                // TODO: update t_from / t_to
 
                 let window_size = au.as_ref().read().await.get_detection_window();
                 let detection_step = ms.get_detection_step();
