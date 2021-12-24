@@ -274,53 +274,30 @@ impl AnalyticService {
     }
 
     fn patch_config(&mut self, patch: PatchConfig, tx: oneshot::Sender<()>) {
-        let (new_conf, need_learning, same_type) = self.analytic_unit_config.patch(patch);
-        self.analytic_unit_config = new_conf.clone();
-        if need_learning {
-            self.consume_request(RequestType::RunLearning);
-            // TODO: it's not fully correct: we need to wait when the learning starts
-            match tx.send(()) {
-                Ok(_) => {}
-                Err(_e) => {
-                    println!("Can`t send patch config notification");
-                }
-            }
-        } else {
-            if self.analytic_unit.is_some() {
-                tokio::spawn({
-                    let au = self.analytic_unit.clone();
-                    let cfg = self.analytic_unit_config.clone();
-                    async move {
-                        au.unwrap().write().await.set_config(cfg);
-                        match tx.send(()) {
-                            Ok(_) => {}
-                            Err(_e) => {
-                                println!("Can`t send patch config notification");
-                            }
-                        }
-                    }
-                });
-            } else {
-                match tx.send(()) {
-                    Ok(_) => {}
-                    Err(_e) => {
-                        println!("Can`t send patch config notification");
-                    }
-                }
+
+        let my_id = self.analytic_unit_service.get_config_id(&self.analytic_unit_config);
+        let patch_id = patch.get_type_id();
+
+        println!("my id: {}", my_id);
+        println!("patch id: {}", patch_id);
+
+        println!("equals: {}", my_id == patch_id);
+
+        // TODO: update analytic_unit config if some
+        // TODO: save updated
+        // TODO: run learning when different
+        // TODO: run learning when it's necessary
+    
+
+        match tx.send(()) {
+            Ok(_) => {}
+            Err(_e) => {
+                println!("Can`t send patch config notification");
             }
         }
+
 
         
-        if same_type {
-            // TODO: avoid using `unwrap`
-            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
-        } else {
-            // TODO: it's a hack, make it a better way
-            // TODO: avoid using unwrap
-            self.analytic_unit_service.resolve(&new_conf).unwrap();
-            self.analytic_unit_service.update_active_config(&new_conf).unwrap();
-        }
-
     }
 
     pub async fn serve(&mut self) {

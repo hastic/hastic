@@ -127,6 +127,31 @@ impl AnalyticUnitService {
         }
     }
 
+    pub fn get_config_by_id(&self) {
+        // TODO: implement
+    }
+
+    pub fn get_config_id(&self, cfg: &AnalyticUnitConfig) -> String {
+        match cfg {
+            AnalyticUnitConfig::Threshold(_) => "1".to_string(),
+            AnalyticUnitConfig::Pattern(_) => "2".to_string(),
+            AnalyticUnitConfig::Anomaly(_) => "3".to_string(),
+        }
+    }
+
+    pub fn update_config_by_id(&self, id: &String, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
+        let conn = self.connection.lock().unwrap();
+
+        let cfg_json = serde_json::to_string(&cfg)?;
+
+        conn.execute(
+            "UPDATE analytic_unit SET config = ?1 WHERE id = ?2",
+            params![cfg_json, id]
+        )?;
+
+        return Ok(());
+    }
+
     pub fn update_active_config(&self, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
         let conn = self.connection.lock().unwrap();
 
