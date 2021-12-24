@@ -57,12 +57,22 @@ impl Default for ThresholdConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AnalyticUnitConfig {
-    Pattern(PatternConfig),
     Threshold(ThresholdConfig),
+    Pattern(PatternConfig),
     Anomaly(AnomalyConfig),
 }
 
 impl AnalyticUnitConfig {
+
+    pub fn get_default_by_id(id: &String) -> AnalyticUnitConfig {
+        let iid = id.as_str();
+        match iid {
+            "1" => AnalyticUnitConfig::Threshold(Default::default()),
+            "2" => AnalyticUnitConfig::Pattern(Default::default()),
+            "3" => AnalyticUnitConfig::Anomaly(Default::default()),
+            _ => panic!("bad id for getting get_default_by_id")
+        }
+    }
     // return true if need needs relearning
     pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
         match patch {

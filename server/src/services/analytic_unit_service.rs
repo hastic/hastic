@@ -127,8 +127,31 @@ impl AnalyticUnitService {
         }
     }
 
-    pub fn get_config_by_id(&self) {
-        // TODO: implement
+    pub fn get_config_by_id(&self, id: &String) -> anyhow::Result<AnalyticUnitConfig> {
+        let exists = {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare(
+                "SELECT config from analytic_unit WHERE id = ?1"
+            )?;
+            stmt.exists([id])?
+        };
+
+        if exists == false {
+            let c = AnalyticUnitConfig::get_default_by_id(id);
+            self.resolve(&c)?;
+            return Ok(c);
+        } else {
+            let conn = self.connection.lock().unwrap();
+            let mut stmt = conn.prepare(
+                "SELECT config from analytic_unit WHERE id = ?1"
+            )?;
+            let acfg = stmt.query_row([id], |row| {
+                let c: String = row.get(0)?;
+                let cfg = serde_json::from_str(&c).unwrap();
+                Ok(cfg)
+            })?;
+            return Ok(acfg);
+        }
     }
 
     pub fn get_config_id(&self, cfg: &AnalyticUnitConfig) -> String {
@@ -140,6 +163,8 @@ impl AnalyticUnitService {
     }
 
     pub fn update_config_by_id(&self, id: &String, cfg: &AnalyticUnitConfig) -> anyhow::Result<()> {
+
+        // TODO: it's possble that config doesn't exist, but we trying to update it
         let conn = self.connection.lock().unwrap();
 
         let cfg_json = serde_json::to_string(&cfg)?;

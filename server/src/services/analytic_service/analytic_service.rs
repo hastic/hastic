@@ -278,14 +278,10 @@ impl AnalyticService {
         let my_id = self.analytic_unit_service.get_config_id(&self.analytic_unit_config);
         let patch_id = patch.get_type_id();
 
-        println!("my id: {}", my_id);
-        println!("patch id: {}", patch_id);
-
-        println!("equals: {}", my_id == patch_id);
-
         let same_type = my_id == patch_id;
 
         if same_type {
+            // TODO: check when learning should be started
             let new_conf = patch.get_new_config();
             self.analytic_unit_config = new_conf.clone();
             self.analytic_unit_service.update_config_by_id(&my_id, &new_conf).unwrap();
@@ -304,11 +300,19 @@ impl AnalyticService {
                     }
                 });
             } else {
-                // TODO: implement
+                // TODO: check if we need this else
+                match tx.send(()) {
+                    Ok(_) => {}
+                    Err(_e) => {
+                        println!("Can`t send patch config notification");
+                    }
+                }
             }
         } else {
             // TODO: extracdt from db
-
+            let new_conf = self.analytic_unit_service.get_config_by_id(&patch_id).unwrap();
+            self.analytic_unit_config = new_conf.clone();
+            self.consume_request(RequestType::RunLearning);
             match tx.send(()) {
                 Ok(_) => {}
                 Err(_e) => {
