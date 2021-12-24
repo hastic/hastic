@@ -7,7 +7,6 @@ use crate::services::metric_service::MetricService;
 use super::types::{AnalyticServiceMessage, AnalyticUnitRF, DetectionRunnerConfig, ResponseType};
 use tokio::time::{sleep, Duration};
 
-const DETECTION_STEP: u64 = 10;
 
 pub struct DetectionRunner {
     metric_service: MetricService,
@@ -50,7 +49,9 @@ impl DetectionRunner {
                 // TODO: define window for detection
                 // TODO: handle case when detection is in the end and continues after "now"
                 // TODO: update t_from / t_to
+
                 let window_size = au.as_ref().read().await.get_detection_window();
+                let detection_step = ms.get_detection_step();
                 let mut t_from = from - window_size;
                 let mut t_to = from;
 
@@ -88,6 +89,8 @@ impl DetectionRunner {
                     }
 
                     sleep(Duration::from_secs(cfg.interval)).await;
+                    t_from += detection_step;
+                    t_to += detection_step;
                 }
             }
         }));
