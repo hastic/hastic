@@ -73,6 +73,47 @@ impl AnalyticUnitConfig {
             _ => panic!("bad id for getting get_default_by_id")
         }
     }
+
+    pub fn patch_needs_learning(&self, patch: &PatchConfig) -> bool {
+        // TODO: maybe use type id's to optimise code
+        match patch {
+            PatchConfig::Pattern(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Pattern(_) => {
+                    return false;
+                }
+                _ => {
+                    return true
+                }
+            },
+
+            PatchConfig::Anomaly(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Anomaly(scfg) => {
+                    if tcfg.is_some() {
+                        let t = tcfg.as_ref().unwrap();
+                        let mut need_learning = t.seasonality != scfg.seasonality;
+                        need_learning |= t.seasonality_iterations != scfg.seasonality_iterations;
+                        return need_learning;
+                    } else {
+                        return false;
+                    }
+                }
+                _ => {
+                    return true;
+                }
+            },
+
+            PatchConfig::Threshold(tcfg) => match self.clone() {
+                AnalyticUnitConfig::Threshold(_) => {
+                    return false;
+                }
+                _ => {
+                    return true;
+                }
+            },
+        }
+    }
+
+    // TODO: maybe this method depricated
     // return true if need needs relearning
     pub fn patch(&self, patch: PatchConfig) -> (AnalyticUnitConfig, bool) {
         match patch {
