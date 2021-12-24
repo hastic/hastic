@@ -1,5 +1,7 @@
 use subbeat::types::{DatasourceConfig, InfluxConfig, PrometheusConfig};
 
+use std::env;
+
 #[derive(Clone)]
 pub struct WebhookAlertingConfig {
     pub endpoint: String,
@@ -62,7 +64,7 @@ fn resolve_alerting(config: &config::Config) -> anyhow::Result<Option<AlertingCo
     let analytic_type = config.get::<String>("alerting.type").unwrap();
     if analytic_type != "webhook" {
         return Err(anyhow::format_err!(
-            "unknown alerting typy {}",
+            "unknown alerting type: {}",
             analytic_type
         ));
     }
@@ -75,6 +77,33 @@ fn resolve_alerting(config: &config::Config) -> anyhow::Result<Option<AlertingCo
     }));
 }
 
+// config::Environment doesn't support nested configs, e.g. `alerting.type`,
+// so I've copied this from:
+// https://github.com/rust-lang/mdBook/blob/f3e5fce6bf5e290c713f4015947dc0f0ad172d20/src/config.rs#L132
+// so that `__` can be used in env variables instead of `.`, 
+// e.g. `HASTIC_ALERTING__TYPE` -> alerting.type
+pub fn update_from_env(config: &mut config::Config) {
+    let overrides =
+        env::vars().filter_map(|(key, value)| parse_env(&key).map(|index| (index, value)));
+
+    for (key, value) in overrides {
+        println!("{} => {}", key, value);
+        config.set(&key, value).unwrap();
+    }
+}
+
+fn parse_env(key: &str) -> Option<String> {
+    const PREFIX: &str = "HASTIC_";
+
+    if key.starts_with(PREFIX) {
+        let key = &key[PREFIX.len()..];
+
+        Some(key.to_lowercase().replace("__", ".").replace("_", "-"))
+    } else {
+        None
+    }
+}
+
 impl Config {
     pub fn new() -> anyhow::Result<Config> {
         let mut config = config::Config::default();
@@ -83,14 +112,13 @@ impl Config {
             config.merge(config::File::with_name("config")).unwrap();
         }
 
-        config
-            .merge(config::Environment::with_prefix("HASTIC"))
-            .unwrap();
+        update_from_env(&mut config);
 
         if config.get::<u16>("port").is_err() {
             config.set("port", "8000").unwrap();
         }
 
+        // TODO: print resulted config (perfectly, it needs adding `derive(Debug)` in `subbeat`'s `DatasourceConfig`)
         Ok(Config {
             port: config.get::<u16>("port").unwrap(),
             datasource_config: resolve_datasource(&config)?,
