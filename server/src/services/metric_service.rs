@@ -32,4 +32,11 @@ impl MetricService {
         }
         return Ok(mr);
     }
+
+    // TODO: it a hack for DetectionRunner: it should vary for different analytic units
+    //       and it's config         
+    pub fn get_detection_step(&self) -> u64 {
+        return 10;
+    }
+
 }

@@ -220,8 +220,8 @@ impl AnalyticUnit for PatternAnalyticUnit {
         return self.id.to_owned();
     }
     fn get_detection_window(&self) -> u64 {
-        // TODO: return window based on real petterns info
-        return DETECTION_STEP;
+        let lr = self.learning_results.as_ref().unwrap();
+        return lr.avg_pattern_length as u64;
     }
     fn set_config(&mut self, config: AnalyticUnitConfig) {
         if let AnalyticUnitConfig::Pattern(cfg) = config {
