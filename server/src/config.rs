@@ -97,7 +97,6 @@ fn parse_env(key: &str) -> Option<String> {
 
     if key.starts_with(PREFIX) {
         let key = &key[PREFIX.len()..];
-
         Some(key.to_lowercase().replace("__", ".").replace("_", "-"))
     } else {
         None
