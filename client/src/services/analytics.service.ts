@@ -5,20 +5,33 @@ import axios from 'axios';
 
 import { getGenerator } from '@/utils';
 
-import _ from 'lodash';
-import { 
+import {
   AnalyticUnitType, AnlyticUnitConfig,
   PatternConfig, ThresholdConfig, AnomalyConfig
 } from "@/types/analytic_units";
 import { AnomalyHSR } from "@/types";
+import { AnalyticStatus } from "@/store";
+
+import _ from 'lodash';
+
 
 const ANALYTICS_API_URL = API_URL + "analytics/";
 
-export async function getStatus(): Promise<string> {
+export async function getStatus(): Promise<AnalyticStatus> {
   const uri = ANALYTICS_API_URL + `status`;
-  const res = await axios.get(uri);
-  const data = res['data'] as any;
-  return data.status;
+  try {
+    const res = await axios.get<{ status: string }>(uri);
+    const data = res.data;
+    return {
+      available: true,
+      message: data.status
+    };
+  } catch (e) {
+    return {
+      available: false,
+      message: e.message
+    };
+  }
 }
 
 export async function getConfig(): Promise<[AnalyticUnitType, AnlyticUnitConfig]> {
@@ -54,8 +67,8 @@ export async function patchConfig(patchObj: any) {
   await axios.patch(uri, patchObj);
 }
 
-export function getStatusGenerator(): AsyncIterableIterator<string> {
-  return getGenerator<string>(100, getStatus);
+export function getStatusGenerator(): AsyncIterableIterator<AnalyticStatus> {
+  return getGenerator<AnalyticStatus>(100, getStatus);
 }
 
 
@@ -68,6 +81,6 @@ export async function getHSRAnomaly(from: number, to: number): Promise<AnomalyHS
   const res = await axios.get(uri);
 
   const values = res["data"]["AnomalyHSR"];
-  
+
   return values as AnomalyHSR;
 }
