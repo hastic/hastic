@@ -12,23 +12,30 @@ const _SET_STATUS_GENERATOR = '_SET_STATUS_GENERATOR';
 
 // TODO: consts for actions
 
+export type AnalyticStatus = {
+  available: boolean,
+  message: string,
+}
 
 type State = {
-  analyticStatus: string,
+  analyticStatus: AnalyticStatus,
   analyticUnitType?: AnalyticUnitType,
   analyticUnitConfig?: AnlyticUnitConfig,
-  _statusGenerator: AsyncIterableIterator<string>
+  _statusGenerator: AsyncIterableIterator<AnalyticStatus>
 }
 
 const store = createStore<State>({
   state: {
-    analyticStatus: 'loading...',
+    analyticStatus: {
+      available: false,
+      message: 'loading...',
+    },
     analyticUnitType: null,
     analyticUnitConfig: null,
     _statusGenerator: null
   },
   mutations: {
-    [SET_ANALYTICS_STATUS](state, status: string) {
+    [SET_ANALYTICS_STATUS](state, status: AnalyticStatus) {
       state.analyticStatus = status;
     },
     [SET_DETECTOR_CONFIG](state, { analyticUnitType, analyticUnitConfig }) {      
@@ -38,7 +45,7 @@ const store = createStore<State>({
     // [PATCH_CONFIG](state, patchObj) {
     //   patchConfig(patchConfig)
     // }
-    [_SET_STATUS_GENERATOR](state, generator: AsyncIterableIterator<string>) {
+    [_SET_STATUS_GENERATOR](state, generator: AsyncIterableIterator<AnalyticStatus>) {
       state._statusGenerator = generator;
     }
   },

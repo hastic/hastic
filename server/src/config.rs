@@ -114,7 +114,7 @@ impl Config {
         update_from_env(&mut config);
 
         if config.get::<u16>("port").is_err() {
-            config.set("port", "8000").unwrap();
+            config.set("port", 4347).unwrap();
         }
 
         // TODO: print resulted config (perfectly, it needs adding `derive(Debug)` in `subbeat`'s `DatasourceConfig`)

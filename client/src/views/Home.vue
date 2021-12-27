@@ -2,50 +2,53 @@
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
     <graph ref="graph" />
-    
+
     <analytic-status />
-    <div>
-      Analytic unit type:
-      <select :value="analyticUnitType" @change="changeAnalyticUnitType">
-        <option disabled value="">Please Select</option>
-        <option v-bind:key="option" v-for="option in analyticUnitTypes" :value="option">{{option}}</option>
-      </select> <br/><br/>
-    </div>
-    <div id="controls">
-      <div v-if="analyticUnitType == analyticUnitTypes[0]">
-        Threshold: 
-        <input :value="analyticUnitConfig.threshold" @change="thresholdChange" /> <br/><br/>
+
+    <template v-if="analyticStatus.available">
+      <div>
+        Analytic unit type:
+        <select :value="analyticUnitType" @change="changeAnalyticUnitType">
+          <option disabled value="">Please Select</option>
+          <option v-bind:key="option" v-for="option in analyticUnitTypes" :value="option">{{option}}</option>
+        </select> <br/><br/>
       </div>
-      <div v-if="analyticUnitType == analyticUnitTypes[1]">
-        Hold <pre>S</pre> to label patterns; 
-        Hold <pre>A</pre> to label anti patterns <br/>
-        Hold <pre>D</pre> to delete patterns
-        <br/>
-        <hr/>
-        Correlation score:
-        <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
-        Anti correlation score: 
-        <input :value="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>
-        Model score: 
-        <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/>
-        Threshold score: 
-        <input :value="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
-        <button @click="clearAllLabeling"> clear all labeling </button>
+      <div id="controls">
+        <div v-if="analyticUnitType == analyticUnitTypes[0]">
+          Threshold:
+          <input :value="analyticUnitConfig.threshold" @change="thresholdChange" /> <br/><br/>
+        </div>
+        <div v-if="analyticUnitType == analyticUnitTypes[1]">
+          Hold <pre>S</pre> to label patterns;
+          Hold <pre>A</pre> to label anti patterns <br/>
+          Hold <pre>D</pre> to delete patterns
+          <br/>
+          <hr/>
+          Correlation score:
+          <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
+          Anti correlation score:
+          <input :value="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>
+          Model score:
+          <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/>
+          Threshold score:
+          <input :value="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
+          <button @click="clearAllLabeling"> clear all labeling </button>
+        </div>
+        <div v-if="analyticUnitType == analyticUnitTypes[2]">
+          Hold <pre>Z</pre> to set seasonality timespan
+          <hr/>
+          <!-- Alpha:
+          <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/> -->
+          Confidence:
+          <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
+          Seasonality:
+          <input :value="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
+          Seasonality iterations:
+          <input :value="analyticUnitConfig.seasonality_iterations" @change="seasonalityIterationsChange" /> <br/>
+          <br/>
+        </div>
       </div>
-      <div v-if="analyticUnitType == analyticUnitTypes[2]">
-        Hold <pre>Z</pre> to set seasonality timespan
-        <hr/>
-        <!-- Alpha:
-        <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/> -->
-        Confidence:
-        <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
-        Seasonality:
-        <input :value="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
-        Seasonality iterations:
-        <input :value="analyticUnitConfig.seasonality_iterations" @change="seasonalityIterationsChange" /> <br/>
-        <br/>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -140,6 +143,9 @@ export default defineComponent({
     },
     analyticUnitConfig() {
       return this.$store.state.analyticUnitConfig;
+    },
+    analyticStatus() {
+      return this.$store.state.analyticStatus;
     }
   }
 });
