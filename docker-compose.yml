@@ -4,6 +4,7 @@ services:
   app:
     image: hastic/hastic:latest
     network_mode: host
+    restart: always
     environment:
       HASTIC_PORT: "4347"
       HASTIC_PROMETHEUS__URL: "http://demo.robustperception.io:9090"
