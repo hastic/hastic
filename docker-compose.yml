@@ -2,7 +2,7 @@
 version: '3'
 services:
   app:
-    image: hastic:latest
+    image: hastic/hastic:latest
     network_mode: host
     environment:
       HASTIC_PORT: "8000"
