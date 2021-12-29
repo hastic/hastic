@@ -1,0 +1,12 @@
+
+version: '3'
+services:
+  app:
+    image: hastic:latest
+    network_mode: host
+    environment:
+      HASTIC_PORT: "8000"
+      HASTIC_PROMETHEUS__URL: "http://demo.robustperception.io:9090"
+      HASTIC_PROMETHEUS__QUERY: "rate(go_memstats_alloc_bytes_total[1m])"
+    ports:
+      - "8000:8000"
