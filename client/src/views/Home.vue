@@ -86,7 +86,6 @@ export default defineComponent({
 
     // Pattern
     correlationScoreChange(e) {
-      console.log('change correlationScoreChange');
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.correlation_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig',  { Pattern: cfg });
