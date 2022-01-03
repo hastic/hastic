@@ -16,7 +16,7 @@
       <div id="controls">
         <div v-if="analyticUnitType == analyticUnitTypes[0]">
           Threshold:
-          <input :value="analyticUnitConfig.threshold" @change="thresholdChange" /> <br/><br/>
+          <input v-model="analyticUnitConfig.threshold" @change="thresholdChange" /> <br/><br/>
         </div>
         <div v-if="analyticUnitType == analyticUnitTypes[1]">
           Hold <pre>S</pre> to label patterns;
@@ -25,13 +25,13 @@
           <br/>
           <hr/>
           Correlation score:
-          <input :value="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
+          <input v-model="analyticUnitConfig.correlation_score" @change="correlationScoreChange" /> <br/>
           Anti correlation score:
-          <input :value="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>
+          <input v-model="analyticUnitConfig.anti_correlation_score" @change="antiCorrelationScoreChange" /> <br/>
           Model score:
-          <input :value="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/>
+          <input v-model="analyticUnitConfig.model_score" @change="modelScoreChange" /> <br/>
           Threshold score:
-          <input :value="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
+          <input v-model="analyticUnitConfig.threshold_score" @change="thresholdScoreChange" /> <br/><br/>
           <button @click="clearAllLabeling"> clear all labeling </button>
         </div>
         <div v-if="analyticUnitType == analyticUnitTypes[2]">
@@ -40,11 +40,11 @@
           <!-- Alpha:
           <input :value="analyticUnitConfig.alpha" @change="alphaChange" /> <br/> -->
           Confidence:
-          <input :value="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
+          <input v-model="analyticUnitConfig.confidence" @change="confidenceChange" /> <br/>
           Seasonality:
-          <input :value="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
+          <input v-model="analyticUnitConfig.seasonality" @change="seasonalityChange" /> <br/>
           Seasonality iterations:
-          <input :value="analyticUnitConfig.seasonality_iterations" @change="seasonalityIterationsChange" /> <br/>
+          <input v-model="analyticUnitConfig.seasonality_iterations" @change="seasonalityIterationsChange" /> <br/>
           <br/>
         </div>
       </div>
@@ -86,6 +86,7 @@ export default defineComponent({
 
     // Pattern
     correlationScoreChange(e) {
+      console.log('change correlationScoreChange');
       let cfg = _.clone(this.analyticUnitConfig);
       cfg.correlation_score = parseFloat(e.target.value);
       this.$store.dispatch('patchConfig',  { Pattern: cfg });
