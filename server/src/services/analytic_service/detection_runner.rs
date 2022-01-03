@@ -33,7 +33,6 @@ impl DetectionRunner {
     }
 
     pub fn run(&mut self, from: u64) {
-        // TODO: get last detection timestamp from persistance
         // TODO: set last detection from "now"
         if self.running_handler.is_some() {
             self.running_handler.as_mut().unwrap().abort();
@@ -46,8 +45,8 @@ impl DetectionRunner {
             async move {
                 // TODO: run detection "from" for big timespan
                 // TODO: parse detections to webhooks
-                // TODO: define window for detection
                 // TODO: handle case when detection is in the end and continues after "now"
+                //       it's better to make an issue on github
 
                 let window_size = au.as_ref().read().await.get_detection_window();
                 let detection_step = ms.get_detection_step();
@@ -72,7 +71,7 @@ impl DetectionRunner {
                         println!("detection: {} {}", d.0, d.1);
                     }
 
-                    // TODO: set info about detections to tx
+                    // TODO: send info about detections to tx
 
                     match tx
                         .send(AnalyticServiceMessage::Response(Ok(
