@@ -9,8 +9,8 @@ use tokio::time::{sleep, Duration};
 
 
 pub struct DetectionRunner {
-    metric_service: MetricService,
     tx: mpsc::Sender<AnalyticServiceMessage>,
+    metric_service: MetricService,
     config: DetectionRunnerConfig,
     analytic_unit: AnalyticUnitRF,
     running_handler: Option<tokio::task::JoinHandle<()>>,
@@ -18,8 +18,8 @@ pub struct DetectionRunner {
 
 impl DetectionRunner {
     pub fn new(
-        metric_service: MetricService,
         tx: mpsc::Sender<AnalyticServiceMessage>,
+        metric_service: MetricService,
         config: DetectionRunnerConfig,
         analytic_unit: AnalyticUnitRF,
     ) -> DetectionRunner {

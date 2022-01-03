@@ -137,7 +137,7 @@ impl AnalyticService {
         };
         let tx = self.tx.clone();
         let au = self.analytic_unit.as_ref().unwrap().clone();
-        let dr = DetectionRunner::new(self.metric_service.clone(), tx, drcfg, au);
+        let dr = DetectionRunner::new(tx,self.metric_service.clone(), drcfg, au);
         self.detection_runner = Some(dr);
         self.detection_runner.as_mut().unwrap().run(from);
 
