@@ -1,5 +1,3 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{Result, Value};
 use std::sync::{Arc, Mutex};
 
 use rusqlite::{params, Connection};
@@ -11,19 +9,20 @@ use super::analytic_service::analytic_unit::{
     types::{self, AnalyticUnitConfig},
 };
 
+use super::data_service::DataService;
+
 #[derive(Clone)]
 pub struct AnalyticUnitService {
     connection: Arc<Mutex<Connection>>,
 }
 
+// TODO: get DataService
 impl AnalyticUnitService {
-    pub fn new() -> anyhow::Result<AnalyticUnitService> {
-        // TODO: remove repetitoin with segment_service
-        std::fs::create_dir_all("./data").unwrap();
-        let conn = Connection::open("./data/analytic_units.db")?;
+    pub fn new(ds: &DataService) -> anyhow::Result<AnalyticUnitService> {
+        let conn = ds.analytic_units_connection.clone();
 
         // TODO: add learning results field
-        conn.execute(
+        conn.lock().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS analytic_unit (
                       id              TEXT PRIMARY KEY,
                       last_detection  INTEGER,
@@ -35,7 +34,7 @@ impl AnalyticUnitService {
         )?;
 
         Ok(AnalyticUnitService {
-            connection: Arc::new(Mutex::new(conn)),
+            connection: conn
         })
     }
 
