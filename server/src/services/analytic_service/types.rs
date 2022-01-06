@@ -45,6 +45,7 @@ impl Default for LearningTrain {
 pub enum ResponseType {
     DetectionRunnerStarted(u64),
     DetectionRunnerUpdate(String, u64), // analytic_unit id and timestamp
+    DetectionRunnerDetection(u64, u64), // TODO: add more into about analytic unit and more
     LearningStarted,
     LearningFinished(Box<dyn AnalyticUnit + Send + Sync>),
     LearningFinishedEmpty,
