@@ -6,8 +6,12 @@ use serde::{Deserialize, Serialize};
 
 use std::sync::{Arc, Mutex};
 
+use super::data_service::DataService;
+
 pub const ID_LENGTH: usize = 20;
 pub type SegmentId = String;
+
+
 
 // TODO: make logic with this enum shorter
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
@@ -58,19 +62,19 @@ impl Segment {
     }
 }
 
+
+// TODO: get DataService
 #[derive(Clone)]
 pub struct SegmentsService {
     connection: Arc<Mutex<Connection>>,
 }
 
 impl SegmentsService {
-    pub fn new() -> anyhow::Result<SegmentsService> {
-        // TODO: move it to data service
-        std::fs::create_dir_all("./data").unwrap();
+    pub fn new(ds: &DataService) -> anyhow::Result<SegmentsService> {
 
         // TODO: add unilytic_unit id as a new field
-        let conn = Connection::open("./data/segments.db")?;
-        conn.execute(
+        let conn = ds.segments_connection.clone();
+        conn.lock().unwrap().execute(
             "CREATE TABLE IF NOT EXISTS segment (
                       id            TEXT PRIMARY KEY,
                       start         INTEGER NOT NULL,
@@ -81,7 +85,7 @@ impl SegmentsService {
         )?;
 
         Ok(SegmentsService {
-            connection: Arc::new(Mutex::new(conn)),
+            connection: conn
         })
     }
 

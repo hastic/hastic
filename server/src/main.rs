@@ -1,6 +1,6 @@
 mod api;
 
-use hastic::services::{analytic_service, analytic_unit_service, metric_service, segments_service};
+use hastic::services::{analytic_service, analytic_unit_service, metric_service, segments_service, data_service};
 
 use anyhow;
 
@@ -9,9 +9,10 @@ async fn main() -> anyhow::Result<()> {
     let config = hastic::config::Config::new()?;
     let cfg_clone = config.clone();
 
-    let analytic_unit_service = analytic_unit_service::AnalyticUnitService::new()?;
+    let data_service = data_service::DataService::new()?;
+    let analytic_unit_service = analytic_unit_service::AnalyticUnitService::new(&data_service)?;
     let metric_service = metric_service::MetricService::new(&config.datasource_config);
-    let segments_service = segments_service::SegmentsService::new()?;
+    let segments_service = segments_service::SegmentsService::new(&data_service)?;
 
     let mut analytic_service = analytic_service::AnalyticService::new(
         analytic_unit_service.clone(),
