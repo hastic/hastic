@@ -245,6 +245,9 @@ impl AnalyticService {
                             .set_last_detection(id, timestamp)
                             .unwrap();
                     }
+                    ResponseType::DetectionRunnerDetection(from, to) => {
+                        println!("detection: {} {}", from, to);
+                    }
                     ResponseType::LearningStarted => {
                         self.analytic_unit_learning_status = LearningStatus::Learning
                     }

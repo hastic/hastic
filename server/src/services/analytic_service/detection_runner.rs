@@ -69,7 +69,15 @@ impl DetectionRunner {
                     let detections = a.detect(ms.clone(), t_from, t_to).await.unwrap();
 
                     for d in detections {
-                        println!("detection: {} {}", d.0, d.1);
+                        match tx
+                        .send(AnalyticServiceMessage::Response(Ok(
+                            ResponseType::DetectionRunnerDetection(d.0, d.1),
+                        )))
+                        .await
+                        {
+                            Ok(_) => {}
+                            Err(_e) => println!("Fail to send detection runner detection notification"),
+                        }
                     }
 
                     // TODO: send info about detections to tx
