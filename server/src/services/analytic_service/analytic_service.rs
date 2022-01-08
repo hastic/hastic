@@ -302,8 +302,9 @@ impl AnalyticService {
                     self.consume_request(RequestType::RunLearning);
                     match tx.send(()) {
                         Ok(_) => {}
-                        Err(_e) => {
+                        Err(e) => {
                             println!("Can`t send patch config notification");
+                            println!("{:?}", e);
                         }
                     }
                     return;
@@ -315,8 +316,9 @@ impl AnalyticService {
                             au.unwrap().write().await.set_config(cfg);
                             match tx.send(()) {
                                 Ok(_) => {}
-                                Err(_e) => {
+                                Err(e) => {
                                     println!("Can`t send patch config notification");
+                                    println!("{:?}", e);
                                 }
                             }
                         }
@@ -326,8 +328,9 @@ impl AnalyticService {
                 // TODO: check if we need this else
                 match tx.send(()) {
                     Ok(_) => {}
-                    Err(_e) => {
+                    Err(e) => {
                         println!("Can`t send patch config notification");
+                        println!("{:?}", e);
                     }
                 }
             }
@@ -340,8 +343,9 @@ impl AnalyticService {
             self.consume_request(RequestType::RunLearning);
             match tx.send(()) {
                 Ok(_) => {}
-                Err(_e) => {
+                Err(e) => {
                     println!("Can`t send patch config notification");
+                    println!("{:?}", e);
                 }
             }
         }
