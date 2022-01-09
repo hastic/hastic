@@ -79,7 +79,6 @@ export class PatternPod extends HasticPod<UpdateDataCallback> {
     } else {
       console.log('took from range from default');
     }
-    console.log(from + " ---- " + to);
 
     this.udc({ from, to })
       .then(resp => {
