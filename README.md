@@ -1,3 +1,7 @@
+THE DEVELOPMENT OF THIS REPO MOVED To [https://code.corpglory.net/hastic/hastic](https://code.corpglory.net/hastic/hastic)
+
+(**_because fuck github_**)
+
 # Hastic
 
 Hastic needs [Prometheus](https://prometheus.io/) or [InfluxDB](https://www.influxdata.com/get-influxdb/)
